@@ -18,6 +18,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
   
   let testRoot;
   let originalCwd;
+  let sharedStateManager; // Shared across wave executions
 
   beforeEach(() => {
     testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-phase4-e2e-'));
@@ -37,6 +38,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
     fs.writeFileSync('README.md', '# Test Project\n', 'utf8');
     execSync('git add .', { stdio: 'pipe' });
     execSync('git commit -m "Initial commit"', { stdio: 'pipe' });
+    
+    // Initialize shared state manager
+    sharedStateManager = new StateManager(testRoot);
   });
 
   afterEach(() => {
@@ -73,7 +77,8 @@ describe('Phase 4 E2E Workflow Tests', function() {
   }
 
   function executeWave(waveNum, waveName, success = true) {
-    const stateManager = new StateManager(testRoot);
+    // Use shared state manager to maintain state across wave executions
+    const stateManager = sharedStateManager;
     
     // Use StateManager's built-in methods
     stateManager.startWave(waveName, 3);
@@ -96,8 +101,6 @@ describe('Phase 4 E2E Workflow Tests', function() {
     }
     
     // Return current state (in-memory, has correct waves.completed)
-    // Note: StateManager's parseState() doesn't parse completed waves correctly from markdown
-    // So we return the in-memory state which is correct
     return stateManager.state;
   }
 
