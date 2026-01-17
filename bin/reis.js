@@ -228,8 +228,9 @@ program
 program
   .command('uninstall')
   .description('Uninstall REIS')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
+  .action(async () => {
+    const uninstallCmd = require('../lib/commands/uninstall');
+    await uninstallCmd({});
   });
 
 // Default action (no command)
