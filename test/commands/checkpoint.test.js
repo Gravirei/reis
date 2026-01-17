@@ -510,20 +510,34 @@ describe('Checkpoint Command', function() {
       const stateManager = new StateManager(testDir);
       stateManager.saveState();
 
-      // Initialize git without user config (will cause commit to fail)
+      // Initialize git repo
       execSync('git init', { cwd: testDir, stdio: 'pipe' });
+      execSync('git config user.email "test@example.com"', { cwd: testDir, stdio: 'pipe' });
+      execSync('git config user.name "Test User"', { cwd: testDir, stdio: 'pipe' });
       fs.writeFileSync(path.join(testDir, 'test.txt'), 'test content');
       execSync('git add .', { cwd: testDir, stdio: 'pipe' });
 
-      // Create checkpoint with --commit (should warn but not fail)
-      await checkpoint({ subcommand: 'create', name: 'error-checkpoint', commit: true });
+      // Mock GitIntegration to throw error
+      const GitIntegration = require('../../lib/utils/git-integration');
+      const originalCommitCheckpoint = GitIntegration.commitCheckpoint;
+      GitIntegration.commitCheckpoint = () => {
+        throw new Error('Simulated git error');
+      };
 
-      // Verify checkpoint was still created
-      const updatedState = new StateManager(testDir);
-      const cp = updatedState.state.checkpoints.find(c => c.name === 'error-checkpoint');
-      
-      assert.ok(cp, 'Checkpoint should exist despite git error');
-      assert.ok(consoleOutput.warn.length > 0, 'Should have warning about git failure');
+      try {
+        // Create checkpoint with --commit (should warn but not fail)
+        await checkpoint({ subcommand: 'create', name: 'error-checkpoint', commit: true });
+
+        // Verify checkpoint was still created
+        const updatedState = new StateManager(testDir);
+        const cp = updatedState.state.checkpoints.find(c => c.name === 'error-checkpoint');
+        
+        assert.ok(cp, 'Checkpoint should exist despite git error');
+        assert.ok(consoleOutput.warn.length > 0, 'Should have warning about git failure');
+      } finally {
+        // Restore original function
+        GitIntegration.commitCheckpoint = originalCommitCheckpoint;
+      }
     });
   });
 });
