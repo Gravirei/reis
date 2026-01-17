@@ -2,6 +2,49 @@
 
 const { program } = require('commander');
 const packageJson = require('../package.json');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const chalk = require('chalk');
+
+// Check for first run and show welcome banner
+function checkFirstRun() {
+  const markerPath = path.join(os.homedir(), '.rovodev', 'reis', '.first-run-done');
+  
+  // If marker exists, not first run
+  if (fs.existsSync(markerPath)) {
+    return;
+  }
+  
+  // Show welcome banner
+  console.log(chalk.white.bold(`
+  ██████  ███████ ██ ███████
+  ██   ██ ██      ██ ██     
+  ██████  █████   ██ ███████
+  ██   ██ ██      ██      ██
+  ██   ██ ███████ ██ ███████
+  `));
+  
+  console.log(chalk.blue.bold('  REIS - Roadmap Execution & Implementation System'));
+  console.log(chalk.gray('  Systematic development with parallel subagent execution\n'));
+  console.log(chalk.white(`  Version ${packageJson.version}\n`));
+  
+  // Create marker file
+  try {
+    const markerDir = path.dirname(markerPath);
+    if (!fs.existsSync(markerDir)) {
+      fs.mkdirSync(markerDir, { recursive: true });
+    }
+    fs.writeFileSync(markerPath, new Date().toISOString());
+  } catch (err) {
+    // Ignore errors
+  }
+  
+  console.log('');
+}
+
+// Run first-run check before anything else
+checkFirstRun();
 
 // Command implementations - Core commands
 const helpCmd = require('../lib/commands/help.js');
