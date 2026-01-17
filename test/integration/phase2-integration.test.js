@@ -415,7 +415,7 @@ Test file exists
       const gitInfo = getGitInfo(testRoot);
       assert.ok(gitInfo.commit);
       assert.ok(gitInfo.branch);
-      assert.strictEqual(gitInfo.hasRemote, false);
+      assert.strictEqual(gitInfo.isRepo, true);
     });
     
     it('should handle no git repo gracefully', () => {

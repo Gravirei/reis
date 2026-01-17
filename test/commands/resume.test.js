@@ -261,7 +261,7 @@ describe('Resume Command', function() {
       const result = await resume({ checkpoint: 'Invalid checkpoint' });
 
       assert.strictEqual(result, 1);
-      const output = consoleOutput.error.join('\n');
+      const output = consoleOutput.log.join('\n') + consoleOutput.error.join('\n');
       assert(output.includes('Checkpoint not found'), 'Should show error');
       assert(output.includes('Available checkpoints'), 'Should list available checkpoints');
       assert(output.includes('Valid checkpoint'), 'Should show valid checkpoint');
@@ -346,7 +346,7 @@ describe('Resume Command', function() {
       const result = await resume({ continue: true });
 
       assert.strictEqual(result, 1);
-      const output = consoleOutput.error.join('\n');
+      const output = consoleOutput.log.join('\n') + consoleOutput.error.join('\n');
       assert(output.includes('No active wave to continue'), 'Should show error');
       assert(output.includes('reis execute-plan'), 'Should suggest starting new wave');
     });
