@@ -270,15 +270,9 @@ program.action(async () => {
       if (choice === '2') {
         console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
         
-        // Show installation progress
-        console.log(chalk.green('  ✓ Installed documentation'));
-        console.log(chalk.green('  ✓ Installed templates'));
-        console.log(chalk.green('  ✓ Installed subagents'));
-        console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
-        console.log(chalk.green('  ✓ Configured REIS\n'));
-        
-        const { install } = require('../lib/install.js');
-        await install();
+        // Perform installation directly
+        const { performInstallation } = require('../lib/install.js');
+        await performInstallation();
       } else {
         console.log(chalk.cyan('  Keeping existing installation\n'));
         console.log(chalk.green('  ✓ Using existing documentation'));
@@ -333,16 +327,9 @@ program.action(async () => {
       
       console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
       
-      // Show installation progress
-      console.log(chalk.green('  ✓ Installed documentation'));
-      console.log(chalk.green('  ✓ Installed templates'));
-      console.log(chalk.green('  ✓ Installed subagents'));
-      console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
-      console.log(chalk.green('  ✓ Configured REIS\n'));
-      
-      // Actually run the install
-      const { install } = require('../lib/install.js');
-      await install();
+      // Perform installation directly
+      const { performInstallation } = require('../lib/install.js');
+      await performInstallation();
       
       // Show completion message
       console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
@@ -354,16 +341,9 @@ program.action(async () => {
       console.log(chalk.gray('  Non-interactive mode - installing automatically...\n'));
       console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
       
-      // Show installation progress
-      console.log(chalk.green('  ✓ Installed documentation'));
-      console.log(chalk.green('  ✓ Installed templates'));
-      console.log(chalk.green('  ✓ Installed subagents'));
-      console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
-      console.log(chalk.green('  ✓ Configured REIS\n'));
-      
-      // Actually run the install
-      const { install } = require('../lib/install.js');
-      await install();
+      // Perform installation directly
+      const { performInstallation } = require('../lib/install.js');
+      await performInstallation();
       
       // Show completion message
       console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
