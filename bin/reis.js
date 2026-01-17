@@ -341,7 +341,8 @@ program.action(async () => {
       console.log(chalk.green('  ✓ Configured REIS\n'));
       
       // Actually run the install
-      const install = require('../lib/install.js');
+      const { install } = require('../lib/install.js');
+      await install();
       
       // Show completion message
       console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
@@ -361,7 +362,8 @@ program.action(async () => {
       console.log(chalk.green('  ✓ Configured REIS\n'));
       
       // Actually run the install
-      const install = require('../lib/install.js');
+      const { install } = require('../lib/install.js');
+      await install();
       
       // Show completion message
       console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
