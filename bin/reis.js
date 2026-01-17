@@ -11,6 +11,15 @@ const mapCmd = require('../lib/commands/map.js');
 const requirementsCmd = require('../lib/commands/requirements.js');
 const roadmapCmd = require('../lib/commands/roadmap.js');
 
+// Command implementations - Phase Management commands
+const planCmd = require('../lib/commands/plan.js');
+const discussCmd = require('../lib/commands/discuss.js');
+const researchCmd = require('../lib/commands/research.js');
+const assumptionsCmd = require('../lib/commands/assumptions.js');
+const executeCmd = require('../lib/commands/execute.js');
+const executePlanCmd = require('../lib/commands/execute-plan.js');
+const verifyCmd = require('../lib/commands/verify.js');
+
 // Command implementations - Other commands
 const progressCmd = require('../lib/commands/progress.js');
 const pauseCmd = require('../lib/commands/pause.js');
@@ -62,51 +71,37 @@ program
 program
   .command('plan [phase]')
   .description('Create detailed plan for a phase')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => planCmd({phase}));
 
 program
   .command('discuss [phase]')
   .description('Discuss implementation approach for a phase')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => discussCmd({phase}));
 
 program
   .command('research [phase]')
   .description('Research technical solutions for a phase')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => researchCmd({phase}));
 
 program
   .command('assumptions [phase]')
   .description('Document and validate assumptions')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => assumptionsCmd({phase}));
 
 program
   .command('execute [phase]')
   .description('Execute a phase')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => executeCmd({phase}));
 
 program
   .command('execute-plan <path>')
   .description('Execute a specific plan file')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((path) => executePlanCmd({path}));
 
 program
   .command('verify [phase]')
   .description('Verify phase completion')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => verifyCmd({phase}));
 
 // Progress Commands
 program
