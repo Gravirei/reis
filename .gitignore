@@ -28,6 +28,7 @@ PUBLISHING_GUIDE.md
 # Build artifacts
 *.tgz
 dist/
+package/
 
 # Temporary files
 *.tmp
