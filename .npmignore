@@ -1,0 +1,8 @@
+.planning/
+.git/
+.gitignore
+generated-diagrams/
+node_modules/
+*.log
+.DS_Store
+tmp_rovodev_*
