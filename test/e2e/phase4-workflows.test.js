@@ -232,19 +232,19 @@ describe('Phase 4 E2E Workflow Tests', function() {
       // Execute Wave 1 with metrics
       executeWave(1, 'Wave 1');
       metricsTracker.recordWaveExecution({
-        waveName: 'Wave 1',
+        name: 'Wave 1',
         duration: 300,
-        tasksCompleted: 3,
-        success: true
+        taskCount: 3,
+        status: 'completed'
       });
       
       // Execute Wave 2 with metrics
       executeWave(2, 'Wave 2');
       metricsTracker.recordWaveExecution({
-        waveName: 'Wave 2',
+        name: 'Wave 2',
         duration: 600,
-        tasksCompleted: 4,
-        success: true
+        taskCount: 4,
+        status: 'completed'
       });
       
       // Create checkpoint
@@ -258,13 +258,13 @@ describe('Phase 4 E2E Workflow Tests', function() {
       stateManager.saveState();
       
       // Verify metrics preserved
-      const metrics = metricsTracker.getMetrics();
+      const metrics = metricsTracker.getMetricsSummary();
       assert.strictEqual(metrics.totalWaves, 2);
       assert.strictEqual(metrics.successfulWaves, 2);
       
       // Simulate failure on Wave 3
       const state = executeWave(3, 'Wave 3', false);
-      assert.strictEqual(state.failedWaves.length, 1);
+      assert.strictEqual(state.blockers.length, 1); // Failed wave in blockers
       
       // Verify checkpoint available for resume
       assert.strictEqual(state.checkpoints.length, 1);
@@ -272,7 +272,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Resume and retry Wave 3
       const retryState = executeWave(3, 'Wave 3', true);
-      assert.strictEqual(retryState.completedWaves.length, 3);
+      assert.strictEqual(retryState.waves.completed.length, 3);
     });
   });
 
@@ -571,10 +571,10 @@ Core functionality`;
       for (let i = 0; i < 6; i++) {
         executeWave(i + 1, `Wave ${i + 1}`);
         metricsTracker.recordWaveExecution({
-          waveName: `Wave ${i + 1}`,
+          name: `Wave ${i + 1}`,
           duration: waveDurations[i],
-          tasksCompleted: 3 + (i % 3),
-          success: true
+          taskCount: 3 + (i % 3),
+          status: 'completed'
         });
       }
       
@@ -593,7 +593,7 @@ Core functionality`;
       }
       
       // Verify metrics
-      const metrics = metricsTracker.getMetrics();
+      const metrics = metricsTracker.getMetricsSummary();
       assert.strictEqual(metrics.totalWaves, 6);
       assert.strictEqual(metrics.successfulWaves, 6);
       assert.strictEqual(metrics.failedWaves, 0);
