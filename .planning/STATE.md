@@ -225,3 +225,44 @@ None - ready to execute
 - None - straightforward implementation following established command pattern
 
 **Blockers/Issues:** None
+
+## 2025-01-17 - Phase 5 Plan 01 Complete
+
+**Completed:** 05-01-command-infrastructure
+
+**Objective:** Build command routing infrastructure and utility functions
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Created command-helpers.js with 6 utility functions (showPrompt, showError, showSuccess, showInfo, getVersion, checkPlanningDir)
+- Updated bin/reis.js with complete command router for all 29 commands
+- Created command implementation guide (lib/commands/README.md)
+- Infrastructure ready for all command implementations
+
+**Decisions made:**
+- None - straightforward implementation
+
+**Blockers/Issues:** None
+
+## 2025-01-17 - Phase 5 Plan 02 Complete
+
+**Completed:** 05-02-core-commands
+
+**Objective:** Implement 6 core REIS commands (help, version, new, map, requirements, roadmap)
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Implemented help command with beautiful categorized display of all 29 commands
+- Implemented version command showing version and install location
+- Implemented new command for project initialization (with optional idea)
+- Implemented map command for codebase mapping with reis_project_mapper
+- Implemented requirements command with .planning/ validation
+- Implemented roadmap command with .planning/ validation
+- All 6 commands wired to CLI and fully functional
+
+**Decisions made:**
+- None - followed plan exactly
+
+**Blockers/Issues:** None
