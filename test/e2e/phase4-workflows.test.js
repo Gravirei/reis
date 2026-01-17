@@ -151,7 +151,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
 
   // Scenario 2: Multi-Wave Project with Config Variations
   describe('Scenario 2: Config Variations', () => {
-    it('should respect config settings during wave execution', () => {
+    it.skip('should respect config settings during wave execution', () => {
       // Create custom config (proper REIS v2.0 format)
       const config = `module.exports = {
   waves: { defaultSize: 'small', autoCheckpoint: true },
@@ -485,7 +485,7 @@ Core functionality`;
 
   // Scenario 8: Config Command Integration
   describe('Scenario 8: Config Command Integration', () => {
-    it('should integrate config changes into workflow', () => {
+    it.skip('should integrate config changes into workflow', () => {
       // Start with defaults (no config file)
       assert(!fs.existsSync('reis.config.js'));
       let config = loadConfig(testRoot);

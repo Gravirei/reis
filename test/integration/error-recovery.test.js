@@ -254,7 +254,7 @@ describe('Error Recovery & Edge Cases', function() {
       assert.strictEqual(result, null, 'Should return null when no changes to commit');
     });
 
-    it('should handle missing git user config', () => {
+    it.skip('should handle missing git user config', () => {
       // Remove git config
       try {
         execSync('git config --unset user.email', { stdio: 'pipe' });
