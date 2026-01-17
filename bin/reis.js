@@ -277,8 +277,8 @@ program.action(async () => {
         console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
         console.log(chalk.green('  ✓ Configured REIS\n'));
         
-        const install = require('../lib/install.js');
-        // The install module runs automatically
+        const { install } = require('../lib/install.js');
+        await install();
       } else {
         console.log(chalk.cyan('  Keeping existing installation\n'));
         console.log(chalk.green('  ✓ Using existing documentation'));
