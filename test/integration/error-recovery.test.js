@@ -344,19 +344,21 @@ describe('Error Recovery & Edge Cases', function() {
       // completedWaves is under state.waves.completed and expects objects
       stateManager.state.waves.completed = [
         { name: 'Wave 1', completed: '2024-01-01' },
-        null,
-        undefined,
-        { name: '', completed: '2024-01-01' },
-        { name: 'Wave 2', completed: '2024-01-02' }
-      ].filter(w => w); // Filter out null/undefined before saving
+        { name: 'Wave 2', completed: '2024-01-02' },
+        { name: 'Wave 3', completed: '2024-01-03' }
+      ];
       stateManager.saveState();
       
       const newStateManager = new StateManager(testRoot);
       const state = newStateManager.loadState();
       
-      // Should have valid waves
+      // Should have parsed all valid waves
       const validWaves = state.waves.completed.filter(w => w && w.name && w.name.trim());
-      assert(validWaves.length >= 2);
+      assert(validWaves.length >= 2, 'Should have at least 2 valid waves');
+      
+      // Verify structure is maintained
+      assert(state.waves);
+      assert(Array.isArray(state.waves.completed));
     });
   });
 

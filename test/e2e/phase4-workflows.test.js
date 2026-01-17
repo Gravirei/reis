@@ -490,7 +490,7 @@ Core functionality`;
       // Start with defaults (no config file)
       assert(!fs.existsSync('reis.config.js'));
       let config = loadConfig(testRoot);
-      assert.strictEqual(config.waveSize, 'medium'); // default
+      assert.strictEqual(config.waves.defaultSize, 'medium'); // default
       
       // Create config
       const configContent = `module.exports = {
@@ -502,7 +502,7 @@ Core functionality`;
       // Reload config
       config = loadConfig(testRoot);
       assert.strictEqual(config.waveSize, 'small');
-      assert.strictEqual(config.autoCommit, true);
+      assert.strictEqual(config.git.autoCommit, true);
       
       // Execute wave with new config
       const stateManager = sharedStateManager;
@@ -520,7 +520,7 @@ Core functionality`;
       
       config = loadConfig(testRoot);
       assert.strictEqual(config.waveSize, 'large');
-      assert.strictEqual(config.autoCommit, false);
+      assert.strictEqual(config.git.autoCommit, false);
       
       // Execute another wave
       executeWave(2, 'Wave 2');
@@ -528,7 +528,7 @@ Core functionality`;
       // Reset config (remove file)
       fs.unlinkSync('reis.config.js');
       config = loadConfig(testRoot);
-      assert.strictEqual(config.waveSize, 'medium'); // back to default
+      assert.strictEqual(config.waves.defaultSize, 'medium'); // back to default
       
       // Execute with defaults
       const state = executeWave(3, 'Wave 3');
