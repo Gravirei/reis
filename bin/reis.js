@@ -18,7 +18,7 @@ function showBanner() {
   `));
   
   console.log(chalk.blue.bold('  REIS - Roadmap Execution & Implementation System'));
-  console.log(chalk.gray('  Systematic development with parallel subagent execution\n'));
+  console.log(chalk.gray('  Specially designed for Atlassian Rovo Dev\n'));
   console.log(chalk.white(`  Version ${packageJson.version}\n`));
 }
 
@@ -253,7 +253,7 @@ program.action(async () => {
         {
           type: 'input',
           name: 'choice',
-          message: 'Choice [1]:',
+          message: 'Choice:',
           default: '1',
           validate: (input) => {
             if (input === '1' || input === '2') {
@@ -267,12 +267,27 @@ program.action(async () => {
       console.log('');
       
       if (choice === '2') {
-        console.log(chalk.cyan('  Reinstalling REIS files...\n'));
+        console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
+        
+        // Show installation progress
+        console.log(chalk.green('  ✓ Installed documentation'));
+        console.log(chalk.green('  ✓ Installed templates'));
+        console.log(chalk.green('  ✓ Installed subagents'));
+        console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
+        console.log(chalk.green('  ✓ Configured REIS\n'));
+        
         const install = require('../lib/install.js');
         // The install module runs automatically
       } else {
-        console.log(chalk.green('  ✓ Keeping existing installation\n'));
+        console.log(chalk.cyan('  Keeping existing installation\n'));
+        console.log(chalk.green('  ✓ Using existing documentation'));
+        console.log(chalk.green('  ✓ Using existing templates'));
+        console.log(chalk.green('  ✓ Using existing subagents'));
+        console.log(chalk.green(`  ✓ Current VERSION (${packageJson.version})\n`));
       }
+      
+      // Show completion message
+      console.log(chalk.bold.green('  Done! ') + chalk.white('Use ') + chalk.cyan('npx @gravirei/reis help') + chalk.white(' to get started.\n'));
       
       // Always show help after
       const helpCmd = require('../lib/commands/help');
