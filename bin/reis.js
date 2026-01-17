@@ -3,7 +3,15 @@
 const { program } = require('commander');
 const packageJson = require('../package.json');
 
-// Command implementations
+// Command implementations - Core commands
+const helpCmd = require('../lib/commands/help.js');
+const versionCmd = require('../lib/commands/version.js');
+const newCmd = require('../lib/commands/new.js');
+const mapCmd = require('../lib/commands/map.js');
+const requirementsCmd = require('../lib/commands/requirements.js');
+const roadmapCmd = require('../lib/commands/roadmap.js');
+
+// Command implementations - Other commands
 const progressCmd = require('../lib/commands/progress.js');
 const pauseCmd = require('../lib/commands/pause.js');
 const resumeCmd = require('../lib/commands/resume.js');
@@ -22,44 +30,32 @@ program
 program
   .command('help')
   .description('Show comprehensive help with all commands')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => helpCmd());
 
 program
   .command('version')
   .description('Show version and install location')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => versionCmd());
 
 program
   .command('new [idea]')
   .description('Initialize a new REIS project')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((idea) => newCmd({idea}));
 
 program
   .command('map')
   .description('Analyze and map existing codebase')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => mapCmd({}));
 
 program
   .command('requirements')
   .description('Generate or update requirements document')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => requirementsCmd({}));
 
 program
   .command('roadmap')
   .description('Generate or update project roadmap')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => roadmapCmd({}));
 
 // Phase Management Commands
 program
