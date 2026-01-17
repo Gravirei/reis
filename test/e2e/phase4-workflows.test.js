@@ -152,18 +152,17 @@ describe('Phase 4 E2E Workflow Tests', function() {
   // Scenario 2: Multi-Wave Project with Config Variations
   describe('Scenario 2: Config Variations', () => {
     it('should respect config settings during wave execution', () => {
-      // Create custom config
+      // Create custom config (proper REIS v2.0 format)
       const config = `module.exports = {
-  waveSize: 'small',
-  autoCommit: true,
-  maxWaveSize: 4
+  waves: { defaultSize: 'small', autoCheckpoint: true },
+  git: { autoCommit: true }
 };`;
-      fs.writeFileSync('reis.config.js', config, 'utf8');
+      fs.writeFileSync(path.join(testRoot, 'reis.config.js'), config, 'utf8');
       
       // Verify config loaded
       const loadedConfig = loadConfig(testRoot);
-      assert.strictEqual(loadedConfig.waveSize, 'small');
-      assert.strictEqual(loadedConfig.autoCommit, true);
+      assert.strictEqual(loadedConfig.waves.defaultSize, 'small');
+      assert.strictEqual(loadedConfig.git.autoCommit, true);
       
       // Create plan with small waves
       const plan = createPlanMD([
@@ -190,12 +189,12 @@ describe('Phase 4 E2E Workflow Tests', function() {
       const commits = execSync('git log --oneline', { encoding: 'utf8' }).split('\n');
       assert(commits.length >= 4); // Initial + 3 waves
       
-      // Change config
+      // Change config (proper REIS v2.0 format)
       const newConfig = `module.exports = {
-  waveSize: 'small',
-  autoCommit: false
+  waves: { defaultSize: 'small' },
+  git: { autoCommit: false }
 };`;
-      fs.writeFileSync('reis.config.js', newConfig, 'utf8');
+      fs.writeFileSync(path.join(testRoot, 'reis.config.js'), newConfig, 'utf8');
       
       const updatedConfig = loadConfig(testRoot);
       assert.strictEqual(updatedConfig.autoCommit, false);
