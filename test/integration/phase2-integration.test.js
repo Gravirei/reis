@@ -212,7 +212,7 @@ Test file exists
       const gitInfo = getGitInfo(testRoot);
       const checkpoint2 = stateManager.createCheckpoint('after-refactor', gitInfo.commit);
       assert.ok(checkpoint2);
-      assert.strictEqual(checkpoint2.gitCommit, gitInfo.commit);
+      assert.strictEqual(checkpoint2.commit, gitInfo.commit);
       
       // Make more changes
       fs.writeFileSync(path.join(testRoot, 'file2.js'), '// Version 2\n', 'utf8');
@@ -227,7 +227,7 @@ Test file exists
       
       assert.ok(beforeCheckpoint);
       assert.ok(afterCheckpoint);
-      assert.ok(afterCheckpoint.gitCommit);
+      assert.ok(afterCheckpoint.commit);
     });
   });
 
@@ -238,17 +238,24 @@ Test file exists
   waves: { defaultSize: 'medium', autoCheckpoint: true },
   git: { autoCommit: false }
 };`;
-      fs.writeFileSync('reis.config.js', configContent, 'utf8');
+      const configPath = path.join(testRoot, 'reis.config.js');
+      fs.writeFileSync(configPath, configContent, 'utf8');
+      
+      // Clear require cache
+      delete require.cache[require.resolve(configPath)];
       
       let config = loadConfig(testRoot);
-      assert.strictEqual(config.git.autoCommit, false);
+      assert.strictEqual(config.git.autoCommit, false, 'autoCommit should be false');
       
       // Test with autoCommit: true
       configContent = `module.exports = {
   waves: { defaultSize: 'medium', autoCheckpoint: true },
   git: { autoCommit: true, commitMessagePrefix: '[AUTO]' }
 };`;
-      fs.writeFileSync('reis.config.js', configContent, 'utf8');
+      fs.writeFileSync(configPath, configContent, 'utf8');
+      
+      // Clear require cache again
+      delete require.cache[require.resolve(configPath)];
       
       config = loadConfig(testRoot);
       assert.strictEqual(config.git.autoCommit, true);
@@ -340,7 +347,7 @@ Test file exists
       // Should have markdown structure
       assert.ok(stateContent.includes('# REIS v2.0 Development State'));
       assert.ok(stateContent.includes('## Current Phase'));
-      assert.ok(stateContent.includes('## Waves'));
+      assert.ok(stateContent.includes('## Completed Waves') || stateContent.includes('## Active Wave'));
       assert.ok(stateContent.includes('## Checkpoints'));
       
       // Reload state to verify no corruption
@@ -385,13 +392,13 @@ Test file exists
     it('should verify git status and info work correctly', () => {
       // Check initial git status
       const status1 = getGitStatus(testRoot);
-      assert.strictEqual(status1.hasChanges, false);
+      assert.strictEqual(status1.hasChanges, false, 'Should have no changes initially');
       
       // Make changes
-      fs.writeFileSync('newfile.js', '// New file\n', 'utf8');
+      fs.writeFileSync(path.join(testRoot, 'newfile.js'), '// New file\n', 'utf8');
       
       const status2 = getGitStatus(testRoot);
-      assert.strictEqual(status2.hasChanges, true);
+      assert.strictEqual(status2.hasChanges, true, 'Should detect new file');
       
       // Commit changes
       execSync('git add .', { stdio: 'pipe' });
