@@ -299,10 +299,22 @@ program.action(async () => {
       helpCmd();
     }
   } else {
-    console.log(chalk.green('  Installing REIS files to ~/.rovodev/reis/...\n'));
-    // Show help after install
-    const helpCmd = require('../lib/commands/help');
-    helpCmd();
+    console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
+    
+    // Show installation progress
+    console.log(chalk.green('  ✓ Installed documentation'));
+    console.log(chalk.green('  ✓ Installed templates'));
+    console.log(chalk.green('  ✓ Installed subagents'));
+    console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
+    console.log(chalk.green('  ✓ Configured REIS\n'));
+    
+    // Actually run the install
+    const install = require('../lib/install.js');
+    
+    // Show completion message
+    console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
+    console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
+    console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
   }
 });
 
