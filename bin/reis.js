@@ -18,6 +18,7 @@ const resumeCmd = require('../lib/commands/resume.js');
 const addCmd = require('../lib/commands/add.js');
 const insertCmd = require('../lib/commands/insert.js');
 const removeCmd = require('../lib/commands/remove.js');
+const milestoneCmd = require('../lib/commands/milestone.js');
 
 // Set up commander
 program
@@ -141,11 +142,11 @@ program
 
 // Milestone Commands
 program
-  .command('milestone <subcommand>')
-  .description('Manage milestones (complete/discuss/new)')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .command('milestone')
+  .description('Manage milestones')
+  .argument('<subcommand>', 'Subcommand: complete, discuss, or new')
+  .argument('[name]', 'Milestone name (required for complete/new)')
+  .action((subcommand, name) => milestoneCmd({subcommand, name}));
 
 // Utility Commands
 program
