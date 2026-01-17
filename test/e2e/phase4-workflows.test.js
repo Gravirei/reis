@@ -74,7 +74,12 @@ describe('Phase 4 E2E Workflow Tests', function() {
 
   function executeWave(waveNum, waveName, success = true) {
     const stateManager = new StateManager(testRoot);
-    const state = stateManager.loadState();
+    let state = stateManager.loadState();
+    
+    // Initialize arrays if needed
+    state.completedWaves = state.completedWaves || [];
+    state.failedWaves = state.failedWaves || [];
+    state.checkpoints = state.checkpoints || [];
     
     // Mark wave as started
     if (!state.activeWave) {
@@ -87,7 +92,6 @@ describe('Phase 4 E2E Workflow Tests', function() {
     
     if (success) {
       // Complete wave successfully
-      state.completedWaves = state.completedWaves || [];
       state.completedWaves.push({
         number: waveNum,
         name: waveName,
@@ -99,7 +103,6 @@ describe('Phase 4 E2E Workflow Tests', function() {
       execSync(`git commit -m "feat: complete wave ${waveNum} - ${waveName}"`, { stdio: 'pipe' });
     } else {
       // Mark as failed
-      state.failedWaves = state.failedWaves || [];
       state.failedWaves.push({
         number: waveNum,
         name: waveName,
@@ -111,7 +114,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
     stateManager.state = state;
     stateManager.saveState();
     
-    return state;
+    return stateManager.loadState();
   }
 
   // Scenario 1: Complete Project Lifecycle with Visualization
