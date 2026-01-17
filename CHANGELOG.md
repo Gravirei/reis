@@ -5,6 +5,48 @@ All notable changes to REIS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-alpha.1] - 2026-01-18 (Phase 1 Complete)
+
+### Added - Phase 1: Foundation
+- **Config System** (`lib/utils/config.js`)
+  - Load and validate `reis.config.js` from project root
+  - Wave size configuration (small/medium/large)
+  - Git integration settings
+  - Deep merge with defaults
+  - Comprehensive validation
+  
+- **Enhanced State Management** (`lib/utils/state-manager.js`)
+  - Wave tracking with start/complete/progress
+  - Checkpoint management with history
+  - Activity logging with timestamps
+  - Metrics tracking (success rate, duration)
+  - Markdown-based state persistence
+  
+- **Git Integration** (`lib/utils/git-integration.js`)
+  - Repository detection and status checking
+  - Structured commits with metadata
+  - Wave completion auto-commits
+  - Checkpoint commits and milestone tagging
+  - Branch management and rollback support
+  
+- **Wave Execution Engine** (`lib/utils/wave-executor.js`)
+  - Parse PLAN.md into Wave objects
+  - Wave lifecycle management
+  - Sequential execution with auto-checkpoints
+  - Deviation detection and reporting
+  - Resume from checkpoint capability
+
+- **Comprehensive Test Suite**
+  - 48 unit and integration tests (100% passing)
+  - Full workflow integration tests
+  - Test coverage for all Phase 1 utilities
+
+### Technical Details
+- ~1,587 lines of utility code
+- 4 core utility modules
+- Wave-based execution model from GSD analysis
+- Backward compatible with REIS v1.x projects
+
 ## [1.0.0] - 2025-01-17
 
 ### Added - Initial Release
