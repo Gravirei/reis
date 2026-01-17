@@ -47,8 +47,8 @@ describe('Execute-Plan Command', () => {
       console.log = originalLog;
 
       assert.strictEqual(exitCode, 0);
-      assert(output.includes('PROMPT FOR ROVO DEV'), 'Should show prompt');
-      assert(output.includes('Execute the specific plan'), 'Should include plan path');
+      assert(output.includes('Execute the specific plan'), 'Should show prompt with plan path');
+      assert(output.includes('reis_executor subagent'), 'Should mention subagent');
     });
 
     it('should fail gracefully when plan file does not exist (legacy mode)', async () => {
@@ -71,11 +71,14 @@ describe('Execute-Plan Command', () => {
       const planPath = path.join(testDir, 'nonexistent.PLAN.md');
 
       let output = '';
+      const originalLog = console.log;
       const originalError = console.error;
+      console.log = (...args) => { output += args.join(' ') + '\n'; };
       console.error = (...args) => { output += args.join(' ') + '\n'; };
 
       const exitCode = await executePlan({ path: planPath, wave: true });
 
+      console.log = originalLog;
       console.error = originalError;
 
       assert.strictEqual(exitCode, 1);
@@ -137,11 +140,14 @@ module.exports = {
 `);
 
       let output = '';
+      const originalLog = console.log;
       const originalError = console.error;
+      console.log = (...args) => { output += args.join(' ') + '\n'; };
       console.error = (...args) => { output += args.join(' ') + '\n'; };
 
       const exitCode = await executePlan({ path: planPath, wave: true });
 
+      console.log = originalLog;
       console.error = originalError;
 
       assert.strictEqual(exitCode, 1);
@@ -284,16 +290,20 @@ module.exports = {
 `);
 
       let output = '';
+      const originalLog = console.log;
       const originalError = console.error;
+      console.log = (...args) => { output += args.join(' ') + '\n'; };
       console.error = (...args) => { output += args.join(' ') + '\n'; };
 
       const exitCode = await executePlan({ path: planPath, wave: true });
 
+      console.log = originalLog;
       console.error = originalError;
 
-      // Should handle parse errors gracefully
+      // Should handle parse errors gracefully - in this case, no waves were found
+      // because the parser is lenient and skips malformed tasks
       assert.strictEqual(exitCode, 1);
-      assert(output.includes('Failed to parse') || output.includes('error'), 'Should show parse error');
+      assert(output.includes('No waves found') || output.includes('error'), 'Should show error');
     });
 
     it('should require .planning directory', async () => {

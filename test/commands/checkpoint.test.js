@@ -513,6 +513,7 @@ describe('Checkpoint Command', function() {
       // Initialize git without user config (will cause commit to fail)
       execSync('git init', { cwd: testDir, stdio: 'pipe' });
       fs.writeFileSync(path.join(testDir, 'test.txt'), 'test content');
+      execSync('git add .', { cwd: testDir, stdio: 'pipe' });
 
       // Create checkpoint with --commit (should warn but not fail)
       await checkpoint({ subcommand: 'create', name: 'error-checkpoint', commit: true });
