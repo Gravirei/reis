@@ -264,6 +264,7 @@ program.action(async () => {
         await performInstallation(true, true); // overwrite=true, silent=true
         
         console.log(chalk.green('  ✓ REIS reinstalled successfully'));
+        console.log(chalk.gray('  Location: ~/.rovodev/reis/'));
         console.log(chalk.white(`  Open Atlassian Rovo Dev and run ${chalk.cyan('reis help')} to get started\n`));
       } else {
         console.log(chalk.cyan('  Keeping existing installation\n'));
@@ -308,6 +309,7 @@ program.action(async () => {
       await performInstallation(false, true); // overwrite=false, silent=true
       
       console.log(chalk.green('  ✓ REIS installed successfully'));
+      console.log(chalk.gray('  Location: ~/.rovodev/reis/'));
       console.log(chalk.white(`  Open Atlassian Rovo Dev and run ${chalk.cyan('reis help')} to get started\n`));
       
     } catch (err) {
@@ -319,6 +321,7 @@ program.action(async () => {
       await performInstallation(false, true); // overwrite=false, silent=true
       
       console.log(chalk.green('  ✓ REIS installed successfully'));
+      console.log(chalk.gray('  Location: ~/.rovodev/reis/'));
       console.log(chalk.white(`  Open Atlassian Rovo Dev and run ${chalk.cyan('reis help')} to get started\n`));
     }
   }
