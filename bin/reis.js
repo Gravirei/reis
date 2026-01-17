@@ -299,22 +299,55 @@ program.action(async () => {
       helpCmd();
     }
   } else {
-    console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
+    // First-time installation
+    console.log(chalk.green('  REIS is not installed yet.\n'));
+    console.log(chalk.white('  What would you like to do?\n'));
+    console.log(chalk.white('    1) Install REIS'));
+    console.log(chalk.white('    2) Cancel\n'));
     
-    // Show installation progress
-    console.log(chalk.green('  ✓ Installed documentation'));
-    console.log(chalk.green('  ✓ Installed templates'));
-    console.log(chalk.green('  ✓ Installed subagents'));
-    console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
-    console.log(chalk.green('  ✓ Configured REIS\n'));
-    
-    // Actually run the install
-    const install = require('../lib/install.js');
-    
-    // Show completion message
-    console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
-    console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
-    console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
+    try {
+      const { choice } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'choice',
+          message: 'Choice:',
+          default: '1',
+          validate: (input) => {
+            if (input === '1' || input === '2') {
+              return true;
+            }
+            return 'Please enter 1 or 2';
+          }
+        }
+      ]);
+      
+      console.log('');
+      
+      if (choice === '2') {
+        console.log(chalk.yellow('  Installation cancelled\n'));
+        return;
+      }
+      
+      console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
+      
+      // Show installation progress
+      console.log(chalk.green('  ✓ Installed documentation'));
+      console.log(chalk.green('  ✓ Installed templates'));
+      console.log(chalk.green('  ✓ Installed subagents'));
+      console.log(chalk.green(`  ✓ Wrote VERSION (${packageJson.version})`));
+      console.log(chalk.green('  ✓ Configured REIS\n'));
+      
+      // Actually run the install
+      const install = require('../lib/install.js');
+      
+      // Show completion message
+      console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
+      console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
+      console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
+      
+    } catch (err) {
+      console.log(chalk.yellow('  Installation cancelled\n'));
+    }
   }
 });
 
