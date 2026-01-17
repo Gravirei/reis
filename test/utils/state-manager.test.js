@@ -57,7 +57,7 @@ describe('StateManager', () => {
       const sm = new StateManager(testRoot);
       assert.strictEqual(sm.state.currentPhase, '**Phase 1: Foundation**');
       assert.ok(sm.state.activeWave);
-      assert.strictEqual(sm.state.activeWave.name, 'Core Infrastructure');
+      assert.strictEqual(sm.state.activeWave.name, 'Wave 1: Core Infrastructure');
       assert.strictEqual(sm.state.activeWave.status, 'IN_PROGRESS');
     });
   });
