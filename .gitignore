@@ -16,8 +16,21 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output/
+tests/
 
-# Temporary
+# Development/Planning (not needed in Git)
+.planning/
+generated-diagrams/
+VERIFICATION_REPORT.md
+REIS_BUILD_SUMMARY.md
+PUBLISHING_GUIDE.md
+
+# Build artifacts
+*.tgz
+dist/
+
+# Temporary files
 *.tmp
 .tmp/
 temp/
+tmp_rovodev_*

@@ -1,8 +1,27 @@
+# Development/Planning files
 .planning/
+generated-diagrams/
+tests/
+VERIFICATION_REPORT.md
+REIS_BUILD_SUMMARY.md
+PUBLISHING_GUIDE.md
+
+# Git files
 .git/
 .gitignore
-generated-diagrams/
+.gitattributes
+
+# Dependencies
 node_modules/
+
+# Logs
 *.log
+npm-debug.log*
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Temporary files
 tmp_rovodev_*
+*.tmp
