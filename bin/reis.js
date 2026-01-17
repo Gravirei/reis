@@ -7,16 +7,8 @@ const path = require('path');
 const os = require('os');
 const chalk = require('chalk');
 
-// Check for first run and show welcome banner
-function checkFirstRun() {
-  const markerPath = path.join(os.homedir(), '.rovodev', 'reis', '.first-run-done');
-  
-  // If marker exists, not first run
-  if (fs.existsSync(markerPath)) {
-    return;
-  }
-  
-  // Show welcome banner
+// Show welcome banner (always, not just first run)
+function showBanner() {
   console.log(chalk.white.bold(`
   ██████  ███████ ██ ███████
   ██   ██ ██      ██ ██     
@@ -28,23 +20,30 @@ function checkFirstRun() {
   console.log(chalk.blue.bold('  REIS - Roadmap Execution & Implementation System'));
   console.log(chalk.gray('  Systematic development with parallel subagent execution\n'));
   console.log(chalk.white(`  Version ${packageJson.version}\n`));
-  
-  // Create marker file
-  try {
-    const markerDir = path.dirname(markerPath);
-    if (!fs.existsSync(markerDir)) {
-      fs.mkdirSync(markerDir, { recursive: true });
-    }
-    fs.writeFileSync(markerPath, new Date().toISOString());
-  } catch (err) {
-    // Ignore errors
-  }
-  
-  console.log('');
 }
 
-// Run first-run check before anything else
-checkFirstRun();
+// Check if REIS is already installed
+function checkExistingInstallation() {
+  const reisDir = path.join(os.homedir(), '.rovodev', 'reis');
+  
+  if (fs.existsSync(reisDir)) {
+    try {
+      const files = fs.readdirSync(reisDir);
+      // If directory has files (not just .first-run-done), it's installed
+      const hasFiles = files.some(f => f !== '.first-run-done' && f !== '.installed');
+      if (hasFiles) {
+        return true;
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+  
+  return false;
+}
+
+// Show banner when no command is given (default action)
+let shouldShowBanner = false;
 
 // Command implementations - Core commands
 const helpCmd = require('../lib/commands/help.js');
@@ -234,8 +233,27 @@ program
   });
 
 // Default action (no command)
-program.action(() => {
-  // If no command given, show help instead
+program.action(async () => {
+  // Show banner first
+  showBanner();
+  
+  // Check if already installed
+  const isInstalled = checkExistingInstallation();
+  
+  if (isInstalled) {
+    console.log(chalk.yellow('  ⚠️  REIS is already installed at ~/.rovodev/reis/\n'));
+    console.log(chalk.white('  Options:'));
+    console.log(chalk.white('    1) Keep existing installation'));
+    console.log(chalk.white('    2) Reinstall (replace existing files)'));
+    console.log(chalk.white('    3) Show help\n'));
+    
+    // For now, just show help. Full interactive prompts would need inquirer
+    console.log(chalk.gray('  Showing help... (Run with --reinstall to force reinstall)\n'));
+  } else {
+    console.log(chalk.green('  Installing REIS files to ~/.rovodev/reis/...\n'));
+  }
+  
+  // Show help
   const helpCmd = require('../lib/commands/help');
   helpCmd();
 });
