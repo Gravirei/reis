@@ -3,6 +3,14 @@
 const { program } = require('commander');
 const packageJson = require('../package.json');
 
+// Command implementations
+const progressCmd = require('../lib/commands/progress.js');
+const pauseCmd = require('../lib/commands/pause.js');
+const resumeCmd = require('../lib/commands/resume.js');
+const addCmd = require('../lib/commands/add.js');
+const insertCmd = require('../lib/commands/insert.js');
+const removeCmd = require('../lib/commands/remove.js');
+
 // Set up commander
 program
   .name('reis')
@@ -107,45 +115,33 @@ program
 program
   .command('progress')
   .description('Show current project progress')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => progressCmd({}));
 
 program
   .command('pause')
   .description('Pause current work and save state')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => pauseCmd({}));
 
 program
   .command('resume')
   .description('Resume paused work')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action(() => resumeCmd({}));
 
 // Roadmap Management Commands
 program
   .command('add <feature>')
   .description('Add feature to roadmap')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((feature) => addCmd({feature}));
 
 program
   .command('insert <phase> <feature>')
   .description('Insert feature at specific phase')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase, feature) => insertCmd({phase, feature}));
 
 program
   .command('remove <phase>')
   .description('Remove phase from roadmap')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((phase) => removeCmd({phase}));
 
 // Milestone Commands
 program
