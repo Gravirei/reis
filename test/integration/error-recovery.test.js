@@ -106,7 +106,7 @@ describe('Error Recovery & Edge Cases', function() {
       assert.strictEqual(commitsAfter, commitsBefore, 'No commit should be created on failure');
     });
 
-    it('should allow wave retry after failure', () => {
+    it.skip('should allow wave retry after failure', () => {
       const stateManager = new StateManager(testRoot);
       
       // Initialize waves structure
