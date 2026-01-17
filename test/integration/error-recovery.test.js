@@ -176,11 +176,17 @@ describe('Error Recovery & Edge Cases', function() {
       const invalidPlan = `# Test Plan\n\n## Wave\nNo name specified\n\n### Tasks\n- Task 1\n`;
       fs.writeFileSync('.planning/PLAN.md', invalidPlan, 'utf8');
       
-      // WaveExecutor expects "## Wave N: Name" format - test it handles malformed
+      // WaveExecutor expects "## Wave N: Name" format - malformed wave headers won't match
       const executor = new WaveExecutor(testRoot);
-      const waves = executor.parsePlan();
-      // It may parse but with no waves or empty names
-      assert(waves.length === 0 || waves[0].name.includes('Wave'));
+      
+      try {
+        const waves = executor.parsePlan();
+        // Should either have no waves or throw
+        assert(waves.length === 0);
+      } catch (error) {
+        // Expected - no valid waves found
+        assert(error.message.includes('No waves found'));
+      }
     });
 
     it('should detect invalid wave dependencies', () => {
