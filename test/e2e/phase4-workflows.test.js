@@ -76,14 +76,19 @@ describe('Phase 4 E2E Workflow Tests', function() {
     const stateManager = new StateManager(testRoot);
     let state = stateManager.loadState();
     
-    // Initialize arrays if needed
-    state.completedWaves = state.completedWaves || [];
-    state.failedWaves = state.failedWaves || [];
+    // Initialize arrays if needed (use state.waves.completed structure)
+    state.waves = state.waves || { current: null, completed: [], total: 0 };
     state.checkpoints = state.checkpoints || [];
     
     // Mark wave as started
     if (!state.activeWave) {
-      state.activeWave = { number: waveNum, name: waveName, startedAt: new Date().toISOString() };
+      state.activeWave = { 
+        name: waveName, 
+        status: 'IN_PROGRESS',
+        started: new Date().toISOString(),
+        items: 3,
+        progress: { completed: 0, total: 3 }
+      };
     }
     
     // Create test file for this wave
@@ -91,24 +96,21 @@ describe('Phase 4 E2E Workflow Tests', function() {
     execSync('git add .', { stdio: 'pipe' });
     
     if (success) {
-      // Complete wave successfully
-      state.completedWaves.push({
-        number: waveNum,
-        name: waveName,
-        completedAt: new Date().toISOString()
-      });
-      delete state.activeWave;
+      // Complete wave successfully using StateManager structure
+      const commitHash = execSync(`git commit -m "feat: complete wave ${waveNum} - ${waveName}"`, { encoding: 'utf8', stdio: 'pipe' }).trim();
       
-      // Create commit
-      execSync(`git commit -m "feat: complete wave ${waveNum} - ${waveName}"`, { stdio: 'pipe' });
-    } else {
-      // Mark as failed
-      state.failedWaves.push({
-        number: waveNum,
+      state.waves.completed.push({
         name: waveName,
-        failedAt: new Date().toISOString(),
-        error: 'Simulated failure'
+        completed: new Date().toISOString().split('T')[0],
+        commit: commitHash.split('\n')[0] // Get first line of commit output
       });
+      state.metrics = state.metrics || { totalWaves: 0, completedWaves: 0, successRate: 0 };
+      state.metrics.completedWaves++;
+      delete state.activeWave;
+    } else {
+      // Mark as failed (add to notes/blockers)
+      state.blockers = state.blockers || [];
+      state.blockers.push(`Wave ${waveNum} - ${waveName} failed: Simulated failure`);
     }
     
     stateManager.state = state;
@@ -141,8 +143,8 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Execute Wave 1
       let state = executeWave(1, 'Setup Infrastructure');
-      assert.strictEqual(state.completedWaves.length, 1);
-      assert.strictEqual(state.completedWaves[0].name, 'Setup Infrastructure');
+      assert.strictEqual(state.waves.completed.length, 1);
+      assert.strictEqual(state.waves.completed[0].name, 'Setup Infrastructure');
       
       // Verify STATE.md created
       assert(fs.existsSync('.planning/STATE.md'));
@@ -151,7 +153,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Execute Wave 2
       state = executeWave(2, 'Create Core Modules');
-      assert.strictEqual(state.completedWaves.length, 2);
+      assert.strictEqual(state.waves.completed.length, 2);
       
       // Verify git commits
       const commits = execSync('git log --oneline', { encoding: 'utf8' });
@@ -199,7 +201,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Verify all waves completed
       const state = stateManager.loadState();
-      assert.strictEqual(state.completedWaves.length, 3);
+      assert.strictEqual(state.waves.completed.length, 3);
       
       // Verify commits created (auto-commit on)
       const commits = execSync('git log --oneline', { encoding: 'utf8' }).split('\n');
@@ -354,7 +356,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Verify Phase 1 completion
       let state = stateManager.loadState();
-      assert.strictEqual(state.completedWaves.length, 3);
+      assert.strictEqual(state.waves.completed.length, 3);
       
       // Transition to Phase 2
       state.currentPhase = 'Phase 2: Features';
@@ -368,7 +370,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       executeWave(7, 'UI Components');
       
       state = stateManager.loadState();
-      assert.strictEqual(state.completedWaves.length, 7);
+      assert.strictEqual(state.waves.completed.length, 7);
       
       // Create checkpoint
       const checkpointHash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
@@ -391,7 +393,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       executeWave(9, 'Final Testing');
       
       state = stateManager.loadState();
-      assert.strictEqual(state.completedWaves.length, 9);
+      assert.strictEqual(state.waves.completed.length, 9);
       assert.strictEqual(state.checkpoints.length, 1);
       assert.strictEqual(state.currentPhase, 'Phase 3: Polish');
       
