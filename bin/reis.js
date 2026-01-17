@@ -259,31 +259,20 @@ program.action(async () => {
       console.log('');
       
       if (reinstall) {
-        console.log(chalk.cyan('  Reinstalling to ~/.rovodev/reis/\n'));
-        
-        // Perform installation directly
+        // Perform installation directly with overwrite
         const { performInstallation } = require('../lib/install.js');
-        await performInstallation();
+        await performInstallation(true, true); // overwrite=true, silent=true
         
-        // Show completion message
-        console.log(chalk.bold.green('\n  🎉 REIS has been reinstalled successfully!'));
-        console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
-        console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
+        console.log(chalk.green('  ✓ REIS reinstalled successfully'));
+        console.log(chalk.white(`  Run ${chalk.cyan('reis help')} to get started\n`));
       } else {
         console.log(chalk.cyan('  Keeping existing installation\n'));
         console.log(chalk.green('  ✓ Using existing documentation'));
         console.log(chalk.green('  ✓ Using existing templates'));
         console.log(chalk.green('  ✓ Using existing subagents'));
-        console.log(chalk.green(`  ✓ Current VERSION (${packageJson.version})\n`));
-        
-        // Show help
-        console.log(chalk.white('  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
+        console.log(chalk.green(`  ✓ Current VERSION (${packageJson.version})`));
+        console.log(chalk.white(`\n  Run ${chalk.cyan('reis help')} to get started\n`));
       }
-      
-      // Show completion message
-      console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
-      console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
-      console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
       
     } catch (err) {
       // If inquirer fails (non-interactive), just show help
@@ -314,30 +303,23 @@ program.action(async () => {
         return;
       }
       
-      console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
-      
       // Perform installation directly
       const { performInstallation } = require('../lib/install.js');
-      await performInstallation();
+      await performInstallation(false, true); // overwrite=false, silent=true
       
-      // Show completion message
-      console.log(chalk.bold.green('\n  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
-      console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
-      console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
+      console.log(chalk.green('  ✓ REIS installed successfully'));
+      console.log(chalk.white(`  Run ${chalk.cyan('reis help')} to get started\n`));
       
     } catch (err) {
       // inquirer failed, auto-install as default
       console.log(chalk.gray('  Non-interactive mode - installing automatically...\n'));
-      console.log(chalk.cyan('  Installing to ~/.rovodev/reis/\n'));
       
       // Perform installation directly
       const { performInstallation } = require('../lib/install.js');
-      await performInstallation();
+      await performInstallation(false, true); // overwrite=false, silent=true
       
-      // Show completion message
-      console.log(chalk.bold.green('\n  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
-      console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
-      console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
+      console.log(chalk.green('  ✓ REIS installed successfully'));
+      console.log(chalk.white(`  Run ${chalk.cyan('reis help')} to get started\n`));
     }
   }
 });
