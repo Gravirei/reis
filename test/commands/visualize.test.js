@@ -2,10 +2,11 @@ const assert = require('assert');
 const visualizeCommand = require('../../lib/commands/visualize.js');
 const StateManager = require('../../lib/utils/state-manager.js');
 const { MetricsTracker } = require('../../lib/utils/metrics-tracker.js');
+const config = require('../../lib/utils/config.js');
 
 describe('visualize command', () => {
   let originalLog, originalError, originalClear, originalExit;
-  let originalGetState, originalGetMetricsSummary;
+  let originalGetState, originalGetMetricsSummary, originalLoadConfig;
   let consoleOutput, exitCode;
 
   beforeEach(() => {
@@ -16,12 +17,16 @@ describe('visualize command', () => {
     originalExit = process.exit;
     originalGetState = StateManager.prototype.getState;
     originalGetMetricsSummary = MetricsTracker.prototype.getMetricsSummary;
+    originalLoadConfig = config.loadConfig;
     
     console.log = (...args) => consoleOutput.log.push(args.join(' '));
     console.error = (...args) => consoleOutput.error.push(args.join(' '));
     console.clear = () => consoleOutput.clear.push('cleared');
     exitCode = null;
     process.exit = (code) => { exitCode = code; throw new Error('process.exit called'); };
+    
+    // Mock loadConfig to return a default config
+    config.loadConfig = async () => ({ projectRoot: process.cwd() });
   });
 
   afterEach(() => {
@@ -31,6 +36,7 @@ describe('visualize command', () => {
     process.exit = originalExit;
     if (originalGetState) StateManager.prototype.getState = originalGetState;
     if (originalGetMetricsSummary) MetricsTracker.prototype.getMetricsSummary = originalGetMetricsSummary;
+    if (originalLoadConfig) config.loadConfig = originalLoadConfig;
   });
 
   describe('basic functionality', () => {
