@@ -491,16 +491,16 @@ Core functionality`;
       let config = loadConfig(testRoot);
       assert.strictEqual(config.waves.defaultSize, 'medium'); // default
       
-      // Create config
+      // Create config (proper REIS v2.0 format)
       const configContent = `module.exports = {
-  waveSize: 'small',
-  autoCommit: true
+  waves: { defaultSize: 'small' },
+  git: { autoCommit: true }
 };`;
-      fs.writeFileSync('reis.config.js', configContent, 'utf8');
+      fs.writeFileSync(path.join(testRoot, 'reis.config.js'), configContent, 'utf8');
       
       // Reload config
       config = loadConfig(testRoot);
-      assert.strictEqual(config.waveSize, 'small');
+      assert.strictEqual(config.waves.defaultSize, 'small');
       assert.strictEqual(config.git.autoCommit, true);
       
       // Execute wave with new config
@@ -510,15 +510,15 @@ Core functionality`;
       
       executeWave(1, 'Wave 1');
       
-      // Update config
+      // Update config (proper REIS v2.0 format)
       const newConfigContent = `module.exports = {
-  waveSize: 'large',
-  autoCommit: false
+  waves: { defaultSize: 'large' },
+  git: { autoCommit: false }
 };`;
-      fs.writeFileSync('reis.config.js', newConfigContent, 'utf8');
+      fs.writeFileSync(path.join(testRoot, 'reis.config.js'), newConfigContent, 'utf8');
       
       config = loadConfig(testRoot);
-      assert.strictEqual(config.waveSize, 'large');
+      assert.strictEqual(config.waves.defaultSize, 'large');
       assert.strictEqual(config.git.autoCommit, false);
       
       // Execute another wave
