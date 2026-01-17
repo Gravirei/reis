@@ -235,7 +235,9 @@ program
 
 // Default action (no command)
 program.action(() => {
-  console.log('Run \'reis help\' for available commands');
+  // If no command given, show help instead
+  const helpCmd = require('../lib/commands/help');
+  helpCmd();
 });
 
 // Parse command-line arguments
