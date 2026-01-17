@@ -242,20 +242,49 @@ program.action(async () => {
   
   if (isInstalled) {
     console.log(chalk.yellow('  ⚠️  REIS is already installed at ~/.rovodev/reis/\n'));
-    console.log(chalk.white('  Options:'));
-    console.log(chalk.white('    1) Keep existing installation'));
-    console.log(chalk.white('    2) Reinstall (replace existing files)'));
-    console.log(chalk.white('    3) Show help\n'));
     
-    // For now, just show help. Full interactive prompts would need inquirer
-    console.log(chalk.gray('  Showing help... (Run with --reinstall to force reinstall)\n'));
+    // Use inquirer for interactive prompt
+    const inquirer = require('inquirer');
+    try {
+      const { choice } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'choice',
+          message: 'What would you like to do?',
+          choices: [
+            { name: '1) Keep existing installation', value: 'keep' },
+            { name: '2) Reinstall (replace existing files)', value: 'reinstall' },
+            { name: '3) Show help', value: 'help' }
+          ]
+        }
+      ]);
+      
+      console.log('');
+      
+      if (choice === 'reinstall') {
+        console.log(chalk.cyan('  Reinstalling REIS files...\n'));
+        const install = require('../lib/install.js');
+        // The install module runs automatically
+      } else if (choice === 'help') {
+        const helpCmd = require('../lib/commands/help');
+        helpCmd();
+      } else {
+        console.log(chalk.green('  ✓ Keeping existing installation\n'));
+        const helpCmd = require('../lib/commands/help');
+        helpCmd();
+      }
+    } catch (err) {
+      // If inquirer fails (non-interactive), just show help
+      console.log(chalk.gray('  Non-interactive mode - showing help...\n'));
+      const helpCmd = require('../lib/commands/help');
+      helpCmd();
+    }
   } else {
     console.log(chalk.green('  Installing REIS files to ~/.rovodev/reis/...\n'));
+    // Show help after install
+    const helpCmd = require('../lib/commands/help');
+    helpCmd();
   }
-  
-  // Show help
-  const helpCmd = require('../lib/commands/help');
-  helpCmd();
 });
 
 // Parse command-line arguments
