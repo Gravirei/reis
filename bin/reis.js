@@ -242,37 +242,42 @@ program.action(async () => {
   
   if (isInstalled) {
     console.log(chalk.yellow('  ⚠️  REIS is already installed at ~/.rovodev/reis/\n'));
+    console.log(chalk.white('  What would you like to do?\n'));
+    console.log(chalk.white('    1) Keep existing installation'));
+    console.log(chalk.white('    2) Reinstall (replace existing files)\n'));
     
-    // Use inquirer for interactive prompt
+    // Use inquirer for simple input prompt
     const inquirer = require('inquirer');
     try {
       const { choice } = await inquirer.prompt([
         {
-          type: 'list',
+          type: 'input',
           name: 'choice',
-          message: 'What would you like to do?',
-          choices: [
-            { name: '1) Keep existing installation', value: 'keep' },
-            { name: '2) Reinstall (replace existing files)', value: 'reinstall' },
-            { name: '3) Show help', value: 'help' }
-          ]
+          message: 'Choice [1]:',
+          default: '1',
+          validate: (input) => {
+            if (input === '1' || input === '2') {
+              return true;
+            }
+            return 'Please enter 1 or 2';
+          }
         }
       ]);
       
       console.log('');
       
-      if (choice === 'reinstall') {
+      if (choice === '2') {
         console.log(chalk.cyan('  Reinstalling REIS files...\n'));
         const install = require('../lib/install.js');
         // The install module runs automatically
-      } else if (choice === 'help') {
-        const helpCmd = require('../lib/commands/help');
-        helpCmd();
       } else {
         console.log(chalk.green('  ✓ Keeping existing installation\n'));
-        const helpCmd = require('../lib/commands/help');
-        helpCmd();
       }
+      
+      // Always show help after
+      const helpCmd = require('../lib/commands/help');
+      helpCmd();
+      
     } catch (err) {
       // If inquirer fails (non-interactive), just show help
       console.log(chalk.gray('  Non-interactive mode - showing help...\n'));
