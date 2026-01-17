@@ -1,5 +1,5 @@
 {
-  "name": "reis",
+  "name": "@gravirei/reis",
   "version": "1.0.0",
   "description": "Roadmap Execution & Implementation System - Systematic development with parallel subagent execution for Atlassian Rovo Dev",
   "main": "lib/index.js",
