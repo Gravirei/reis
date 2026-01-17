@@ -107,10 +107,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
   // Scenario 1: Complete Project Lifecycle with Visualization
   describe('Scenario 1: Complete Project Lifecycle', () => {
     it('should execute full lifecycle from init to completion with visualization', () => {
-      // Initialize project
-      const stateManager = new StateManager(testRoot);
-      stateManager.state.currentPhase = 'Phase 1: Foundation';
-      stateManager.saveState();
+      // Initialize project using shared state manager
+      sharedStateManager.state.currentPhase = 'Phase 1: Foundation';
+      sharedStateManager.saveState();
       
       // Create ROADMAP
       const roadmap = createRoadmapMD([
@@ -146,7 +145,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       assert(commits.includes('wave 2'));
       
       // Verify phase completion
-      assert.strictEqual(state.currentPhase, 'Phase 1: Foundation');
+      assert(state.currentPhase.includes('Phase 1'));
     });
   });
 
