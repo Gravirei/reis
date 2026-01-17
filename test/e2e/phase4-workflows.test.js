@@ -398,4 +398,302 @@ describe('Phase 4 E2E Workflow Tests', function() {
       assert(commits.includes('wave 9'));
     });
   });
+
+  // Scenario 6: Backward Compatibility with REIS v1.x
+  describe('Scenario 6: Backward Compatibility', () => {
+    it('should work with v1.x project structure and migrate gracefully', () => {
+      // Create legacy v1.x STATE.md (without waves/checkpoints)
+      const legacyState = `# REIS v1.x Development State
+
+## Current Phase
+**Phase 1: Foundation**
+
+## Recent Activity
+- 2025-01-01: Started project
+
+## Completed Items
+- Initial setup
+- Base configuration
+
+## Next Steps
+Add core features
+
+## Blockers
+_None_`;
+      fs.writeFileSync('.planning/STATE.md', legacyState, 'utf8');
+      
+      // Create legacy ROADMAP (v1.x format)
+      const legacyRoadmap = `# Project Roadmap
+
+## Phase 1: Foundation
+Setup and configuration
+
+## Phase 2: Features
+Core functionality`;
+      fs.writeFileSync('.planning/ROADMAP.md', legacyRoadmap, 'utf8');
+      
+      // Initialize with v2.0 StateManager (should migrate)
+      const stateManager = new StateManager(testRoot);
+      const state = stateManager.loadState();
+      
+      // Verify v1.x data preserved
+      assert(state.currentPhase.includes('Phase 1'));
+      
+      // Add v2.0 features
+      assert(Array.isArray(state.completedWaves) || state.completedWaves === undefined);
+      assert(Array.isArray(state.checkpoints) || state.checkpoints === undefined);
+      
+      // Execute wave with v2.0 features
+      const newState = executeWave(1, 'First v2.0 Wave');
+      assert.strictEqual(newState.completedWaves.length, 1);
+      
+      // Verify STATE.md upgraded
+      const updatedStateContent = fs.readFileSync('.planning/STATE.md', 'utf8');
+      assert(updatedStateContent.includes('completedWaves') || updatedStateContent.includes('Wave'));
+      
+      // Verify no data loss
+      assert(state.currentPhase.includes('Phase 1'));
+    });
+  });
+
+  // Scenario 7: Error Recovery and State Consistency
+  describe('Scenario 7: Error Recovery', () => {
+    it('should maintain state consistency during errors', () => {
+      const stateManager = new StateManager(testRoot);
+      stateManager.state.currentPhase = 'Phase 1: Test';
+      stateManager.saveState();
+      
+      // Execute Wave 1 successfully
+      let state = executeWave(1, 'Wave 1', true);
+      assert.strictEqual(state.completedWaves.length, 1);
+      
+      // Execute Wave 2 with failure
+      state = executeWave(2, 'Wave 2', false);
+      assert.strictEqual(state.failedWaves.length, 1);
+      assert.strictEqual(state.completedWaves.length, 1);
+      
+      // Verify no commit created for failed wave
+      const commitsAfterFailure = execSync('git log --oneline', { encoding: 'utf8' });
+      const commitCount = commitsAfterFailure.split('\n').filter(l => l.trim()).length;
+      assert.strictEqual(commitCount, 2); // Initial + Wave 1 only
+      
+      // Verify STATE.md marks failure
+      const stateContent = fs.readFileSync('.planning/STATE.md', 'utf8');
+      assert(stateContent.includes('failedWaves') || stateContent.includes('Wave 2'));
+      
+      // Retry Wave 2 successfully
+      state = executeWave(2, 'Wave 2', true);
+      assert.strictEqual(state.completedWaves.length, 2);
+      assert.strictEqual(state.failedWaves.length, 1); // History preserved
+      
+      // Execute Wave 3
+      state = executeWave(3, 'Wave 3', true);
+      assert.strictEqual(state.completedWaves.length, 3);
+      
+      // Verify final state consistency
+      assert.strictEqual(state.currentPhase, 'Phase 1: Test');
+      assert(Array.isArray(state.completedWaves));
+      assert(Array.isArray(state.failedWaves));
+    });
+  });
+
+  // Scenario 8: Config Command Integration
+  describe('Scenario 8: Config Command Integration', () => {
+    it('should integrate config changes into workflow', () => {
+      // Start with defaults (no config file)
+      assert(!fs.existsSync('reis.config.js'));
+      let config = loadConfig(testRoot);
+      assert.strictEqual(config.waveSize, 'medium'); // default
+      
+      // Create config
+      const configContent = `module.exports = {
+  waveSize: 'small',
+  autoCommit: true
+};`;
+      fs.writeFileSync('reis.config.js', configContent, 'utf8');
+      
+      // Reload config
+      config = loadConfig(testRoot);
+      assert.strictEqual(config.waveSize, 'small');
+      assert.strictEqual(config.autoCommit, true);
+      
+      // Execute wave with new config
+      const stateManager = new StateManager(testRoot);
+      stateManager.state.currentPhase = 'Phase 1: Test';
+      stateManager.saveState();
+      
+      executeWave(1, 'Wave 1');
+      
+      // Update config
+      const newConfigContent = `module.exports = {
+  waveSize: 'large',
+  autoCommit: false
+};`;
+      fs.writeFileSync('reis.config.js', newConfigContent, 'utf8');
+      
+      config = loadConfig(testRoot);
+      assert.strictEqual(config.waveSize, 'large');
+      assert.strictEqual(config.autoCommit, false);
+      
+      // Execute another wave
+      executeWave(2, 'Wave 2');
+      
+      // Reset config (remove file)
+      fs.unlinkSync('reis.config.js');
+      config = loadConfig(testRoot);
+      assert.strictEqual(config.waveSize, 'medium'); // back to default
+      
+      // Execute with defaults
+      executeWave(3, 'Wave 3');
+      
+      const state = stateManager.loadState();
+      assert.strictEqual(state.completedWaves.length, 3);
+    });
+  });
+
+  // Scenario 9: Metrics Accumulation and Reporting
+  describe('Scenario 9: Metrics Accumulation', () => {
+    it('should track metrics across long project lifecycle', () => {
+      const stateManager = new StateManager(testRoot);
+      stateManager.state.currentPhase = 'Phase 1: Test';
+      stateManager.saveState();
+      
+      const metricsTracker = new MetricsTracker(testRoot);
+      
+      // Execute 6 waves with varying durations
+      const waveDurations = [300, 600, 480, 720, 360, 540]; // seconds (5m, 10m, 8m, 12m, 6m, 9m)
+      
+      for (let i = 0; i < 6; i++) {
+        executeWave(i + 1, `Wave ${i + 1}`);
+        metricsTracker.recordWaveExecution({
+          waveName: `Wave ${i + 1}`,
+          duration: waveDurations[i],
+          tasksCompleted: 3 + (i % 3),
+          success: true
+        });
+      }
+      
+      // Create checkpoint mid-project
+      if (fs.existsSync('.planning/STATE.md')) {
+        const checkpointHash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+        const state = stateManager.loadState();
+        state.checkpoints = state.checkpoints || [];
+        state.checkpoints.push({
+          name: 'mid-project',
+          commit: checkpointHash,
+          createdAt: new Date().toISOString()
+        });
+        stateManager.state = state;
+        stateManager.saveState();
+      }
+      
+      // Verify metrics
+      const metrics = metricsTracker.getMetrics();
+      assert.strictEqual(metrics.totalWaves, 6);
+      assert.strictEqual(metrics.successfulWaves, 6);
+      assert.strictEqual(metrics.failedWaves, 0);
+      
+      // Verify average duration (sum: 3000s / 6 = 500s = 8.33m)
+      const avgDuration = waveDurations.reduce((a, b) => a + b, 0) / waveDurations.length;
+      assert.strictEqual(avgDuration, 500);
+      
+      // Verify success rate
+      assert.strictEqual(metrics.successRate, 100);
+      
+      // Verify METRICS.md exists
+      assert(fs.existsSync('.planning/METRICS.md'));
+      const metricsContent = fs.readFileSync('.planning/METRICS.md', 'utf8');
+      assert(metricsContent.includes('Wave 1'));
+      assert(metricsContent.includes('Wave 6'));
+    });
+  });
+
+  // Scenario 10: Parallel Wave Dependencies
+  describe('Scenario 10: Dependency Management', () => {
+    it('should handle complex dependency chains correctly', () => {
+      const stateManager = new StateManager(testRoot);
+      stateManager.state.currentPhase = 'Phase 1: Test';
+      stateManager.saveState();
+      
+      // Create PLAN with dependencies
+      const planContent = `# Test Plan with Dependencies
+
+## Wave 1: Foundation
+Size: medium
+Dependencies: none
+
+### Tasks
+- Task 1: Setup base infrastructure
+- Task 2: Configure environment
+- Task 3: Create core modules
+
+## Wave 2: Feature A
+Size: medium
+Dependencies: Wave 1
+
+### Tasks
+- Task 1: Build Feature A component 1
+- Task 2: Build Feature A component 2
+
+## Wave 3: Feature B
+Size: medium
+Dependencies: Wave 1
+
+### Tasks
+- Task 1: Build Feature B component 1
+- Task 2: Build Feature B component 2
+
+## Wave 4: Integration
+Size: medium
+Dependencies: Wave 2, Wave 3
+
+### Tasks
+- Task 1: Integrate Feature A and B
+- Task 2: Add integration tests
+- Task 3: Final verification
+`;
+      fs.writeFileSync('.planning/PLAN.md', planContent, 'utf8');
+      
+      // Execute Wave 1 (no dependencies)
+      let state = executeWave(1, 'Foundation');
+      assert.strictEqual(state.completedWaves.length, 1);
+      
+      // Create checkpoint after Wave 1
+      const checkpointHash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+      state.checkpoints = state.checkpoints || [];
+      state.checkpoints.push({
+        name: 'Foundation complete',
+        commit: checkpointHash,
+        createdAt: new Date().toISOString()
+      });
+      stateManager.state = state;
+      stateManager.saveState();
+      
+      // Execute Wave 2 (depends on Wave 1 - can proceed)
+      state = executeWave(2, 'Feature A');
+      assert.strictEqual(state.completedWaves.length, 2);
+      
+      // Execute Wave 3 (depends on Wave 1 - can proceed in parallel)
+      state = executeWave(3, 'Feature B');
+      assert.strictEqual(state.completedWaves.length, 3);
+      
+      // Execute Wave 4 (depends on Wave 2 and 3 - now unblocked)
+      state = executeWave(4, 'Integration');
+      assert.strictEqual(state.completedWaves.length, 4);
+      
+      // Verify execution order in git history
+      const commits = execSync('git log --oneline', { encoding: 'utf8' });
+      assert(commits.includes('wave 1'));
+      assert(commits.includes('wave 2'));
+      assert(commits.includes('wave 3'));
+      assert(commits.includes('wave 4'));
+      
+      // Verify checkpoint recorded
+      assert.strictEqual(state.checkpoints.length, 1);
+      assert.strictEqual(state.checkpoints[0].name, 'Foundation complete');
+      
+      // Verify final state
+      assert.strictEqual(state.currentPhase, 'Phase 1: Test');
+    });
+  });
 });

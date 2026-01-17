@@ -11,7 +11,7 @@ const { execSync } = require('child_process');
 const { measureTime, measureMemory, assertPerformance, assertMemory, generateReport } = require('./benchmark-utils');
 const { loadConfig, saveConfig, mergeConfigs } = require('../../lib/utils/config');
 const StateManager = require('../../lib/utils/state-manager');
-const { getGitStatus, createCommit, createCheckpoint } = require('../../lib/utils/git-integration');
+const { getGitStatus, commitWaveCompletion, commitCheckpoint } = require('../../lib/utils/git-integration');
 const { WaveExecutor } = require('../../lib/utils/wave-executor');
 const { validatePlan } = require('../../lib/utils/plan-validator');
 const { MetricsTracker } = require('../../lib/utils/metrics-tracker');
@@ -120,7 +120,8 @@ describe('Performance Benchmarks', function() {
       
       const result = await measureTime(async () => {
         for (let i = 0; i < 100; i++) {
-          stateManager.addCompletedWave(`Wave ${i}`, 'commit-' + i);
+          stateManager.startWave(`Wave ${i}`, 3);
+          stateManager.completeWave('commit-' + i);
           stateManager.saveState();
         }
       }, 1); // Only run once (already doing 100 iterations internally)
@@ -143,7 +144,7 @@ describe('Performance Benchmarks', function() {
     it('should create commit in <200ms', async () => {
       const result = await measureTime(
         async () => {
-          const commit = createCommit('Test commit', testRoot);
+          const commit = commitWaveCompletion('Test Wave', 'Phase 1', { projectRoot: testRoot });
         },
         10,
         // Setup: Make a change before each commit
@@ -160,7 +161,7 @@ describe('Performance Benchmarks', function() {
     it('should create checkpoint (commit + tag) in <300ms', async () => {
       const result = await measureTime(
         async () => {
-          const checkpoint = createCheckpoint(`checkpoint-${Date.now()}`, 'Test checkpoint', testRoot);
+          const checkpoint = commitCheckpoint(`checkpoint-${Date.now()}`, 'Phase 1', { projectRoot: testRoot });
         },
         10,
         // Setup: Make a change before each checkpoint
