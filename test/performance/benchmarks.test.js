@@ -12,7 +12,7 @@ const { measureTime, measureMemory, assertPerformance, assertMemory, generateRep
 const { loadConfig, saveConfig, mergeConfigs } = require('../../lib/utils/config');
 const StateManager = require('../../lib/utils/state-manager');
 const { getGitStatus, createCommit, createCheckpoint } = require('../../lib/utils/git-integration');
-const WaveExecutor = require('../../lib/utils/wave-executor');
+const { WaveExecutor } = require('../../lib/utils/wave-executor');
 const { validatePlan } = require('../../lib/utils/plan-validator');
 const { MetricsTracker } = require('../../lib/utils/metrics-tracker');
 const { createBarChart, createProgressBar, createTimeline } = require('../../lib/utils/visualizer');
