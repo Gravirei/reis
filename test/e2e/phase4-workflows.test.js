@@ -134,9 +134,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Execute Wave 2
       state = executeWave(2, 'Create Core Modules');
-      // Reload state to get updated wave count from disk
-      const stateManager2 = new StateManager(testRoot);
-      assert.strictEqual(stateManager2.state.waves.completed.length, 2);
+      assert.strictEqual(state.waves.completed.length, 2);
       
       // Verify git commits
       const commits = execSync('git log --oneline', { encoding: 'utf8' });
