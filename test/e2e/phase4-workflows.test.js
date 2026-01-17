@@ -74,49 +74,29 @@ describe('Phase 4 E2E Workflow Tests', function() {
 
   function executeWave(waveNum, waveName, success = true) {
     const stateManager = new StateManager(testRoot);
-    let state = stateManager.loadState();
     
-    // Initialize arrays if needed (use state.waves.completed structure)
-    state.waves = state.waves || { current: null, completed: [], total: 0 };
-    state.checkpoints = state.checkpoints || [];
-    
-    // Mark wave as started
-    if (!state.activeWave) {
-      state.activeWave = { 
-        name: waveName, 
-        status: 'IN_PROGRESS',
-        started: new Date().toISOString(),
-        items: 3,
-        progress: { completed: 0, total: 3 }
-      };
-    }
+    // Use StateManager's built-in methods
+    stateManager.startWave(waveName, 3);
     
     // Create test file for this wave
     fs.writeFileSync(`wave${waveNum}.txt`, `Wave ${waveNum} output\n`, 'utf8');
     execSync('git add .', { stdio: 'pipe' });
     
     if (success) {
-      // Complete wave successfully using StateManager structure
-      const commitHash = execSync(`git commit -m "feat: complete wave ${waveNum} - ${waveName}"`, { encoding: 'utf8', stdio: 'pipe' }).trim();
+      // Complete wave successfully using StateManager's method
+      const commitOutput = execSync(`git commit -m "feat: complete wave ${waveNum} - ${waveName}"`, { encoding: 'utf8', stdio: 'pipe' });
+      const commitHash = commitOutput.includes('[') ? commitOutput.split('[')[1].split(']')[0].trim() : 'no-hash';
       
-      state.waves.completed.push({
-        name: waveName,
-        completed: new Date().toISOString().split('T')[0],
-        commit: commitHash.split('\n')[0] // Get first line of commit output
-      });
-      state.metrics = state.metrics || { totalWaves: 0, completedWaves: 0, successRate: 0 };
-      state.metrics.completedWaves++;
-      delete state.activeWave;
+      stateManager.completeWave(commitHash);
     } else {
-      // Mark as failed (add to notes/blockers)
-      state.blockers = state.blockers || [];
-      state.blockers.push(`Wave ${waveNum} - ${waveName} failed: Simulated failure`);
+      // Mark as failed (add to blockers)
+      stateManager.addBlocker(`Wave ${waveNum} - ${waveName} failed: Simulated failure`);
+      stateManager.state.activeWave = null;
+      stateManager.saveState();
     }
     
-    stateManager.state = state;
-    stateManager.saveState();
-    
-    return stateManager.loadState();
+    // Return the current state
+    return stateManager.state;
   }
 
   // Scenario 1: Complete Project Lifecycle with Visualization
