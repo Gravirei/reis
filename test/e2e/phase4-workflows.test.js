@@ -174,7 +174,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       fs.writeFileSync('.planning/PLAN.md', plan, 'utf8');
       
       // Initialize state
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       stateManager.state.currentPhase = 'Phase 1: Test';
       stateManager.saveState();
       
@@ -206,7 +206,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
   // Scenario 3: Checkpoint and Resume with Metrics
   describe('Scenario 3: Checkpoint and Resume', () => {
     it('should preserve metrics and state across checkpoint/resume', () => {
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       stateManager.state.currentPhase = 'Phase 1: Test';
       stateManager.saveState();
       
@@ -263,7 +263,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
   // Scenario 4: Visualization Integration Throughout
   describe('Scenario 4: Visualization Integration', () => {
     it('should provide visualization at every project stage', () => {
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       
       // Stage 1: Empty project
       stateManager.state.currentPhase = 'Phase 1: Test';
@@ -327,7 +327,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       ]);
       fs.writeFileSync('.planning/ROADMAP.md', roadmap, 'utf8');
       
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       const metricsTracker = new MetricsTracker(testRoot);
       
       // Phase 1: Foundation (3 waves)
@@ -422,7 +422,7 @@ Core functionality`;
       fs.writeFileSync('.planning/ROADMAP.md', legacyRoadmap, 'utf8');
       
       // Initialize with v2.0 StateManager (should migrate)
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       const state = stateManager.loadState();
       
       // Verify v1.x data preserved
@@ -448,7 +448,7 @@ Core functionality`;
   // Scenario 7: Error Recovery and State Consistency
   describe('Scenario 7: Error Recovery', () => {
     it('should maintain state consistency during errors', () => {
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       stateManager.state.currentPhase = 'Phase 1: Test';
       stateManager.saveState();
       
@@ -507,7 +507,7 @@ Core functionality`;
       assert.strictEqual(config.autoCommit, true);
       
       // Execute wave with new config
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       stateManager.state.currentPhase = 'Phase 1: Test';
       stateManager.saveState();
       
@@ -543,7 +543,7 @@ Core functionality`;
   // Scenario 9: Metrics Accumulation and Reporting
   describe('Scenario 9: Metrics Accumulation', () => {
     it('should track metrics across long project lifecycle', () => {
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       stateManager.state.currentPhase = 'Phase 1: Test';
       stateManager.saveState();
       
@@ -600,7 +600,7 @@ Core functionality`;
   // Scenario 10: Parallel Wave Dependencies
   describe('Scenario 10: Dependency Management', () => {
     it('should handle complex dependency chains correctly', () => {
-      const stateManager = new StateManager(testRoot);
+      const stateManager = sharedStateManager;
       stateManager.state.currentPhase = 'Phase 1: Test';
       stateManager.saveState();
       
