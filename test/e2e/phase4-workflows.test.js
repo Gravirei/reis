@@ -444,13 +444,13 @@ Core functionality`;
       // Verify v1.x data preserved
       assert(state.currentPhase.includes('Phase 1'));
       
-      // Add v2.0 features
-      assert(Array.isArray(state.completedWaves) || state.completedWaves === undefined);
-      assert(Array.isArray(state.checkpoints) || state.checkpoints === undefined);
+      // Add v2.0 features (use waves.completed structure)
+      assert(state.waves && Array.isArray(state.waves.completed));
+      assert(Array.isArray(state.checkpoints));
       
       // Execute wave with v2.0 features
       const newState = executeWave(1, 'First v2.0 Wave');
-      assert.strictEqual(newState.completedWaves.length, 1);
+      assert.strictEqual(newState.waves.completed.length, 1);
       
       // Verify STATE.md upgraded
       const updatedStateContent = fs.readFileSync('.planning/STATE.md', 'utf8');
@@ -470,12 +470,12 @@ Core functionality`;
       
       // Execute Wave 1 successfully
       let state = executeWave(1, 'Wave 1', true);
-      assert.strictEqual(state.completedWaves.length, 1);
+      assert.strictEqual(state.waves.completed.length, 1);
       
       // Execute Wave 2 with failure
       state = executeWave(2, 'Wave 2', false);
-      assert.strictEqual(state.failedWaves.length, 1);
-      assert.strictEqual(state.completedWaves.length, 1);
+      assert.strictEqual(state.blockers.length, 1); // Failed wave added to blockers
+      assert.strictEqual(state.waves.completed.length, 1);
       
       // Verify no commit created for failed wave
       const commitsAfterFailure = execSync('git log --oneline', { encoding: 'utf8' });
@@ -484,21 +484,21 @@ Core functionality`;
       
       // Verify STATE.md marks failure
       const stateContent = fs.readFileSync('.planning/STATE.md', 'utf8');
-      assert(stateContent.includes('failedWaves') || stateContent.includes('Wave 2'));
+      assert(stateContent.includes('Blockers') || stateContent.includes('Wave 2'));
       
       // Retry Wave 2 successfully
       state = executeWave(2, 'Wave 2', true);
-      assert.strictEqual(state.completedWaves.length, 2);
-      assert.strictEqual(state.failedWaves.length, 1); // History preserved
+      assert.strictEqual(state.waves.completed.length, 2);
+      assert.strictEqual(state.blockers.length, 1); // History preserved in blockers
       
       // Execute Wave 3
       state = executeWave(3, 'Wave 3', true);
-      assert.strictEqual(state.completedWaves.length, 3);
+      assert.strictEqual(state.waves.completed.length, 3);
       
       // Verify final state consistency
       assert.strictEqual(state.currentPhase, 'Phase 1: Test');
-      assert(Array.isArray(state.completedWaves));
-      assert(Array.isArray(state.failedWaves));
+      assert(state.waves && Array.isArray(state.waves.completed));
+      assert(Array.isArray(state.blockers));
     });
   });
 
@@ -552,7 +552,7 @@ Core functionality`;
       executeWave(3, 'Wave 3');
       
       const state = stateManager.loadState();
-      assert.strictEqual(state.completedWaves.length, 3);
+      assert.strictEqual(state.waves.completed.length, 3);
     });
   });
 
@@ -661,7 +661,7 @@ Dependencies: Wave 2, Wave 3
       
       // Execute Wave 1 (no dependencies)
       let state = executeWave(1, 'Foundation');
-      assert.strictEqual(state.completedWaves.length, 1);
+      assert.strictEqual(state.waves.completed.length, 1);
       
       // Create checkpoint after Wave 1
       const checkpointHash = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
@@ -676,15 +676,15 @@ Dependencies: Wave 2, Wave 3
       
       // Execute Wave 2 (depends on Wave 1 - can proceed)
       state = executeWave(2, 'Feature A');
-      assert.strictEqual(state.completedWaves.length, 2);
+      assert.strictEqual(state.waves.completed.length, 2);
       
       // Execute Wave 3 (depends on Wave 1 - can proceed in parallel)
       state = executeWave(3, 'Feature B');
-      assert.strictEqual(state.completedWaves.length, 3);
+      assert.strictEqual(state.waves.completed.length, 3);
       
       // Execute Wave 4 (depends on Wave 2 and 3 - now unblocked)
       state = executeWave(4, 'Integration');
-      assert.strictEqual(state.completedWaves.length, 4);
+      assert.strictEqual(state.waves.completed.length, 4);
       
       // Verify execution order in git history
       const commits = execSync('git log --oneline', { encoding: 'utf8' });
