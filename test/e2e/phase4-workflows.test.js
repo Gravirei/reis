@@ -95,8 +95,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
       stateManager.saveState();
     }
     
-    // Return the current state
-    return stateManager.state;
+    // Return fresh state loaded from disk
+    const freshStateManager = new StateManager(testRoot);
+    return freshStateManager.state;
   }
 
   // Scenario 1: Complete Project Lifecycle with Visualization
@@ -133,7 +134,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Execute Wave 2
       state = executeWave(2, 'Create Core Modules');
-      assert.strictEqual(state.waves.completed.length, 2);
+      // Reload state to get updated wave count from disk
+      const stateManager2 = new StateManager(testRoot);
+      assert.strictEqual(stateManager2.state.waves.completed.length, 2);
       
       // Verify git commits
       const commits = execSync('git log --oneline', { encoding: 'utf8' });
