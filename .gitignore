@@ -30,6 +30,9 @@ PUBLISHING_GUIDE.md
 dist/
 package/
 
+# Planning and internal docs
+.planning/
+
 # Temporary files
 *.tmp
 .tmp/
