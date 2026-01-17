@@ -52,7 +52,9 @@ describe('Error Recovery & Edge Cases', function() {
       stateManager.state.activeWave = {
         name: 'Wave 1',
         status: 'in_progress',
-        started: new Date().toISOString()
+        started: new Date().toISOString(),
+        items: 5,
+        progress: { completed: 0, total: 5 }
       };
       stateManager.saveState();
       
@@ -111,7 +113,10 @@ describe('Error Recovery & Edge Cases', function() {
       stateManager.state.activeWave = {
         name: 'Wave 1',
         status: 'failed',
-        error: 'Previous attempt failed'
+        error: 'Previous attempt failed',
+        started: new Date().toISOString(),
+        items: 5,
+        progress: { completed: 2, total: 5 }
       };
       stateManager.saveState();
       
