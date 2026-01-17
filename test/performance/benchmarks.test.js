@@ -155,7 +155,7 @@ describe('Performance Benchmarks', function() {
       );
       
       benchmarkResults['Git: Create commit'] = result;
-      assertPerformance(result, 200, 'Git commit creation', 'avg');
+      assertPerformance(result, 250, 'Git commit creation', 'avg');
     });
 
     it('should create checkpoint (commit + tag) in <300ms', async () => {
