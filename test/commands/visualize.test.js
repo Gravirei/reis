@@ -1,11 +1,11 @@
 const assert = require('assert');
 const visualizeCommand = require('../../lib/commands/visualize.js');
 const StateManager = require('../../lib/utils/state-manager.js');
-const MetricsTracker = require('../../lib/utils/metrics-tracker.js');
+const { MetricsTracker } = require('../../lib/utils/metrics-tracker.js');
 
 describe('visualize command', () => {
   let originalLog, originalError, originalClear, originalExit;
-  let originalGetState, originalGetHistory;
+  let originalGetState, originalGetMetricsSummary;
   let consoleOutput, exitCode;
 
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('visualize command', () => {
     originalClear = console.clear;
     originalExit = process.exit;
     originalGetState = StateManager.prototype.getState;
-    originalGetHistory = MetricsTracker.prototype.getExecutionHistory;
+    originalGetMetricsSummary = MetricsTracker.prototype.getMetricsSummary;
     
     console.log = (...args) => consoleOutput.log.push(args.join(' '));
     console.error = (...args) => consoleOutput.error.push(args.join(' '));
@@ -30,7 +30,7 @@ describe('visualize command', () => {
     console.clear = originalClear;
     process.exit = originalExit;
     if (originalGetState) StateManager.prototype.getState = originalGetState;
-    if (originalGetHistory) MetricsTracker.prototype.getExecutionHistory = originalGetHistory;
+    if (originalGetMetricsSummary) MetricsTracker.prototype.getMetricsSummary = originalGetMetricsSummary;
   });
 
   describe('basic functionality', () => {
@@ -38,7 +38,7 @@ describe('visualize command', () => {
       StateManager.prototype.getState = async function() {
         return { currentPhase: 'Phase 1', currentWave: { id: 'wave-1', status: 'in_progress', completedTasks: 3, totalTasks: 5 } };
       };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand([]);
       const output = consoleOutput.log.join('\n');
       assert(output.includes('Project Progress'));
@@ -49,7 +49,7 @@ describe('visualize command', () => {
       StateManager.prototype.getState = async function() {
         return { waves: [{ id: 'wave-1', status: 'complete', totalTasks: 5, completedTasks: 5 }] };
       };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand(['--type', 'waves']);
       const output = consoleOutput.log.join('\n');
       assert(output.includes('Wave Overview'));
@@ -59,7 +59,7 @@ describe('visualize command', () => {
       StateManager.prototype.getState = async function() {
         return { phases: [{ number: 1, name: 'Foundation', totalWaves: 3, completedWaves: 3 }] };
       };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand(['--type', 'roadmap']);
       const output = consoleOutput.log.join('\n');
       assert(output.includes('Project Roadmap'));
@@ -67,8 +67,8 @@ describe('visualize command', () => {
 
     it('should display metrics with --type metrics', async () => {
       StateManager.prototype.getState = async function() { return {}; };
-      MetricsTracker.prototype.getExecutionHistory = async function() {
-        return [{ status: 'success', duration: 30000, tasksCompleted: 5, startTime: new Date().toISOString(), endTime: new Date().toISOString() }];
+      MetricsTracker.prototype.getMetricsSummary = function() {
+        return { totalWaves: 3, successfulWaves: 2, successRate: 0.67 };
       };
       await visualizeCommand(['--type', 'metrics']);
       const output = consoleOutput.log.join('\n');
@@ -79,7 +79,7 @@ describe('visualize command', () => {
   describe('options', () => {
     it('should support --compact flag', async () => {
       StateManager.prototype.getState = async function() { return { currentPhase: 'Phase 1' }; };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand(['--compact']);
       const output = consoleOutput.log.join('\n');
       assert(!output.includes('╔═══'));
@@ -98,7 +98,7 @@ describe('visualize command', () => {
       StateManager.prototype.getState = async function() {
         return { currentWave: { id: 'wave-1', completedTasks: 6, totalTasks: 10 } };
       };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand([]);
       const output = consoleOutput.log.join('\n');
       assert(output.includes('60%'));
@@ -108,7 +108,7 @@ describe('visualize command', () => {
       StateManager.prototype.getState = async function() {
         return { nextSteps: ['Task 1', 'Task 2'] };
       };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand([]);
       const output = consoleOutput.log.join('\n');
       assert(output.includes('Task 1'));
@@ -118,7 +118,7 @@ describe('visualize command', () => {
   describe('error handling', () => {
     it('should handle missing STATE.md', async () => {
       StateManager.prototype.getState = async function() { throw new Error('STATE.md not found'); };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand([]);
       const errorOutput = consoleOutput.error.join('\n');
       assert(errorOutput.includes('STATE.md not found'));
@@ -126,7 +126,7 @@ describe('visualize command', () => {
 
     it('should handle empty waves', async () => {
       StateManager.prototype.getState = async function() { return { waves: [] }; };
-      MetricsTracker.prototype.getExecutionHistory = async function() { return []; };
+      MetricsTracker.prototype.getMetricsSummary = function() { return {}; };
       await visualizeCommand(['--type', 'waves']);
       const output = consoleOutput.log.join('\n');
       assert(output.includes('No waves found'));
