@@ -66,6 +66,7 @@ const verifyCmd = require('../lib/commands/verify.js');
 const progressCmd = require('../lib/commands/progress.js');
 const pauseCmd = require('../lib/commands/pause.js');
 const resumeCmd = require('../lib/commands/resume.js');
+const checkpointCmd = require('../lib/commands/checkpoint.js');
 const addCmd = require('../lib/commands/add.js');
 const insertCmd = require('../lib/commands/insert.js');
 const removeCmd = require('../lib/commands/remove.js');
@@ -141,7 +142,17 @@ program
 program
   .command('execute-plan <path>')
   .description('Execute a specific plan file')
-  .action((path) => executePlanCmd({path}));
+  .option('--wave', 'Enable wave-based execution (v2.0 feature)')
+  .option('--dry-run', 'Show plan structure without executing')
+  .option('--interactive', 'Step-by-step execution with prompts between waves')
+  .action(async (path, options) => {
+    await executePlanCmd({
+      path,
+      wave: options.wave,
+      dryRun: options.dryRun,
+      interactive: options.interactive
+    });
+  });
 
 program
   .command('verify [phase]')
@@ -163,6 +174,17 @@ program
   .command('resume')
   .description('Resume paused work')
   .action(() => resumeCmd({}));
+
+// Checkpoint Management Commands
+program
+  .command('checkpoint [subcommand] [name]')
+  .description('Manage checkpoints (create, list, show, delete)')
+  .option('-c, --commit', 'Force git commit')
+  .option('--no-commit', 'Skip git commit')
+  .option('-m, --message <message>', 'Custom commit message')
+  .action((subcommand, name, options) => {
+    checkpointCmd({ subcommand, name, ...options });
+  });
 
 // Roadmap Management Commands
 program
