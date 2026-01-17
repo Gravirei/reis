@@ -287,11 +287,9 @@ program.action(async () => {
       }
       
       // Show completion message
-      console.log(chalk.bold.green('  Done! ') + chalk.white('Use ') + chalk.cyan('npx @gravirei/reis help') + chalk.white(' to get started.\n'));
-      
-      // Always show help after
-      const helpCmd = require('../lib/commands/help');
-      helpCmd();
+      console.log(chalk.bold.green('  🎉 Congratulations! ') + chalk.white('REIS is now in your system.'));
+      console.log(chalk.white('  Open Atlassian Rovo Dev and try: ') + chalk.cyan('use reis_planner') + chalk.white(' or ') + chalk.cyan('use reis_executor'));
+      console.log(chalk.white('\n  For help, run: ') + chalk.cyan('npx @gravirei/reis help\n'));
       
     } catch (err) {
       // If inquirer fails (non-interactive), just show help
