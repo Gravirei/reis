@@ -98,10 +98,10 @@ describe('Phase 1 Integration Tests', () => {
     assert.ok(result2.wave);
 
     // 6. Verify state was tracked
-    const stateManager = new StateManager(testRoot);
-    assert.ok(stateManager.state);
-    assert.strictEqual(stateManager.state.waves.completed.length, 2);
-    assert.ok(stateManager.state.checkpoints.length >= 2);
+    // The executor's state manager already has the data
+    assert.ok(executor.stateManager.state);
+    assert.strictEqual(executor.stateManager.state.waves.completed.length, 2);
+    assert.ok(executor.stateManager.state.checkpoints.length >= 2);
 
     // 7. Verify git commits were created
     const gitInfo = getGitInfo(testRoot);

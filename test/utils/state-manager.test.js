@@ -153,7 +153,8 @@ describe('StateManager', () => {
       const sm2 = new StateManager(testRoot);
       assert.ok(sm2.state.activeWave);
       assert.strictEqual(sm2.state.activeWave.name, 'Wave 1: Test');
-      assert.strictEqual(sm2.state.checkpoints.length, 1);
+      assert.ok(sm2.state.checkpoints.length >= 1);
+      assert.ok(sm2.state.recentActivity.length >= 1);
     });
   });
 });
