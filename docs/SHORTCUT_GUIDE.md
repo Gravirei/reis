@@ -13,7 +13,7 @@ Since Rovo Dev doesn't support `/reis:*` slash commands like Claude Code, you ca
 
 ### In Rovo Dev (any of these work):
 ```
-"gsd plan phase 1"
+"reis plan phase 1"
 "Plan phase 1"
 "reis:plan-phase 1"
 ```
@@ -28,57 +28,57 @@ Since Rovo Dev doesn't support `/reis:*` slash commands like Claude Code, you ca
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd help` | "Show REIS help" | Display all commands |
-| `gsd status` | "What's the project status?" | Show progress |
-| `gsd whats-new` | "What's new in REIS?" | Show changelog |
+| `reis help` | "Show REIS help" | Display all commands |
+| `reis status` | "What's the project status?" | Show progress |
+| `reis whats-new` | "What's new in REIS?" | Show changelog |
 
 ### 🚀 Project Setup
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd new [idea]` | "Initialize REIS project for [idea]" | Start new project |
-| `gsd map` | "Map this codebase" | Analyze existing code |
-| `gsd requirements` | "Define requirements" | Create REQUIREMENTS.md |
-| `gsd roadmap` | "Create roadmap" | Create ROADMAP.md |
+| `reis new [idea]` | "Initialize REIS project for [idea]" | Start new project |
+| `reis map` | "Map this codebase" | Analyze existing code |
+| `reis requirements` | "Define requirements" | Create REQUIREMENTS.md |
+| `reis roadmap` | "Create roadmap" | Create ROADMAP.md |
 
 ### 📋 Planning
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd plan N` | "Plan phase N" | Create phase plans |
-| `gsd discuss N` | "Discuss phase N" | Gather context first |
-| `gsd research N` | "Research phase N" | Research before planning |
-| `gsd assumptions N` | "List assumptions for phase N" | Show planning assumptions |
+| `reis plan N` | "Plan phase N" | Create phase plans |
+| `reis discuss N` | "Discuss phase N" | Gather context first |
+| `reis research N` | "Research phase N" | Research before planning |
+| `reis assumptions N` | "List assumptions for phase N" | Show planning assumptions |
 
 ### ⚙️ Execution
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd execute N` | "Execute phase N" | Run phase plans |
-| `gsd verify N` | "Verify phase N" | Test completed work |
+| `reis execute N` | "Execute phase N" | Run phase plans |
+| `reis verify N` | "Verify phase N" | Test completed work |
 
 ### 📊 Progress
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd progress` | "Show project progress" | Status + next actions |
-| `gsd pause` | "Pause work" | Create handoff |
-| `gsd resume` | "Resume work" | Continue from last session |
+| `reis progress` | "Show project progress" | Status + next actions |
+| `reis pause` | "Pause work" | Create handoff |
+| `reis resume` | "Resume work" | Continue from last session |
 
 ### 🔧 Phase Management
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd add [feature]` | "Add phase for [feature]" | Add phase to roadmap |
-| `gsd insert N [feature]` | "Insert phase N for [feature]" | Insert urgent phase |
-| `gsd remove N` | "Remove phase N" | Delete phase |
+| `reis add [feature]` | "Add phase for [feature]" | Add phase to roadmap |
+| `reis insert N [feature]` | "Insert phase N for [feature]" | Insert urgent phase |
+| `reis remove N` | "Remove phase N" | Delete phase |
 
 ### 🎯 Milestones
 
 | Shortcut | Natural Language | What It Does |
 |----------|------------------|--------------|
-| `gsd complete` | "Complete milestone" | Archive and prepare next |
-| `gsd milestone [name]` | "Create milestone [name]" | Start new milestone |
+| `reis complete` | "Complete milestone" | Archive and prepare next |
+| `reis milestone [name]` | "Create milestone [name]" | Start new milestone |
 
 ---
 
@@ -88,11 +88,11 @@ Since Rovo Dev doesn't support `/reis:*` slash commands like Claude Code, you ca
 
 **Short form:**
 ```
-gsd new recipe app
-gsd requirements
-gsd roadmap
-gsd plan 1
-gsd execute 1
+reis new recipe app
+reis requirements
+reis roadmap
+reis plan 1
+reis execute 1
 ```
 
 **Natural language:**
@@ -106,9 +106,9 @@ gsd execute 1
 
 **Mixed (both work!):**
 ```
-gsd new recipe app
+reis new recipe app
 "Define requirements and create roadmap"
-gsd plan 1
+reis plan 1
 "Execute phase 1"
 ```
 
@@ -118,8 +118,8 @@ gsd plan 1
 
 **Short form:**
 ```
-gsd status
-gsd progress
+reis status
+reis progress
 ```
 
 **Natural language:**
@@ -135,10 +135,10 @@ gsd progress
 
 **Short form:**
 ```
-gsd plan 1
-gsd execute 1
-gsd verify 1
-gsd plan 2
+reis plan 1
+reis execute 1
+reis verify 1
+reis plan 2
 ```
 
 **Natural language:**
@@ -155,10 +155,10 @@ gsd plan 2
 
 **Short form:**
 ```
-gsd research 2
-gsd discuss 2
-gsd assumptions 2
-gsd plan 2
+reis research 2
+reis discuss 2
+reis assumptions 2
+reis plan 2
 ```
 
 **Natural language:**
@@ -177,7 +177,7 @@ I'll recognize these patterns:
 
 ### Format 1: Shortcut Style (Claude Code-like)
 ```
-gsd [command] [args]
+reis [command] [args]
 reis:command [args]
 ```
 
@@ -188,7 +188,7 @@ reis:command [args]
 
 ### Format 3: Mixed
 ```
-"gsd plan phase 1 with focus on performance"
+"reis plan phase 1 with focus on performance"
 ```
 
 **All work the same!** Choose what's comfortable.
@@ -201,44 +201,44 @@ reis:command [args]
 
 ```bash
 # Help
-gsd help
-gsd whats-new
+reis help
+reis whats-new
 
 # Project Setup
-gsd new [idea]
-gsd map
-gsd requirements
-gsd roadmap
+reis new [idea]
+reis map
+reis requirements
+reis roadmap
 
 # Planning
-gsd plan [N]
-gsd discuss [N]
-gsd research [N]
-gsd assumptions [N]
+reis plan [N]
+reis discuss [N]
+reis research [N]
+reis assumptions [N]
 
 # Execution
-gsd execute [N]
-gsd verify [N]
+reis execute [N]
+reis verify [N]
 
 # Progress
-gsd status
-gsd progress
-gsd pause
-gsd resume
+reis status
+reis progress
+reis pause
+reis resume
 
 # Phase Management
-gsd add [feature]
-gsd insert [N] [feature]
-gsd remove [N]
+reis add [feature]
+reis insert [N] [feature]
+reis remove [N]
 
 # Milestones
-gsd complete
-gsd milestone [name]
+reis complete
+reis milestone [name]
 
 # Debug
-gsd debug [issue]
-gsd todos
-gsd todos [area]
+reis debug [issue]
+reis todos
+reis todos [area]
 ```
 
 ---
@@ -247,14 +247,14 @@ gsd todos [area]
 
 ```bash
 # These work too:
-help          → gsd help
-status        → gsd status
-map           → gsd map
-plan [N]      → gsd plan [N]
-execute [N]   → gsd execute [N]
-verify [N]    → gsd verify [N]
-pause         → gsd pause
-resume        → gsd resume
+help          → reis help
+status        → reis status
+map           → reis map
+plan [N]      → reis plan [N]
+execute [N]   → reis execute [N]
+verify [N]    → reis verify [N]
+pause         → reis pause
+resume        → reis resume
 ```
 
 ---
@@ -265,9 +265,9 @@ resume        → gsd resume
 
 **Use shortcuts for quick commands:**
 ```
-gsd plan 1
-gsd execute 1
-gsd status
+reis plan 1
+reis execute 1
+reis status
 ```
 
 **Use natural language for complex requests:**
@@ -278,30 +278,30 @@ gsd status
 
 **Mix and match:**
 ```
-gsd plan 1
+reis plan 1
 "Review the plans and make them more specific"
-gsd execute 1
+reis execute 1
 ```
 
 ### 💡 Pro Tips:
 
 **Chain commands:**
 ```
-"gsd plan 1 and execute it"
+"reis plan 1 and execute it"
 "Map codebase and create improvement roadmap"
 ```
 
 **Add context:**
 ```
-"gsd plan 2 with focus on performance optimization"
+"reis plan 2 with focus on performance optimization"
 "Execute phase 1 - we need this for tomorrow's demo"
 ```
 
 **Ask for help:**
 ```
-"gsd help"
+"reis help"
 "Show me all REIS commands"
-"How do I use gsd plan?"
+"How do I use reis plan?"
 ```
 
 ---
@@ -310,12 +310,12 @@ gsd execute 1
 
 | Claude Code | Rovo Dev Shortcut | Rovo Dev Natural |
 |-------------|-------------------|------------------|
-| `/reis:help` | `gsd help` | "Show REIS help" |
-| `/reis:plan-phase 1` | `gsd plan 1` | "Plan phase 1" |
-| `/reis:execute-phase 1` | `gsd execute 1` | "Execute phase 1" |
-| `/reis:progress` | `gsd status` | "What's the project status?" |
-| `/reis:pause-work` | `gsd pause` | "Pause work" |
-| `/reis:map-codebase` | `gsd map` | "Map this codebase" |
+| `/reis:help` | `reis help` | "Show REIS help" |
+| `/reis:plan-phase 1` | `reis plan 1` | "Plan phase 1" |
+| `/reis:execute-phase 1` | `reis execute 1` | "Execute phase 1" |
+| `/reis:progress` | `reis status` | "What's the project status?" |
+| `/reis:pause-work` | `reis pause` | "Pause work" |
+| `/reis:map-codebase` | `reis map` | "Map this codebase" |
 
 **Key Difference:** Rovo Dev is more flexible - you can use shortcuts OR natural language OR both!
 
@@ -326,9 +326,9 @@ gsd execute 1
 These shortcuts are **patterns I recognize** in your messages. You don't need to install anything - just use them naturally in our conversation!
 
 **Behind the scenes:**
-- When you say `gsd plan 1`, I recognize it as "Plan phase 1"
-- When you say `gsd execute 2`, I recognize it as "Execute phase 2"
-- When you say `gsd status`, I recognize it as "Show project progress"
+- When you say `reis plan 1`, I recognize it as "Plan phase 1"
+- When you say `reis execute 2`, I recognize it as "Execute phase 2"
+- When you say `reis status`, I recognize it as "Show project progress"
 
 ---
 
@@ -337,8 +337,8 @@ These shortcuts are **patterns I recognize** in your messages. You don't need to
 Try these now:
 
 ```
-gsd help
-gsd status
+reis help
+reis status
 ```
 
 I should respond with the appropriate information!
@@ -353,9 +353,9 @@ For a complete mapping of Claude Code commands to Rovo Dev equivalents, see:
 ---
 
 **Quick Reference:**
-- Use `gsd [command]` for Claude Code-style shortcuts
+- Use `reis [command]` for Claude Code-style shortcuts
 - Use natural language for complex requests
 - Mix and match as you prefer
 - All work the same way!
 
-Start with: `gsd help` 🚀
+Start with: `reis help` 🚀

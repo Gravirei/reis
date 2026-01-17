@@ -10,8 +10,8 @@ All 29 REIS commands from Claude Code mapped to Rovo Dev shortcuts.
 **Claude Code:** `/reis:add-phase`
 **Rovo Dev Shortcuts:**
 ```
-gsd add [feature]
-gsd add phase [feature]
+reis add [feature]
+reis add phase [feature]
 "Add phase for [feature]"
 ```
 **What it does:** Add phase to end of current milestone in roadmap
@@ -22,8 +22,8 @@ gsd add phase [feature]
 **Claude Code:** `/reis:add-todo [description]`
 **Rovo Dev Shortcuts:**
 ```
-gsd todo [description]
-gsd add-todo [description]
+reis todo [description]
+reis add-todo [description]
 "Add TODO: [description]"
 "Track this for later: [description]"
 ```
@@ -35,8 +35,8 @@ gsd add-todo [description]
 **Claude Code:** `/reis:audit-milestone`
 **Rovo Dev Shortcuts:**
 ```
-gsd audit
-gsd audit milestone
+reis audit
+reis audit milestone
 "Audit current milestone"
 "Review milestone completeness"
 ```
@@ -48,9 +48,9 @@ gsd audit milestone
 **Claude Code:** `/reis:check-todos [area]`
 **Rovo Dev Shortcuts:**
 ```
-gsd todos
-gsd check-todos
-gsd todos [area]
+reis todos
+reis check-todos
+reis todos [area]
 "Show TODOs"
 "List TODOs for [area]"
 ```
@@ -62,8 +62,8 @@ gsd todos [area]
 **Claude Code:** `/reis:complete-milestone`
 **Rovo Dev Shortcuts:**
 ```
-gsd complete
-gsd complete milestone
+reis complete
+reis complete milestone
 "Complete milestone"
 "Ship v1"
 "Archive this milestone"
@@ -76,8 +76,8 @@ gsd complete milestone
 **Claude Code:** `/reis:create-roadmap`
 **Rovo Dev Shortcuts:**
 ```
-gsd roadmap
-gsd create roadmap
+reis roadmap
+reis create roadmap
 "Create roadmap"
 "Generate project roadmap"
 ```
@@ -89,7 +89,7 @@ gsd create roadmap
 **Claude Code:** `/reis:debug [description]`
 **Rovo Dev Shortcuts:**
 ```
-gsd debug [issue]
+reis debug [issue]
 "Debug [description]"
 "Help me debug [issue]"
 "Systematic debugging for [issue]"
@@ -102,8 +102,8 @@ gsd debug [issue]
 **Claude Code:** `/reis:define-requirements`
 **Rovo Dev Shortcuts:**
 ```
-gsd requirements
-gsd define requirements
+reis requirements
+reis define requirements
 "Define requirements"
 "Create requirements document"
 ```
@@ -115,7 +115,7 @@ gsd define requirements
 **Claude Code:** `/reis:discuss-milestone`
 **Rovo Dev Shortcuts:**
 ```
-gsd discuss milestone
+reis discuss milestone
 "Discuss next milestone"
 "Plan next version"
 "What should be in v2?"
@@ -128,8 +128,8 @@ gsd discuss milestone
 **Claude Code:** `/reis:discuss-phase [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd discuss [N]
-gsd discuss phase [N]
+reis discuss [N]
+reis discuss phase [N]
 "Discuss phase [N]"
 "Gather context for phase [N]"
 ```
@@ -141,9 +141,9 @@ gsd discuss phase [N]
 **Claude Code:** `/reis:execute-phase [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd execute [N]
-gsd exec [N]
-gsd run [N]
+reis execute [N]
+reis exec [N]
+reis run [N]
 "Execute phase [N]"
 "Run phase [N]"
 ```
@@ -155,8 +155,8 @@ gsd run [N]
 **Claude Code:** `/reis:execute-plan [path]`
 **Rovo Dev Shortcuts:**
 ```
-gsd execute plan [path]
-gsd run plan [path]
+reis execute plan [path]
+reis run plan [path]
 "Execute plan [path]"
 "Run this plan"
 ```
@@ -168,7 +168,7 @@ gsd run plan [path]
 **Claude Code:** `/reis:help`
 **Rovo Dev Shortcuts:**
 ```
-gsd help
+reis help
 help
 "Show REIS help"
 "What REIS commands are available?"
@@ -181,8 +181,8 @@ help
 **Claude Code:** `/reis:insert-phase [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd insert [N] [feature]
-gsd insert phase [N]
+reis insert [N] [feature]
+reis insert phase [N]
 "Insert phase [N] for [feature]"
 "Add urgent phase before phase [N]"
 ```
@@ -194,8 +194,8 @@ gsd insert phase [N]
 **Claude Code:** `/reis:list-phase-assumptions [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd assumptions [N]
-gsd list assumptions [N]
+reis assumptions [N]
+reis list assumptions [N]
 "List assumptions for phase [N]"
 "What are your assumptions about phase [N]?"
 ```
@@ -207,8 +207,8 @@ gsd list assumptions [N]
 **Claude Code:** `/reis:map-codebase`
 **Rovo Dev Shortcuts:**
 ```
-gsd map
-gsd map codebase
+reis map
+reis map codebase
 "Map this codebase"
 "Map existing codebase"
 "Analyze existing project structure"
@@ -221,8 +221,8 @@ gsd map codebase
 **Claude Code:** `/reis:new-milestone [name]`
 **Rovo Dev Shortcuts:**
 ```
-gsd milestone [name]
-gsd new milestone [name]
+reis milestone [name]
+reis new milestone [name]
 "Create milestone [name]"
 "Start milestone v2.0"
 ```
@@ -234,8 +234,8 @@ gsd new milestone [name]
 **Claude Code:** `/reis:new-project`
 **Rovo Dev Shortcuts:**
 ```
-gsd new [idea]
-gsd new project [idea]
+reis new [idea]
+reis new project [idea]
 "Initialize REIS project for [idea]"
 "Start new REIS project"
 ```
@@ -247,7 +247,7 @@ gsd new project [idea]
 **Claude Code:** `/reis:pause-work`
 **Rovo Dev Shortcuts:**
 ```
-gsd pause
+reis pause
 pause
 "Pause work"
 "Create handoff"
@@ -261,8 +261,8 @@ pause
 **Claude Code:** `/reis:plan-milestone-gaps`
 **Rovo Dev Shortcuts:**
 ```
-gsd plan gaps
-gsd milestone gaps
+reis plan gaps
+reis milestone gaps
 "Plan milestone gaps"
 "Create plans for missing requirements"
 "What's missing from this milestone?"
@@ -275,8 +275,8 @@ gsd milestone gaps
 **Claude Code:** `/reis:plan-phase [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd plan [N]
-gsd plan phase [N]
+reis plan [N]
+reis plan phase [N]
 "Plan phase [N]"
 ```
 **What it does:** Decompose phase into 2-3 task plans with dependencies
@@ -287,8 +287,8 @@ gsd plan phase [N]
 **Claude Code:** `/reis:progress`
 **Rovo Dev Shortcuts:**
 ```
-gsd progress
-gsd status
+reis progress
+reis status
 status
 "Show project progress"
 "What's the project status?"
@@ -302,9 +302,9 @@ status
 **Claude Code:** `/reis:remove-phase [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd remove [N]
-gsd remove phase [N]
-gsd delete phase [N]
+reis remove [N]
+reis remove phase [N]
+reis delete phase [N]
 "Remove phase [N]"
 "Delete phase [N]"
 ```
@@ -316,8 +316,8 @@ gsd delete phase [N]
 **Claude Code:** `/reis:research-phase [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd research [N]
-gsd research phase [N]
+reis research [N]
+reis research phase [N]
 "Research phase [N]"
 "Research how to implement phase [N]"
 ```
@@ -329,8 +329,8 @@ gsd research phase [N]
 **Claude Code:** `/reis:research-project`
 **Rovo Dev Shortcuts:**
 ```
-gsd research
-gsd research project
+reis research
+reis research project
 "Research the project"
 "Research project domain"
 ```
@@ -342,7 +342,7 @@ gsd research project
 **Claude Code:** `/reis:resume-work`
 **Rovo Dev Shortcuts:**
 ```
-gsd resume
+reis resume
 resume
 "Resume work"
 "Continue from last session"
@@ -356,7 +356,7 @@ resume
 **Claude Code:** `/reis:update`
 **Rovo Dev Shortcuts:**
 ```
-gsd update
+reis update
 "Update REIS"
 "Check for REIS updates"
 ```
@@ -368,8 +368,8 @@ gsd update
 **Claude Code:** `/reis:verify-work [N]`
 **Rovo Dev Shortcuts:**
 ```
-gsd verify [N]
-gsd test [N]
+reis verify [N]
+reis test [N]
 "Verify phase [N]"
 "Test phase [N]"
 "Verify phase [N] work"
@@ -382,7 +382,7 @@ gsd test [N]
 **Claude Code:** `/reis:whats-new`
 **Rovo Dev Shortcuts:**
 ```
-gsd whats-new
+reis whats-new
 "What's new in REIS?"
 "Show REIS changelog"
 ```
@@ -442,35 +442,35 @@ gsd whats-new
 
 | Command | Shortcut | What It Does |
 |---------|----------|--------------|
-| new-project | `gsd new [idea]` | Start new project |
-| map-codebase | `gsd map` | Analyze existing code |
-| define-requirements | `gsd requirements` | Define requirements |
-| create-roadmap | `gsd roadmap` | Create roadmap |
-| research-project | `gsd research` | Research domain |
-| plan-phase | `gsd plan [N]` | Plan phase N |
-| discuss-phase | `gsd discuss [N]` | Discuss phase N |
-| research-phase | `gsd research [N]` | Research phase N |
-| list-phase-assumptions | `gsd assumptions [N]` | List assumptions |
-| execute-phase | `gsd execute [N]` | Execute phase N |
-| execute-plan | `gsd execute plan [path]` | Execute specific plan |
-| verify-work | `gsd verify [N]` | Verify phase N |
-| progress | `gsd status` | Show progress |
-| pause-work | `gsd pause` | Pause work |
-| resume-work | `gsd resume` | Resume work |
-| add-phase | `gsd add [feature]` | Add phase |
-| insert-phase | `gsd insert [N]` | Insert urgent phase |
-| remove-phase | `gsd remove [N]` | Remove phase |
-| complete-milestone | `gsd complete` | Complete milestone |
-| new-milestone | `gsd milestone [name]` | Create milestone |
-| discuss-milestone | `gsd discuss milestone` | Discuss next milestone |
-| audit-milestone | `gsd audit` | Audit milestone |
-| plan-milestone-gaps | `gsd plan gaps` | Plan missing requirements |
-| add-todo | `gsd todo [desc]` | Add TODO |
-| check-todos | `gsd todos` | Show TODOs |
-| debug | `gsd debug [issue]` | Debug issue |
-| help | `gsd help` | Show help |
-| whats-new | `gsd whats-new` | Show changelog |
-| update | `gsd update` | Update REIS (N/A) |
+| new-project | `reis new [idea]` | Start new project |
+| map-codebase | `reis map` | Analyze existing code |
+| define-requirements | `reis requirements` | Define requirements |
+| create-roadmap | `reis roadmap` | Create roadmap |
+| research-project | `reis research` | Research domain |
+| plan-phase | `reis plan [N]` | Plan phase N |
+| discuss-phase | `reis discuss [N]` | Discuss phase N |
+| research-phase | `reis research [N]` | Research phase N |
+| list-phase-assumptions | `reis assumptions [N]` | List assumptions |
+| execute-phase | `reis execute [N]` | Execute phase N |
+| execute-plan | `reis execute plan [path]` | Execute specific plan |
+| verify-work | `reis verify [N]` | Verify phase N |
+| progress | `reis status` | Show progress |
+| pause-work | `reis pause` | Pause work |
+| resume-work | `reis resume` | Resume work |
+| add-phase | `reis add [feature]` | Add phase |
+| insert-phase | `reis insert [N]` | Insert urgent phase |
+| remove-phase | `reis remove [N]` | Remove phase |
+| complete-milestone | `reis complete` | Complete milestone |
+| new-milestone | `reis milestone [name]` | Create milestone |
+| discuss-milestone | `reis discuss milestone` | Discuss next milestone |
+| audit-milestone | `reis audit` | Audit milestone |
+| plan-milestone-gaps | `reis plan gaps` | Plan missing requirements |
+| add-todo | `reis todo [desc]` | Add TODO |
+| check-todos | `reis todos` | Show TODOs |
+| debug | `reis debug [issue]` | Debug issue |
+| help | `reis help` | Show help |
+| whats-new | `reis whats-new` | Show changelog |
+| update | `reis update` | Update REIS (N/A) |
 
 ---
 
@@ -522,7 +522,7 @@ These are NEW commands specific to Rovo Dev:
 
 Try any command:
 ```
-gsd help
-gsd status
-gsd [command]
+reis help
+reis status
+reis [command]
 ```
