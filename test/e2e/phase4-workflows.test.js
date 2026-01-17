@@ -197,7 +197,7 @@ describe('Phase 4 E2E Workflow Tests', function() {
       fs.writeFileSync(path.join(testRoot, 'reis.config.js'), newConfig, 'utf8');
       
       const updatedConfig = loadConfig(testRoot);
-      assert.strictEqual(updatedConfig.autoCommit, false);
+      assert.strictEqual(updatedConfig.git.autoCommit, false);
     });
   });
 
