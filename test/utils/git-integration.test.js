@@ -48,8 +48,8 @@ describe('Git Integration', () => {
     });
 
     it('should return false for non-git directory', () => {
-      // Create a completely separate directory outside the git repo
-      const nonGitDir = path.join(__dirname, '../tmp_non_git');
+      // Create a completely separate directory in /tmp to avoid parent git repo
+      const nonGitDir = path.join('/tmp', 'reis_test_non_git_' + Date.now());
       if (!fs.existsSync(nonGitDir)) {
         fs.mkdirSync(nonGitDir, { recursive: true });
       }
