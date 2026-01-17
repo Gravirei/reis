@@ -28,6 +28,9 @@ const addCmd = require('../lib/commands/add.js');
 const insertCmd = require('../lib/commands/insert.js');
 const removeCmd = require('../lib/commands/remove.js');
 const milestoneCmd = require('../lib/commands/milestone.js');
+const todoCmd = require('../lib/commands/todo.js');
+const todosCmd = require('../lib/commands/todos.js');
+const debugCmd = require('../lib/commands/debug.js');
 
 // Set up commander
 program
@@ -147,23 +150,17 @@ program
 program
   .command('todo <description>')
   .description('Add a TODO item')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((description) => todoCmd({description}));
 
 program
   .command('todos [area]')
   .description('List TODO items')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((area) => todosCmd({area}));
 
 program
   .command('debug <issue>')
   .description('Debug a specific issue')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
-  });
+  .action((issue) => debugCmd({issue}));
 
 program
   .command('update')
