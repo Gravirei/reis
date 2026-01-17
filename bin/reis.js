@@ -294,8 +294,3 @@ program.action(async () => {
 
 // Parse command-line arguments
 program.parse(process.argv);
-
-// If no arguments provided, show default message
-if (!process.argv.slice(2).length) {
-  console.log('Run \'reis help\' for available commands');
-}
