@@ -7,7 +7,8 @@
     "reis": "bin/reis.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 0"
+    "test": "mocha test/**/*.test.js --timeout 5000",
+    "test:watch": "mocha test/**/*.test.js --watch"
   },
   "keywords": [
     "reis",
@@ -51,7 +52,10 @@
   ],
   "dependencies": {
     "chalk": "^4.1.2",
-    "inquirer": "^8.2.6",
-    "commander": "^11.1.0"
+    "commander": "^11.1.0",
+    "inquirer": "^8.2.6"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.5"
   }
 }
