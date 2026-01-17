@@ -74,6 +74,7 @@ const milestoneCmd = require('../lib/commands/milestone.js');
 const todoCmd = require('../lib/commands/todo.js');
 const todosCmd = require('../lib/commands/todos.js');
 const debugCmd = require('../lib/commands/debug.js');
+const configCmd = require('../lib/commands/config.js');
 
 // Set up commander
 program
@@ -225,6 +226,14 @@ program
   .command('debug <issue>')
   .description('Debug a specific issue')
   .action((issue) => debugCmd({issue}));
+
+program
+  .command('config [subcommand]')
+  .description('Manage REIS configuration (show, init, validate, docs)')
+  .option('--json', 'Output as JSON (for show)')
+  .option('-f, --force', 'Force overwrite (for init)')
+  .option('--path <path>', 'Custom config path')
+  .action((subcommand, options) => configCmd({ subcommand, ...options }));
 
 program
   .command('update')
