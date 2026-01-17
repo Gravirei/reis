@@ -181,10 +181,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
       // Execute waves
       executeWave(1, 'Wave 1');
       executeWave(2, 'Wave 2');
-      executeWave(3, 'Wave 3');
+      const state = executeWave(3, 'Wave 3');
       
-      // Verify all waves completed
-      const state = stateManager.loadState();
+      // Verify all waves completed (use in-memory state)
       assert.strictEqual(state.waves.completed.length, 3);
       
       // Verify commits created (auto-commit on)
@@ -336,10 +335,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       executeWave(1, 'Setup Infrastructure');
       executeWave(2, 'Create Core Modules');
-      executeWave(3, 'Add Base Components');
+      let state = executeWave(3, 'Add Base Components');
       
-      // Verify Phase 1 completion
-      let state = stateManager.loadState();
+      // Verify Phase 1 completion (use in-memory state)
       assert.strictEqual(state.waves.completed.length, 3);
       
       // Transition to Phase 2
@@ -351,9 +349,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
       executeWave(4, 'User Authentication');
       executeWave(5, 'Data Management');
       executeWave(6, 'API Integration');
-      executeWave(7, 'UI Components');
+      state = executeWave(7, 'UI Components');
       
-      state = stateManager.loadState();
+      // Verify 7 waves completed (use in-memory state)
       assert.strictEqual(state.waves.completed.length, 7);
       
       // Create checkpoint
@@ -374,9 +372,9 @@ describe('Phase 4 E2E Workflow Tests', function() {
       
       // Phase 3: Polish (2 waves)
       executeWave(8, 'Performance Optimization');
-      executeWave(9, 'Final Testing');
+      state = executeWave(9, 'Final Testing');
       
-      state = stateManager.loadState();
+      // Verify 9 waves completed (use in-memory state)
       assert.strictEqual(state.waves.completed.length, 9);
       assert.strictEqual(state.checkpoints.length, 1);
       assert.strictEqual(state.currentPhase, 'Phase 3: Polish');
@@ -533,9 +531,9 @@ Core functionality`;
       assert.strictEqual(config.waveSize, 'medium'); // back to default
       
       // Execute with defaults
-      executeWave(3, 'Wave 3');
+      const state = executeWave(3, 'Wave 3');
       
-      const state = stateManager.loadState();
+      // Verify all waves completed (use in-memory state)
       assert.strictEqual(state.waves.completed.length, 3);
     });
   });

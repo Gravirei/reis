@@ -109,12 +109,19 @@ describe('Error Recovery & Edge Cases', function() {
     it('should allow wave retry after failure', () => {
       const stateManager = new StateManager(testRoot);
       
+      // Initialize waves structure
+      stateManager.state.waves = {
+        current: null,
+        completed: [],
+        total: 1
+      };
+      
       // Simulate failed wave
       stateManager.state.activeWave = {
         name: 'Wave 1',
         status: 'failed',
         error: 'Previous attempt failed',
-        started: new Date().toISOString(),
+        started: new Date().toISOString().split('T')[0],
         items: 5,
         progress: { completed: 2, total: 5 }
       };
@@ -436,9 +443,13 @@ describe('Error Recovery & Edge Cases', function() {
       // Test that large writes are handled
       const stateManager = new StateManager(testRoot);
       
-      // Add large amount of data
+      // Add large amount of data to waves.completed
       for (let i = 0; i < 1000; i++) {
-        stateManager.state.completedWaves.push(`Wave ${i}`);
+        stateManager.state.waves.completed.push({
+          name: `Wave ${i}`,
+          completed: new Date().toISOString().split('T')[0],
+          commit: `commit-${i}`
+        });
       }
       
       // Should not throw (unless actually out of disk space)
@@ -447,7 +458,7 @@ describe('Error Recovery & Edge Cases', function() {
       // Verify it saved
       const newStateManager = new StateManager(testRoot);
       const state = newStateManager.loadState();
-      assert(state.completedWaves.length >= 1000);
+      assert(state.waves.completed.length >= 1000);
     });
 
     it('should handle missing .planning directory', () => {
