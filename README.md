@@ -1,73 +1,77 @@
-# REIS - Roadmap Execution & Implementation System
-
 <div align="center">
+
+# REIS
+
+**Roadmap Execution & Implementation System**
+
+Systematic development with parallel subagent execution for Atlassian Rovo Dev
 
 [![npm version](https://img.shields.io/npm/v/@gravirei/reis.svg)](https://www.npmjs.com/package/@gravirei/reis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-🚀 **Systematic development with parallel subagent execution for Atlassian Rovo Dev**
+[What is REIS?](#what-is-reis) •
+[Installation](#installation) •
+[Quick Start](#quick-start) •
+[Commands](#commands) •
+[Documentation](#documentation)
 
-[Installation](#installation) • [Quick Start](#quick-start) • [Features](#features) • [Documentation](#documentation)
+<img src=".github/assets/reis-demo.png" alt="REIS Demo" width="800">
 
 </div>
 
----
+## What is REIS?
 
-## ✨ What is REIS?
+**REIS (Roadmap Execution & Implementation System)** is a systematic development framework for building better software with AI. Designed for Atlassian Rovo Dev, REIS provides structured workflows, specialized subagents, and comprehensive documentation to take projects from idea to deployment.
 
-**REIS (Roadmap Execution & Implementation System)** is a systematic development framework designed specifically for Atlassian Rovo Dev. It provides a structured workflow with 29 commands, 3 specialized subagents, and comprehensive documentation to help you build better software faster.
-
-### Key Benefits
+### Why REIS?
 
 - 📋 **Structured Workflow** - Clear phases from requirements to deployment
-- 🤖 **3 Specialized Subagents** - Planner, Executor, and Project Mapper
+- 🤖 **3 Specialized Subagents** - Planner, Executor, and Project Mapper working in parallel
 - 🔄 **Parallel Execution** - Run up to 4 subagents simultaneously
 - 💾 **No Context Rot** - Fresh 200k context per task
 - ⚡ **Atomic Commits** - One commit per task with automatic tracking
 - 🛠️ **Auto-Fix** - Automatic bug detection and gap filling
 - 📚 **Always-Loaded Context** - Structured documentation in `~/.rovodev/`
 
----
+Inspired by [Get Shit Done](https://github.com/glittercowboy/get-shit-done) and enhanced for Rovo Dev.
 
-## 🚀 Installation
-
-Install REIS globally or run it directly with npx:
+## Installation
 
 ```bash
-# Run directly (recommended)
 npx @gravirei/reis
+```
 
-# Or install globally
+Or install globally:
+
+```bash
 npm install -g @gravirei/reis
 ```
 
-On first run, REIS will install to `~/.rovodev/reis/` and set up subagents for Rovo Dev.
+On first run, REIS installs to `~/.rovodev/reis/` and sets up subagents for Rovo Dev.
 
----
+## Quick Start
 
-## 🎯 Quick Start
-
-### Start a New Project
+### Initialize a new project
 
 ```bash
 reis new "build a todo app with React and Node.js"
 ```
 
-This will:
-1. Create `PROJECT.md` with your vision
-2. Generate `REQUIREMENTS.md`
-3. Build a phase-based `ROADMAP.md`
-4. Initialize `STATE.md` for tracking
+This creates:
+- `PROJECT.md` - Your project vision
+- `REQUIREMENTS.md` - Detailed requirements
+- `ROADMAP.md` - Phase-based roadmap
+- `STATE.md` - Progress tracking
 
-### Map an Existing Codebase
+### Map an existing codebase
 
 ```bash
 reis map
 ```
 
-Analyzes your existing project and generates REIS structure.
+Analyzes your project and generates REIS structure.
 
-### Execute Your Roadmap
+### Execute your roadmap
 
 ```bash
 reis plan          # Plan next phase
@@ -76,163 +80,143 @@ reis verify        # Verify completion
 reis progress      # Track progress
 ```
 
----
+## Commands
 
-## 🎨 Features
+REIS provides 29 commands organized into categories:
 
-### 29 Commands Organized by Category
-
-#### **Getting Started**
-- `reis new [idea]` - Initialize new REIS project
-- `reis map` - Analyze and map existing codebase
-- `reis help` - Show all commands
-- `reis version` - Show current version
-
-#### **Requirements & Planning**
-- `reis requirements` - Work on requirements document
-- `reis roadmap` - Work on project roadmap
-- `reis assumptions` - Document assumptions
-
-#### **Phase Execution**
-- `reis plan` - Create phase execution plan
-- `reis discuss` - Discuss phase approach
-- `reis research` - Research phase requirements
-- `reis execute` - Execute current phase
-- `reis execute-plan [file]` - Execute specific plan file
-- `reis verify` - Verify phase completion
-
-#### **Progress Management**
-- `reis progress` - Show current progress
-- `reis pause` - Pause current work
-- `reis resume` - Resume paused work
-- `reis todo` - Add a todo item
-- `reis todos` - Show all todos
-
-#### **Roadmap Management**
-- `reis add [phase]` - Add new phase to roadmap
-- `reis insert [phase] [after]` - Insert phase after another
-- `reis remove [phase]` - Remove phase from roadmap
-
-#### **Milestones**
-- `reis milestone complete [name]` - Mark milestone complete
-- `reis milestone discuss [name]` - Discuss milestone
-- `reis milestone new [name]` - Create new milestone
-
-#### **Utilities**
-- `reis debug` - Show debug information
-- `reis update` - Update REIS to latest version
-- `reis docs` - Open documentation
-- `reis whats-new` - Show what's new
-- `reis uninstall` - Uninstall REIS
-
-### 3 Specialized Subagents
-
-#### 🎯 **reis_planner**
-Creates executable phase plans with:
-- Task breakdown and dependency analysis
-- Resource requirements
-- Risk assessment
-- Success criteria
-
-#### ⚡ **reis_executor**
-Executes plans with:
-- Atomic commits per task
-- Deviation handling and checkpoints
-- State management
-- Auto-fix capabilities
-
-#### 🗺️ **reis_project_mapper**
-Maps codebases with:
-- Architecture analysis
-- Dependency mapping
-- Tech stack identification
-- REIS structure initialization
-
----
-
-## 📚 Documentation
-
-After installation, comprehensive documentation is available:
-
-- **Quick Reference**: `~/.rovodev/reis/QUICK_REFERENCE.md`
-- **Complete Commands**: `~/.rovodev/reis/COMPLETE_COMMANDS.md`
-- **Workflow Examples**: `~/.rovodev/reis/WORKFLOW_EXAMPLES.md`
-- **Integration Guide**: `~/.rovodev/reis/INTEGRATION_GUIDE.md`
-- **Full Guide**: `~/.rovodev/reis/README.md`
-
-Or access directly:
+### Getting Started
 ```bash
-reis docs    # Open documentation
+reis new [idea]         # Initialize new REIS project
+reis map                # Map existing codebase
+reis help               # Show all commands
+reis version            # Show current version
 ```
 
----
+### Requirements & Planning
+```bash
+reis requirements       # Work on requirements
+reis roadmap            # Work on roadmap
+reis assumptions        # Document assumptions
+```
 
-## 🎓 Example Workflow
+### Phase Execution
+```bash
+reis plan               # Create phase plan
+reis discuss            # Discuss phase approach
+reis research           # Research requirements
+reis execute            # Execute current phase
+reis execute-plan [f]   # Execute specific plan
+reis verify             # Verify completion
+```
+
+### Progress Management
+```bash
+reis progress           # Show progress
+reis pause              # Pause work
+reis resume             # Resume work
+reis todo               # Add todo
+reis todos              # Show todos
+```
+
+### Roadmap Management
+```bash
+reis add [phase]        # Add phase
+reis insert [p] [after] # Insert phase
+reis remove [phase]     # Remove phase
+```
+
+### Milestones
+```bash
+reis milestone complete [name]  # Complete milestone
+reis milestone discuss [name]   # Discuss milestone
+reis milestone new [name]       # Create milestone
+```
+
+### Utilities
+```bash
+reis debug              # Debug info
+reis update             # Update REIS
+reis docs               # Open docs
+reis whats-new          # What's new
+reis uninstall          # Uninstall
+```
+
+## Subagents
+
+REIS includes 3 specialized subagents for Rovo Dev:
+
+### 🎯 reis_planner
+Creates executable phase plans with task breakdown, dependency analysis, resource requirements, and success criteria.
+
+### ⚡ reis_executor
+Executes plans with atomic commits, deviation handling, checkpoints, state management, and auto-fix capabilities.
+
+### 🗺️ reis_project_mapper
+Maps codebases with architecture analysis, dependency mapping, tech stack identification, and REIS structure initialization.
+
+## Documentation
+
+After installation, full documentation is available at:
+
+- `~/.rovodev/reis/README.md` - Full guide
+- `~/.rovodev/reis/QUICK_REFERENCE.md` - Quick reference
+- `~/.rovodev/reis/COMPLETE_COMMANDS.md` - All commands
+- `~/.rovodev/reis/WORKFLOW_EXAMPLES.md` - Real examples
+- `~/.rovodev/reis/INTEGRATION_GUIDE.md` - Rovo Dev integration
+
+Access from CLI:
+```bash
+reis docs
+```
+
+## Example Workflow
 
 ```bash
-# 1. Start a new project
+# Start a new project
 reis new "build an AI chatbot"
 
-# 2. Review and refine requirements
+# Refine requirements
 reis requirements
 
-# 3. Create roadmap
+# Create roadmap
 reis roadmap
 
-# 4. Execute first phase
-reis plan           # Plan Phase 1
-reis execute        # Execute Phase 1
-reis verify         # Verify completion
+# Execute phases
+reis plan && reis execute && reis verify
 
-# 5. Track progress
-reis progress       # See what's done
+# Track progress
+reis progress
 
-# 6. Continue to next phase
-reis plan           # Plan Phase 2
-reis execute        # Execute Phase 2
+# Continue to next phase
+reis plan && reis execute
 ```
 
----
+## Tech Stack
 
-## 🛠️ Tech Stack
+- Node.js
+- Chalk (terminal styling)
+- Inquirer (interactive prompts)
+- Rovo Dev (AI development)
 
-- **Node.js** - Runtime environment
-- **Chalk** - Terminal styling
-- **Inquirer** - Interactive prompts
-- **Rovo Dev** - AI-powered development platform
+## Credits
 
----
+Inspired by [Get Shit Done](https://github.com/glittercowboy/get-shit-done) by TÂCHES.
 
-## 🤝 Contributing
+Adapted and enhanced for Atlassian Rovo Dev with parallel subagent execution.
 
-Contributions are welcome! This project is in active development.
+## License
 
----
+MIT - see [LICENSE](LICENSE) file.
 
-## 📝 Credits
+## Links
 
-Inspired by [Get Shit Done](https://github.com/glittercowboy/get-shit-done) by TÂCHES, adapted and enhanced for Atlassian Rovo Dev with parallel subagent execution capabilities.
-
----
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 🔗 Links
-
-- **npm Package**: [@gravirei/reis](https://www.npmjs.com/package/@gravirei/reis)
-- **GitHub**: [Gravirei/reis](https://github.com/Gravirei/reis)
-- **Issues**: [Report a bug](https://github.com/Gravirei/reis/issues)
+- [npm package](https://www.npmjs.com/package/@gravirei/reis)
+- [Report issues](https://github.com/Gravirei/reis/issues)
 
 ---
 
 <div align="center">
 
-**Made with ❤️ for systematic development**
-
-[⬆ back to top](#reis---roadmap-execution--implementation-system)
+Made with ❤️ for systematic development
 
 </div>
