@@ -1,6 +1,6 @@
 {
   "name": "@gravirei/reis",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Roadmap Execution & Implementation System v2.0 - Wave-based execution with checkpoints, metrics, and visualization for Atlassian Rovo Dev",
   "main": "lib/index.js",
   "bin": {
