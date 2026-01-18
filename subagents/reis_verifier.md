@@ -265,34 +265,139 @@ ${failures.map(f => `
 
 ### Step 3: Validate Code Quality
 
-**Purpose:** Check for syntax errors and quality issues.
+**Objective:** Check for syntax errors, linting issues, and common code problems.
 
-**Actions:**
+**Important:** Quality checks don't replace FR4.1. Code can be high quality but incomplete.
+
+**Process:**
+
+**1. Syntax Validation**
+
 ```bash
-# Check for syntax errors in modified files
-node --check file1.js file2.js 2>&1
-
-# Run linter if available
-npm run lint 2>&1 || npx eslint . 2>&1
-
-# Check for common issues
-grep -r "console.log" src/ --include="*.js" | wc -l
-grep -r "debugger" src/ --include="*.js"
+# Check all JS/TS files for syntax errors
+find src lib -name "*.js" -o -name "*.ts" 2>/dev/null | while read file; do
+  node --check "$file" 2>&1
+done
 ```
 
-**Check for:**
-- Syntax errors (fail verification)
-- Linting errors (report but don't fail)
-- Debug statements left in code (warn)
-- Unused imports (warn)
+**2. Detect Linter Configuration**
 
-**Result determination:**
+```bash
+# Check for ESLint config
+if [ -f .eslintrc.js ] || [ -f .eslintrc.json ] || grep -q "eslintConfig" package.json; then
+  LINTER="eslint"
+elif [ -f .eslintrc ]; then
+  LINTER="eslint"
+else
+  LINTER="none"
+fi
+```
+
+**3. Run Linter (if available)**
+
+```bash
+# Run ESLint if configured
+if [ "$LINTER" = "eslint" ]; then
+  npx eslint src/ lib/ --format json > lint-results.json 2>&1 || true
+fi
+```
+
+**4. Parse Linter Output**
+
 ```javascript
-const qualityStatus = 
-  hasSyntaxErrors ? 'FAIL' :
-  hasLintErrors ? 'WARNING' :
-  'PASS';
+function parseLintResults(output) {
+  try {
+    const results = JSON.parse(output);
+    const errors = [];
+    const warnings = [];
+    
+    for (const file of results) {
+      for (const message of file.messages) {
+        const issue = {
+          file: file.filePath,
+          line: message.line,
+          column: message.column,
+          rule: message.ruleId,
+          message: message.message,
+          severity: message.severity // 1=warning, 2=error
+        };
+        
+        if (message.severity === 2) {
+          errors.push(issue);
+        } else {
+          warnings.push(issue);
+        }
+      }
+    }
+    
+    return { errors, warnings };
+  } catch (e) {
+    return { errors: [], warnings: [], parseError: true };
+  }
+}
 ```
+
+**5. Quality Scoring**
+
+```javascript
+function calculateQualityScore(syntaxErrors, lintErrors, lintWarnings) {
+  // Syntax errors = critical
+  if (syntaxErrors > 0) {
+    return { status: 'FAIL', score: 0, reason: 'Syntax errors present' };
+  }
+  
+  // Lint errors = fail
+  if (lintErrors > 0) {
+    return { status: 'FAIL', score: 30, reason: `${lintErrors} linting errors` };
+  }
+  
+  // Warnings = pass with warnings
+  if (lintWarnings > 0) {
+    return { status: 'WARNINGS', score: 70, reason: `${lintWarnings} warnings` };
+  }
+  
+  // All clean
+  return { status: 'PASS', score: 100, reason: 'No quality issues detected' };
+}
+```
+
+**6. Report Section**
+
+```markdown
+## Code Quality
+
+**Status:** ${status}
+**Score:** ${score}/100
+
+### Syntax Validation
+${syntaxErrors === 0 ? '✅' : '❌'} No syntax errors (${syntaxErrors} found)
+
+### Linting ${linter ? `(${linter})` : '(not configured)'}
+${lintErrors === 0 ? '✅' : '❌'} Lint checks passed
+- Errors: ${lintErrors}
+- Warnings: ${lintWarnings}
+
+${errors.length > 0 ? `
+### Linting Errors
+${errors.slice(0, 10).map(e => `
+**File:** ${e.file}:${e.line}:${e.column}  
+**Rule:** ${e.rule}  
+**Message:** ${e.message}
+`).join('\n')}
+${errors.length > 10 ? `\n... and ${errors.length - 10} more` : ''}
+` : ''}
+```
+
+**Integration with Overall Verification:**
+- Syntax errors → FAIL verification
+- Lint errors → FAIL verification (configurable with --lenient flag)
+- Lint warnings → PASS with warnings (don't block)
+- No linter configured → PASS (report as info)
+
+**Quality vs Completeness:**
+- Perfect quality + missing features (FR4.1) = FAIL
+- Some warnings + all features complete = PASS (with warnings)
+- Syntax errors always fail regardless of FR4.1
 
 ### Step 4: Validate Success Criteria & Feature Completeness (FR4.1)
 
@@ -656,32 +761,147 @@ ${task.missing.map(m => `- ${m.deliverable.type}: \`${m.deliverable.name || m.de
 
 ### Step 5: Verify Documentation
 
-**Purpose:** Ensure required documentation exists and is consistent.
+**Objective:** Check that required documentation exists and is reasonably complete.
 
-**Actions:**
+**Important:** Missing docs = WARNING, not failure. FR4.1 completeness takes priority.
+
+**Process:**
+
+**1. Check Required Files**
+
 ```bash
-# Check for README updates
-git diff HEAD~5..HEAD -- README.md | head -50
+# Core documentation files
+REQUIRED_DOCS=(
+  "README.md"
+  "CHANGELOG.md"
+)
 
-# Check for inline documentation
-grep -r "//\|/\*\*" src/ --include="*.js" | wc -l
-
-# Verify SUMMARY.md was created
-test -f .planning/{phase}/SUMMARY.md && echo "✅ SUMMARY exists"
+for doc in "${REQUIRED_DOCS[@]}"; do
+  if [ -f "$doc" ]; then
+    echo "✅ $doc exists"
+  else
+    echo "⚠️  $doc missing"
+  fi
+done
 ```
 
-**Check for:**
-- README.md updated with new features (if plan specified)
-- SUMMARY.md created by executor
-- Inline code comments for complex logic
-- API documentation (if endpoints were added)
+**2. Validate README.md**
 
-**Result determination:**
 ```javascript
-const docsStatus = 
-  requiredDocsExist ? 'PASS' : 
-  'WARNING'; // Don't fail on missing docs unless critical
+function validateReadme(content) {
+  const checks = {
+    exists: content.length > 0,
+    hasTitle: /^#\s+.+/m.test(content),
+    hasDescription: content.length > 100,
+    hasInstallation: /install|setup|getting started/i.test(content),
+    hasUsage: /usage|example|how to/i.test(content)
+  };
+  
+  const score = Object.values(checks).filter(Boolean).length;
+  const total = Object.keys(checks).length;
+  
+  return {
+    score: `${score}/${total}`,
+    percentage: Math.round((score / total) * 100),
+    checks
+  };
+}
 ```
+
+**3. Check CHANGELOG.md**
+
+```javascript
+function validateChangelog(content) {
+  if (!content) {
+    return { status: 'MISSING', entries: 0 };
+  }
+  
+  // Count version entries
+  const entries = (content.match(/^##\s+\[?\d+\.\d+\.\d+/gm) || []).length;
+  
+  return {
+    status: entries > 0 ? 'PRESENT' : 'EMPTY',
+    entries
+  };
+}
+```
+
+**4. Scan for TODO/FIXME**
+
+```bash
+# Find TODO/FIXME comments (informational)
+grep -r "TODO\|FIXME" src/ lib/ 2>/dev/null | wc -l
+```
+
+**5. Documentation Status**
+
+```javascript
+function calculateDocStatus(readme, changelog, todos) {
+  if (!readme.checks.exists) {
+    return {
+      status: 'INCOMPLETE',
+      message: 'README.md missing'
+    };
+  }
+  
+  if (readme.percentage < 60) {
+    return {
+      status: 'INCOMPLETE',
+      message: 'README.md lacks key sections'
+    };
+  }
+  
+  if (!changelog || changelog.status === 'MISSING') {
+    return {
+      status: 'INCOMPLETE',
+      message: 'CHANGELOG.md missing'
+    };
+  }
+  
+  if (todos > 20) {
+    return {
+      status: 'WARNINGS',
+      message: `${todos} TODO/FIXME comments (consider addressing)`
+    };
+  }
+  
+  return {
+    status: 'COMPLETE',
+    message: 'Documentation is adequate'
+  };
+}
+```
+
+**6. Report Section**
+
+```markdown
+## Documentation
+
+**Status:** ${status}
+
+### Required Documentation
+- ${readme.checks.exists ? '✅' : '❌'} README.md ${readme.checks.exists ? `(${readme.percentage}% complete)` : 'missing'}
+- ${changelog.status !== 'MISSING' ? '✅' : '⚠️'} CHANGELOG.md ${changelog.status !== 'MISSING' ? `(${changelog.entries} entries)` : 'missing'}
+
+### README.md Checklist
+- ${readme.checks.hasTitle ? '✅' : '⚠️'} Has title
+- ${readme.checks.hasDescription ? '✅' : '⚠️'} Has description
+- ${readme.checks.hasInstallation ? '✅' : '⚠️'} Has installation instructions
+- ${readme.checks.hasUsage ? '✅' : '⚠️'} Has usage examples
+
+### Code Comments
+${todos > 0 ? `⚠️  ${todos} TODO/FIXME comments found (consider addressing)` : '✅ No TODO/FIXME comments'}
+
+${status === 'INCOMPLETE' ? `
+**Recommendation:** Update documentation to reflect current implementation.
+` : ''}
+```
+
+**Integration:**
+- Missing/incomplete docs = WARNING (don't fail verification)
+- Report status but don't block on docs alone
+- FR4.1 feature completeness takes priority
+- If FR4.1 passes but docs incomplete = PASS with warnings
 
 ### Step 6: Generate Verification Report
 
