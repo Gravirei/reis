@@ -156,9 +156,13 @@ program
   });
 
 program
-  .command('verify [phase]')
-  .description('Verify phase completion')
-  .action((phase) => verifyCmd({phase}));
+  .command('verify <target>')
+  .description('Verify execution results against success criteria (uses reis_verifier subagent)')
+  .option('-v, --verbose', 'Show detailed verification output')
+  .option('-s, --strict', 'Fail on warnings')
+  .action(async (target, options) => {
+    await verifyCmd(target, options);
+  });
 
 // Progress Commands
 program
