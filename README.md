@@ -144,6 +144,114 @@ reis execute-plan [f]   # Execute with wave-based flow (v2.0)
 reis verify             # Verify completion
 ```
 
+### Verification
+
+Verify that executed plans meet all success criteria and feature completeness requirements.
+
+```bash
+# Verify a phase
+reis verify 2
+reis verify phase-2
+reis verify core-implementation
+
+# Verify specific plan
+reis verify path/to/plan.PLAN.md
+
+# Options
+reis verify 2 --verbose      # Detailed output
+reis verify 2 --strict       # Fail on warnings
+```
+
+**What Gets Verified:**
+
+1. **Feature Completeness (FR4.1)** - Critical
+   - Verifies ALL planned tasks are implemented
+   - Checks files, functions, classes, endpoints exist
+   - Reports missing deliverables with evidence
+   - **Requires 100% task completion to pass**
+
+2. **Test Results**
+   - Runs `npm test`
+   - Reports pass/fail counts
+   - Shows failing test details
+
+3. **Success Criteria**
+   - Validates each criterion from PLAN.md
+   - Documents evidence
+   - Reports unmet criteria
+
+4. **Code Quality**
+   - Syntax validation
+   - Linting (if configured)
+   - Quality scoring
+
+5. **Documentation**
+   - Checks README.md, CHANGELOG.md
+   - Reports completeness
+
+**Verification Report:**
+
+Generated at `.planning/verification/{phase}/VERIFICATION_REPORT.md` with:
+- Executive summary with overall status
+- **Feature Completeness breakdown** (task-by-task)
+- Test results and failures
+- Success criteria validation
+- Code quality metrics
+- Actionable recommendations
+
+**FR4.1: Why Feature Completeness Matters:**
+
+Tests passing ≠ features complete. Executors may skip tasks without errors.
+
+FR4.1 catches this by:
+- Parsing all tasks from PLAN.md
+- Verifying each deliverable exists (files, functions, tests)
+- Calculating completion: 100% = PASS, <100% = FAIL
+
+**Example:**
+
+```bash
+$ reis verify phase-2
+
+🔍 REIS Verifier
+📄 Plan: .planning/phase-2/plan.PLAN.md
+
+Verification Scope:
+  Tasks: 3
+  Success Criteria: 6
+
+🔄 Running verification...
+
+❌ VERIFICATION FAILED
+
+Issues found:
+  - Feature Completeness: 66% (1 task incomplete)
+  - Task 2: Build Password Reset - INCOMPLETE
+    Missing: src/auth/password-reset.js, sendResetEmail()
+  - 1 test failing (related to incomplete task)
+
+Report: .planning/verification/phase-2/VERIFICATION_REPORT.md
+
+Action Required: Complete all tasks before proceeding
+```
+
+After fixing:
+```bash
+$ reis verify phase-2
+
+✅ VERIFICATION PASSED
+
+All checks passed:
+  ✅ Feature Completeness: 100% (3/3 tasks)
+  ✅ Tests: 18/18 passing
+  ✅ Success Criteria: 6/6 met
+  ✅ Code Quality: PASS
+
+Ready to proceed to Phase 3
+```
+
+**See also:** `docs/VERIFICATION.md` for detailed verification guide.
+
 ### Checkpoints & Resume (v2.0)
 ```bash
 reis checkpoint [msg]   # Create checkpoint
