@@ -110,7 +110,7 @@ reis visualize --type progress      # Visualize progress
 
 ## Commands
 
-REIS provides comprehensive commands organized into categories. See [COMPLETE_COMMANDS.md](package/docs/COMPLETE_COMMANDS.md) for full details.
+REIS provides comprehensive commands organized into categories. See [COMPLETE_COMMANDS.md](docs/COMPLETE_COMMANDS.md) for full details.
 
 ### Getting Started
 ```bash
@@ -208,18 +208,18 @@ Maps codebases with architecture analysis, dependency mapping, tech stack identi
 
 ### Core Documentation
 
-- [COMPLETE_COMMANDS.md](package/docs/COMPLETE_COMMANDS.md) - All commands with examples
-- [QUICK_REFERENCE.md](package/docs/QUICK_REFERENCE.md) - Quick reference for daily use
-- [WORKFLOW_EXAMPLES.md](package/docs/WORKFLOW_EXAMPLES.md) - Real-world workflows
-- [INTEGRATION_GUIDE.md](package/docs/INTEGRATION_GUIDE.md) - Rovo Dev integration
+- [COMPLETE_COMMANDS.md](docs/COMPLETE_COMMANDS.md) - All commands with examples
+- [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) - Quick reference for daily use
+- [WORKFLOW_EXAMPLES.md](docs/WORKFLOW_EXAMPLES.md) - Real-world workflows
+- [INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md) - Rovo Dev integration
 
 ### v2.0 Documentation
 
-- [V2_FEATURES.md](package/docs/V2_FEATURES.md) - Complete v2.0 features overview
-- [MIGRATION_GUIDE.md](package/docs/MIGRATION_GUIDE.md) - Migrating from v1.x to v2.0
-- [WAVE_EXECUTION.md](package/docs/WAVE_EXECUTION.md) - Wave-based execution guide
-- [CHECKPOINTS.md](package/docs/CHECKPOINTS.md) - Checkpoint system documentation
-- [CONFIG_GUIDE.md](package/docs/CONFIG_GUIDE.md) - Configuration reference
+- [V2_FEATURES.md](docs/V2_FEATURES.md) - Complete v2.0 features overview
+- [MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE.md) - Migrating from v1.x to v2.0
+- [WAVE_EXECUTION.md](docs/WAVE_EXECUTION.md) - Wave-based execution guide
+- [CHECKPOINTS.md](docs/CHECKPOINTS.md) - Checkpoint system documentation
+- [CONFIG_GUIDE.md](docs/CONFIG_GUIDE.md) - Configuration reference
 
 ### After Installation
 
