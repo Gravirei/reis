@@ -5,6 +5,121 @@ All notable changes to REIS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-beta.1] - 2024-01-XX
+
+### Added - REIS Verifier 🔍
+
+**Major Feature: Automated Verification with FR4.1 Feature Completeness Validation**
+
+- **`reis verify` command** - Automated verification of execution results
+  - Verify phases: `reis verify 2` or `reis verify phase-2`
+  - Verify plans: `reis verify path/to/plan.PLAN.md`
+  - Options: `--verbose` for detailed output, `--strict` for strict mode
+
+- **reis_verifier subagent** - Comprehensive verification agent
+  - 7-step verification protocol
+  - Automated test execution and parsing
+  - Code quality checks (syntax, linting)
+  - Success criteria validation
+  - Documentation verification
+  - Detailed report generation
+  - STATE.md integration
+
+- **FR4.1: Feature Completeness Validation** - CRITICAL NEW CAPABILITY
+  - Detects when executor skips tasks or leaves features incomplete
+  - Parses all tasks from PLAN.md
+  - Extracts expected deliverables (files, functions, classes, endpoints)
+  - Verifies each deliverable exists in codebase using multiple methods:
+    * File existence checks (fs, git ls-files)
+    * Code pattern matching (grep for functions/classes)
+    * Git diff analysis
+    * Test presence verification
+  - Calculates task completion percentage (Tasks complete / Total tasks)
+  - **Requires 100% task completion to pass verification**
+  - Reports missing deliverables with search evidence
+  - Impact assessment (HIGH/MEDIUM/LOW) for incomplete tasks
+  - Specific recommendations for fixing incomplete features
+
+- **Verification Reports** - Comprehensive markdown reports
+  - Executive summary with key metrics
+  - Feature Completeness section (task-by-task breakdown)
+  - Test results with failure details
+  - Success criteria validation
+  - Code quality metrics
+  - Documentation status
+  - Issues summary (critical/major/minor)
+  - Actionable recommendations
+  - Saved to `.planning/verification/{phase}/VERIFICATION_REPORT.md`
+
+- **Templates**
+  - `templates/VERIFICATION_REPORT.md` - Report template with FR4.1 section
+  - `templates/STATE_VERIFICATION_ENTRY.md` - STATE.md entry template
+
+- **Documentation**
+  - `docs/VERIFICATION.md` - Comprehensive verification guide
+  - README.md updated with verification section
+  - FR4.1 Feature Completeness extensively documented
+  - Examples and best practices
+
+- **Test Suite**
+  - Comprehensive tests for verify command
+  - FR4.1 feature completeness validation tests
+  - Scenario tests (complete/incomplete tasks, tests pass/fail)
+  - Test coverage for all verification components
+
+### Why FR4.1 Matters
+
+Previous verification approaches only checked if tests passed. This meant:
+- ❌ Executor could skip tasks without detection
+- ❌ Tests might pass but features were missing
+- ❌ Incomplete implementations went unnoticed
+
+FR4.1 solves this by:
+- ✅ Verifying ALL planned tasks are implemented
+- ✅ Checking that deliverables actually exist
+- ✅ Providing evidence for completeness
+- ✅ Requiring 100% task completion before proceeding
+
+### Example
+
+```bash
+$ reis verify phase-2
+
+❌ VERIFICATION FAILED
+- Feature Completeness: 66% (1 task incomplete)
+- Task 2: Build Password Reset - INCOMPLETE
+  Missing: src/auth/password-reset.js, sendResetEmail()
+
+# After fixing
+$ reis verify phase-2
+
+✅ VERIFICATION PASSED
+- Feature Completeness: 100% (3/3 tasks)
+- All checks passed
+```
+
+### Technical Details
+
+- Verification protocol: 7 steps (load → test → quality → FR4.1 → docs → report → state)
+- FR4.1 uses file existence, grep patterns, git diff for verification
+- Confidence scoring (0.7-1.0) prevents false positives
+- Handles refactoring and file renames gracefully
+- Integration with STATE.md for verification history
+
+### Breaking Changes
+
+None - This is a new feature addition.
+
+### Migration
+
+No migration needed. Existing projects can immediately use `reis verify`.
+
+### Credits
+
+FR4.1 Feature Completeness Validation was designed to solve the critical gap of detecting incomplete implementations that tests alone cannot catch.
+
+---
+
 ## [2.0.0-beta.1] - 2026-01-18 (Phase 4 Wave 1-2 Complete)
 
 ### Added - Phase 4 Wave 1-2: Visualization & Performance
