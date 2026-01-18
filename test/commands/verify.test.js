@@ -23,13 +23,13 @@ describe('verify command', function() {
     process.chdir(testDir);
     
     fixtureDir = path.join(testDir, 'fixtures');
-    setupTestFixtures();
+    setupTestFixtures(testDir);
   });
 
   after(function() {
     // Clean up test fixtures
     process.chdir(originalCwd);
-    cleanupTestFixtures();
+    cleanupTestFixtures(testDir);
   });
 
   describe('plan resolution', function() {
@@ -412,7 +412,7 @@ describe('verify command', function() {
 
 // Helper functions
 
-function setupTestFixtures() {
+function setupTestFixtures(testDir) {
   // Create basic fixture structure
   const fixtureDir = path.join(testDir, 'fixtures');
   fs.mkdirSync(fixtureDir, { recursive: true });
@@ -446,7 +446,7 @@ npm test
   fs.writeFileSync(path.join(fixtureDir, 'sample.PLAN.md'), samplePlan);
 }
 
-function cleanupTestFixtures() {
+function cleanupTestFixtures(testDir) {
   // Remove test directory
   if (fs.existsSync(testDir)) {
     fs.rmSync(testDir, { recursive: true, force: true });
