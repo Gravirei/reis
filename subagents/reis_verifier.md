@@ -102,39 +102,165 @@ cat package.json | grep -A5 '"scripts"'
 
 ### Step 2: Run Test Suite
 
-**Purpose:** Execute automated tests and capture results.
+**Objective:** Execute all project tests and collect results.
 
-**Actions:**
-```bash
-# Try to run tests (try multiple frameworks)
-npm test 2>&1 || \
-npm run test 2>&1 || \
-npx jest 2>&1 || \
-npx vitest run 2>&1 || \
-node --test 2>&1
+**Process:**
 
-# Capture full output for parsing
-```
+1. **Detect Test Framework**
+   ```bash
+   # Check package.json for test script
+   cat package.json | grep "\"test\":"
+   
+   # Common frameworks:
+   # - Jest: "jest" in test script or dependencies
+   # - Vitest: "vitest" in test script or dependencies
+   # - Node Test: "node --test" or "node:test"
+   # - Generic: "npm test"
+   ```
 
-**Parse test output for:**
-- Total tests run
-- Passed count
-- Failed count (with failure messages)
-- Pending/skipped count
-- Test execution time
-- Coverage percentage (if available)
+2. **Run Tests**
+   ```bash
+   # Always use npm test (respects package.json config)
+   npm test 2>&1 | tee test-output.txt
+   ```
 
-**Handle gracefully:**
-- Projects without tests → Report as ⚠️ WARNING, not failure
-- Test framework not found → Check for manual test instructions
-- Tests fail to run → Report error and recommend fix
+3. **Parse Test Output**
+   
+   **Jest/Vitest Format:**
+   ```
+   Tests:       5 passed, 2 failed, 1 skipped, 8 total
+   Time:        2.5s
+   ```
+   
+   **Node Test Format:**
+   ```
+   ✓ test name (1.2ms)
+   ✗ test name (0.5ms)
+   tests 10 | passed 8 | failed 2
+   ```
 
-**Result determination:**
-```javascript
-const testStatus = 
-  noTests ? 'WARNING' :
-  allTestsPass ? 'PASS' :
-  'FAIL';
+   **Parse Logic:**
+   ```javascript
+   function parseTestOutput(output) {
+     // Jest/Vitest pattern
+     const jestMatch = output.match(/Tests:\s+(\d+) passed(?:,\s+(\d+) failed)?(?:,\s+(\d+) skipped)?/);
+     if (jestMatch) {
+       return {
+         passed: parseInt(jestMatch[1]),
+         failed: parseInt(jestMatch[2] || 0),
+         skipped: parseInt(jestMatch[3] || 0),
+         total: parseInt(jestMatch[1]) + parseInt(jestMatch[2] || 0) + parseInt(jestMatch[3] || 0)
+       };
+     }
+     
+     // Node test pattern
+     const nodeMatch = output.match(/tests (\d+).*passed (\d+).*failed (\d+)/);
+     if (nodeMatch) {
+       return {
+         passed: parseInt(nodeMatch[2]),
+         failed: parseInt(nodeMatch[3]),
+         total: parseInt(nodeMatch[1])
+       };
+     }
+     
+     // Fallback: count ✓ and ✗
+     const passed = (output.match(/✓|PASS/g) || []).length;
+     const failed = (output.match(/✗|FAIL/g) || []).length;
+     return { passed, failed, total: passed + failed };
+   }
+   ```
+
+4. **Extract Failed Test Details**
+   ```javascript
+   function extractFailedTests(output) {
+     const failures = [];
+     
+     // Look for failure blocks
+     const failureBlocks = output.match(/●[^\n]+\n[\s\S]*?(?=●|\n\n|$)/g) || [];
+     
+     for (const block of failureBlocks) {
+       const nameMatch = block.match(/● (.+)/);
+       const fileMatch = block.match(/at .+\((.+):(\d+):(\d+)\)/);
+       const errorMatch = block.match(/Error: (.+)/);
+       
+       failures.push({
+         name: nameMatch ? nameMatch[1] : 'Unknown test',
+         file: fileMatch ? fileMatch[1] : 'Unknown',
+         line: fileMatch ? fileMatch[2] : '?',
+         error: errorMatch ? errorMatch[1] : 'See output'
+       });
+     }
+     
+     return failures;
+   }
+   ```
+
+5. **Handle No Tests Gracefully**
+   ```bash
+   # If no test script exists
+   if ! grep -q "\"test\":" package.json; then
+     echo "⚠️  No tests configured (not a failure, just a warning)"
+     return { passed: 0, failed: 0, total: 0, warning: "No tests found" }
+   fi
+   ```
+
+6. **Collect Results**
+   ```javascript
+   const testResults = {
+     framework: detectFramework(),
+     status: failed === 0 ? 'PASS' : 'FAIL',
+     metrics: {
+       total,
+       passed,
+       failed,
+       skipped: skipped || 0,
+       duration: parseDuration(output)
+     },
+     failures: extractFailedTests(output),
+     output: output // Keep full output for debugging
+   };
+   ```
+
+**Important Notes:**
+
+- **Tests passing ≠ verification passing**
+  - Tests validate functionality
+  - FR4.1 validates completeness
+  - Both required for overall PASS
+
+- **No tests is a warning, not failure**
+  - Some projects legitimately have no tests yet
+  - Report as warning in verification report
+  - Don't block on this alone
+
+- **Timeout handling**
+  - Set reasonable timeout (5 minutes default)
+  - If tests hang, report timeout and continue
+  - Don't let hung tests block verification
+
+**Verification Report Section:**
+```markdown
+## Test Results
+
+**Status:** ${status}
+**Framework:** ${framework}
+
+**Metrics:**
+- Total: ${total}
+- Passed: ${passed} ✅
+- Failed: ${failed} ❌
+- Skipped: ${skipped} ⏸️
+- Duration: ${duration}ms
+
+${failures.length > 0 ? `
+### Failed Tests
+
+${failures.map(f => `
+**Test:** ${f.name}
+**File:** ${f.file}:${f.line}
+**Error:** ${f.error}
+`).join('\n')}
+` : ''}
 ```
 
 ### Step 3: Validate Code Quality
@@ -170,174 +296,363 @@ const qualityStatus =
 
 ### Step 4: Validate Success Criteria & Feature Completeness (FR4.1)
 
-**Purpose:** Verify ALL tasks were completed and ALL success criteria met.
+**Objective:** Verify PLAN.md success criteria are met AND all tasks are completely implemented.
 
-This is the **critical step** that catches executor shortcuts.
+**CRITICAL:** This step has TWO parts:
+1. Success Criteria Validation (existing functionality)
+2. **Feature Completeness Validation (FR4.1 - NEW)**
 
-#### Part A: Parse Tasks from PLAN.md
+---
 
-**Extract all tasks:**
-```bash
-# Extract task blocks
-grep -A20 "<task" .planning/phase/plan.PLAN.md
+#### Part A: Feature Completeness Validation (FR4.1) - CRITICAL
 
-# Parse task details
-# - Task name from <name>
-# - Expected files from <files>
-# - Expected deliverables from <action> and <done>
-```
+**Purpose:** Detect when executor skipped tasks or left features incomplete.
 
-**Build task checklist:**
+**Process:**
+
+**1. Parse All Tasks from PLAN.md**
+
 ```javascript
-const tasks = [
-  {
-    name: "Build User Login",
-    files: ["src/auth/login.js", "test/auth/login.test.js"],
-    deliverables: {
-      files: ["src/auth/login.js", "test/auth/login.test.js"],
-      functions: ["authenticateUser", "generateToken"],
-      endpoints: ["POST /api/login"],
-      tests: ["login.test.js"]
-    }
-  },
-  // ... more tasks
-];
-```
-
-#### Part B: Verify Each Deliverable
-
-**For each task, check all deliverables:**
-
-**1. File Existence:**
-```bash
-# Check if files exist
-test -f src/auth/login.js && echo "✅ src/auth/login.js exists"
-ls -la src/auth/login.js
-
-# Use git to confirm file was added
-git ls-files | grep "src/auth/login.js"
-```
-
-**2. Function/Class Existence:**
-```bash
-# Search for function definitions
-grep -n "function authenticateUser\|const authenticateUser\|authenticateUser =" src/
-
-# Search for class definitions
-grep -n "class UserModel" src/
-```
-
-**3. Endpoint Existence:**
-```bash
-# Search for route definitions
-grep -rn "POST.*login\|router.post.*login\|app.post.*login" src/
-
-# Check route files
-cat src/routes/auth.js | grep -i login
-```
-
-**4. Test Existence:**
-```bash
-# Check for test files
-test -f test/auth/login.test.js && echo "✅ Test file exists"
-
-# Check test content
-grep -n "describe\|it\|test" test/auth/login.test.js | head -10
-```
-
-**5. Git Diff Analysis:**
-```bash
-# Check what was actually added in recent commits
-git log --oneline -10
-git diff HEAD~5..HEAD --stat
-git diff HEAD~5..HEAD -- src/auth/
-
-# Verify task-related commits exist
-git log --oneline --grep="login" | head -5
-```
-
-#### Part C: Calculate Completion Percentage
-
-**Count completed vs total tasks:**
-```javascript
-let completedTasks = 0;
-let totalTasks = tasks.length;
-
-for (const task of tasks) {
-  let taskComplete = true;
+function parseTasksFromPlan(planContent) {
+  const tasks = [];
+  const taskRegex = /<task type="[^"]+">[\s\S]*?<\/task>/g;
+  const matches = planContent.match(taskRegex) || [];
   
-  // Check all deliverables for this task
-  for (const file of task.deliverables.files) {
-    if (!fileExists(file)) {
-      taskComplete = false;
-      break;
+  for (const taskXml of matches) {
+    // Extract task metadata
+    const name = taskXml.match(/<name>([^<]+)<\/name>/)?.[1]?.trim();
+    const files = taskXml.match(/<files>([^<]+)<\/files>/)?.[1]
+      ?.split(',').map(f => f.trim()) || [];
+    const action = taskXml.match(/<action>([\s\S]*?)<\/action>/)?.[1]?.trim();
+    
+    tasks.push({
+      name: name || 'Unnamed task',
+      files: files,
+      action: action || '',
+      deliverables: extractDeliverables(name, files, action),
+      status: 'PENDING',
+      evidence: [],
+      missing: []
+    });
+  }
+  
+  return tasks;
+}
+```
+
+**2. Extract Expected Deliverables**
+
+```javascript
+function extractDeliverables(taskName, files, action) {
+  const deliverables = [];
+  
+  // From <files> tag - explicit file list
+  for (const file of files) {
+    deliverables.push({
+      type: 'file',
+      path: file,
+      required: true
+    });
+    
+    // Auto-add test file if source file
+    if (file.includes('src/') && !file.includes('.test.')) {
+      const testPath = file
+        .replace('src/', 'test/')
+        .replace(/\.(js|ts)$/, '.test.$1');
+      deliverables.push({
+        type: 'test',
+        path: testPath,
+        required: false // Optional but recommended
+      });
     }
   }
   
-  for (const func of task.deliverables.functions) {
-    if (!functionExists(func)) {
-      taskComplete = false;
-      break;
+  // From action text - parse for patterns
+  const patterns = [
+    // Functions: "Implement functionName()" or "Create functionName"
+    { regex: /(?:Implement|Create|Add|Build)\s+(\w+)\s*\(/gi, type: 'function' },
+    
+    // Classes: "Create ClassName class" or "Add ClassName"
+    { regex: /(?:Create|Add)\s+(\w+)\s+class/gi, type: 'class' },
+    
+    // Endpoints: "Build POST /api/path" or "Create GET /api/users"
+    { regex: /(?:Build|Create|Add)\s+(GET|POST|PUT|DELETE)\s+(\/[^\s]+)/gi, type: 'endpoint' },
+    
+    // Components: "Create ComponentName component"
+    { regex: /Create\s+(\w+)\s+component/gi, type: 'component' }
+  ];
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.regex.exec(action)) !== null) {
+      deliverables.push({
+        type: pattern.type,
+        name: match[1],
+        path: match[2], // For endpoints
+        required: true
+      });
     }
   }
   
-  if (taskComplete) {
-    completedTasks++;
+  return deliverables;
+}
+```
+
+**3. Verify Each Deliverable Exists**
+
+```javascript
+async function verifyDeliverables(task) {
+  for (const deliverable of task.deliverables) {
+    const exists = await checkDeliverable(deliverable);
+    
+    if (exists) {
+      task.evidence.push({
+        deliverable,
+        status: 'FOUND',
+        location: exists.location,
+        confidence: exists.confidence
+      });
+    } else {
+      task.missing.push({
+        deliverable,
+        searchAttempts: exists.searchAttempts
+      });
+    }
+  }
+  
+  // Calculate task status
+  const requiredDeliverables = task.deliverables.filter(d => d.required);
+  const foundRequired = task.evidence.filter(e => 
+    e.deliverable.required && e.confidence >= 0.7
+  ).length;
+  
+  task.status = foundRequired === requiredDeliverables.length 
+    ? 'COMPLETE' 
+    : 'INCOMPLETE';
+  
+  return task;
+}
+```
+
+**4. Check Individual Deliverable**
+
+```javascript
+async function checkDeliverable(deliverable) {
+  const searchResults = {
+    location: null,
+    confidence: 0,
+    searchAttempts: []
+  };
+  
+  switch (deliverable.type) {
+    case 'file':
+      return await checkFile(deliverable, searchResults);
+    
+    case 'function':
+      return await checkFunction(deliverable, searchResults);
+    
+    case 'class':
+      return await checkClass(deliverable, searchResults);
+    
+    case 'endpoint':
+      return await checkEndpoint(deliverable, searchResults);
+    
+    case 'test':
+      return await checkFile(deliverable, searchResults);
+    
+    default:
+      return searchResults;
   }
 }
 
-const completionRate = (completedTasks / totalTasks) * 100;
-const completionStatus = completionRate === 100 ? 'PASS' : 'FAIL';
+async function checkFile(deliverable, results) {
+  // Method 1: Direct file existence
+  const exists = fs.existsSync(deliverable.path);
+  results.searchAttempts.push({
+    method: 'fs.existsSync',
+    path: deliverable.path,
+    result: exists
+  });
+  
+  if (exists) {
+    results.location = deliverable.path;
+    results.confidence = 1.0;
+    return results;
+  }
+  
+  // Method 2: Git ls-files (handles renames)
+  const gitFiles = execSync('git ls-files').toString();
+  const baseName = path.basename(deliverable.path);
+  const found = gitFiles.split('\n').find(f => f.includes(baseName));
+  
+  results.searchAttempts.push({
+    method: 'git ls-files',
+    pattern: baseName,
+    result: !!found
+  });
+  
+  if (found) {
+    results.location = found;
+    results.confidence = 0.8; // Good but not exact match
+    return results;
+  }
+  
+  return null;
+}
+
+async function checkFunction(deliverable, results) {
+  // Grep for function definition
+  const patterns = [
+    `function ${deliverable.name}`,
+    `const ${deliverable.name} =`,
+    `${deliverable.name}:`,
+    `${deliverable.name}(`
+  ];
+  
+  for (const pattern of patterns) {
+    const grepCmd = `grep -r "${pattern}" src/ lib/ 2>/dev/null || true`;
+    const output = execSync(grepCmd).toString();
+    
+    results.searchAttempts.push({
+      method: 'grep',
+      pattern,
+      result: output.length > 0
+    });
+    
+    if (output.length > 0) {
+      const match = output.split('\n')[0];
+      const [file, line] = match.split(':');
+      results.location = `${file}:${line}`;
+      results.confidence = 0.9;
+      return results;
+    }
+  }
+  
+  return null;
+}
+
+async function checkClass(deliverable, results) {
+  // Similar to checkFunction but for class patterns
+  const patterns = [
+    `class ${deliverable.name}`,
+    `export class ${deliverable.name}`
+  ];
+  
+  for (const pattern of patterns) {
+    const grepCmd = `grep -r "${pattern}" src/ lib/ 2>/dev/null || true`;
+    const output = execSync(grepCmd).toString();
+    
+    results.searchAttempts.push({
+      method: 'grep',
+      pattern,
+      result: output.length > 0
+    });
+    
+    if (output.length > 0) {
+      const match = output.split('\n')[0];
+      const [file, line] = match.split(':');
+      results.location = `${file}:${line}`;
+      results.confidence = 0.9;
+      return results;
+    }
+  }
+  
+  return null;
+}
+
+async function checkEndpoint(deliverable, results) {
+  // Check for route definitions
+  const method = deliverable.name; // GET, POST, etc.
+  const path = deliverable.path;
+  
+  const patterns = [
+    `${method.toLowerCase()}('${path}'`,
+    `${method.toLowerCase()}("${path}"`,
+    `.${method.toLowerCase()}('${path}'`,
+    `method: '${method}'.*path: '${path}'`
+  ];
+  
+  for (const pattern of patterns) {
+    const grepCmd = `grep -r "${pattern}" src/ lib/ routes/ 2>/dev/null || true`;
+    const output = execSync(grepCmd).toString();
+    
+    results.searchAttempts.push({
+      method: 'grep',
+      pattern,
+      result: output.length > 0
+    });
+    
+    if (output.length > 0) {
+      const match = output.split('\n')[0];
+      const [file, line] = match.split(':');
+      results.location = `${file}:${line}`;
+      results.confidence = 0.85;
+      return results;
+    }
+  }
+  
+  return null;
+}
 ```
 
-**Completion rules:**
-- 100% = PASS (all tasks complete)
-- 90-99% = FAIL (mostly complete but missing tasks)
-- <90% = FAIL (significant work missing)
+**5. Calculate Completion Percentage**
 
-**Evidence collection per task:**
-```markdown
-#### ✅ Task 1: Build User Login
-Status: COMPLETE
-Evidence:
-  - ✅ File: src/auth/login.js exists (47 lines, git SHA abc123)
-  - ✅ Function: authenticateUser() found at line 15
-  - ✅ Function: generateToken() found at line 32
-  - ✅ Endpoint: POST /api/login found in src/routes/auth.js:12
-  - ✅ Test: test/auth/login.test.js exists (12 tests)
-  - ✅ Git commit: feat(01-18): add user authentication endpoint (abc123)
-
-#### ❌ Task 2: Build Password Reset
-Status: INCOMPLETE - MISSING IMPLEMENTATION
-Missing Deliverables:
-  - ❌ File: src/auth/password-reset.js NOT FOUND
-  - ❌ Function: sendResetEmail() NOT FOUND (grep: 0 matches in src/)
-  - ❌ Function: validateResetToken() NOT FOUND (grep: 0 matches in src/)
-  - ❌ Endpoint: POST /api/reset-password NOT FOUND in routes
-  - ❌ Test: test/auth/password-reset.test.js NOT FOUND
-  - ❌ Git commits: No commits matching "reset" or "password reset"
-Git Search:
-  $ git log --oneline --all --grep="reset"
-  (no matches)
-Impact: HIGH - Critical auth feature completely missing
-Recommendation: Executor MUST implement Task 2 before plan can pass verification
-```
-
-#### Part D: Validate Success Criteria
-
-**Check each criterion from plan:**
-```markdown
-## Success Criteria (from PLAN.md)
-✅ User can log in with email/password
-❌ User can reset forgotten password (MISSING - Task 2 incomplete)
-✅ JWT tokens are generated correctly
-✅ Tests achieve >80% coverage
-```
-
-**Overall success criteria status:**
 ```javascript
-const criteriaStatus = allCriteriaMet ? 'PASS' : 'FAIL';
+function calculateCompleteness(tasks) {
+  const totalTasks = tasks.length;
+  const completeTasks = tasks.filter(t => t.status === 'COMPLETE').length;
+  const completionRate = (completeTasks / totalTasks) * 100;
+  
+  return {
+    total: totalTasks,
+    complete: completeTasks,
+    incomplete: totalTasks - completeTasks,
+    percentage: Math.round(completionRate),
+    status: completionRate === 100 ? 'PASS' : 'FAIL'
+  };
+}
 ```
+
+**6. Generate Feature Completeness Report Section**
+
+See template in VERIFICATION_REPORT.md for full format. Key elements:
+
+```markdown
+## Feature Completeness (FR4.1)
+
+**Status:** ${status} (${percentage}%)
+**Tasks Completed:** ${complete}/${total}
+
+### Task-by-Task Analysis
+
+${tasks.map(task => `
+#### ${task.status === 'COMPLETE' ? '✅' : '❌'} Task: ${task.name}
+
+**Status:** ${task.status}
+
+${task.status === 'COMPLETE' ? `
+**Evidence:**
+${task.evidence.map(e => `- ${e.deliverable.type}: \`${e.location}\` (confidence: ${e.confidence * 100}%)`).join('\n')}
+` : `
+**Missing Deliverables:**
+${task.missing.map(m => `- ${m.deliverable.type}: \`${m.deliverable.name || m.deliverable.path}\` NOT FOUND
+  Search attempts: ${m.searchAttempts.length}
+  Methods tried: ${m.searchAttempts.map(s => s.method).join(', ')}
+`).join('\n')}
+
+**Impact:** ${assessImpact(task)}
+**Recommendation:** ${getRecommendation(task)}
+`}
+`).join('\n')}
+```
+
+---
+
+#### Part B: Success Criteria Validation
+
+(Keep existing success criteria validation logic here - parse criteria from PLAN.md, validate each one, provide evidence)
+
+**Integration:** Both Feature Completeness AND Success Criteria must pass for Step 4 to pass.
 
 ### Step 5: Verify Documentation
 
@@ -370,115 +685,418 @@ const docsStatus =
 
 ### Step 6: Generate Verification Report
 
-**Purpose:** Create comprehensive VERIFICATION_REPORT.md with all evidence.
+**Objective:** Consolidate all verification results into VERIFICATION_REPORT.md with clear pass/fail determination.
 
-**Report location:**
-```bash
-.planning/verification/{phase-name}/{plan-name}.VERIFICATION_REPORT.md
+**Process:**
+
+**1. Load Report Template**
+
+```javascript
+const templatePath = 'templates/VERIFICATION_REPORT.md';
+const template = fs.readFileSync(templatePath, 'utf8');
 ```
 
-**Report template:**
-```markdown
-# Verification Report: {Phase}-{Plan} - {Objective}
+**2. Prepare Report Data**
 
-**Date:** {ISO timestamp}
-**Plan:** {phase}/{plan-name}.PLAN.md
-**Status:** ✅ PASS / ❌ FAIL / ⚠️ WARNING
+Collect all verification results from previous steps:
 
-## Overall Result
-
-**Verdict:** {PASS/FAIL}
-
-**Summary:** {One-line summary of verification result}
-
-**Key Metrics:**
-- Feature Completeness: {X}% ({completed}/{total} tasks)
-- Test Results: {passed}/{total} tests passing
-- Code Quality: {quality-status}
-- Documentation: {docs-status}
-
-## Test Results
-
-**Framework:** {Jest/Vitest/Node/npm test}
-**Status:** {PASS/FAIL/WARNING}
-
-```
-{raw test output}
-```
-
-**Summary:**
-- Total tests: {N}
-- Passed: {N}
-- Failed: {N}
-- Pending: {N}
-- Coverage: {X}% (if available)
-
-{List of failed tests with error messages if any}
-
-## Feature Completeness: {✅ COMPLETE (100%) / ❌ INCOMPLETE (X%)}
-
-### Tasks: {completed}/{total} Completed
-
-{For each task, show completion evidence as in Step 4}
-
-## Code Quality
-
-**Syntax Errors:** {count} (must be 0 to pass)
-**Linting Issues:** {count} (warnings only)
-**Debug Statements:** {count} console.log/debugger found
-
-{Details if issues found}
-
-## Success Criteria Validation
-
-{For each criterion from PLAN.md:}
-- {✅/❌} {Criterion description}
-
-**Overall:** {all-met ? "All criteria met" : "X/Y criteria met"}
-
-## Documentation
-
-- {✅/❌} README.md updated
-- {✅/❌} SUMMARY.md created
-- {✅/❌} Inline documentation present
-- {✅/❌} API docs updated (if applicable)
-
-## Recommendations
-
-{If FAIL:}
-### Critical Issues
-1. {Issue 1 with specific fix recommendation}
-2. {Issue 2 with specific fix recommendation}
-
-### Required Actions
-- [ ] {Action 1}
-- [ ] {Action 2}
-
-{If PASS:}
-No issues found. Ready to proceed to next plan/phase.
-
-## Files Verified
-
-{List of files checked during verification}
-
-## Verification Commands
-
-```bash
-{Commands run during verification for reproducibility}
+```javascript
+const reportData = {
+  metadata: {
+    phaseName: extractPhaseName(planPath),
+    planName: extractPlanName(planPath),
+    timestamp: new Date().toISOString(),
+    verifierVersion: '1.0.0'
+  },
+  
+  // Step 2: Test results
+  tests: testResults,
+  
+  // Step 4A: Feature completeness (FR4.1)
+  featureCompleteness: {
+    status: completenessData.status, // PASS/FAIL
+    percentage: completenessData.percentage,
+    total: completenessData.total,
+    complete: completenessData.complete,
+    incomplete: completenessData.incomplete,
+    tasks: tasksWithEvidenceAndMissing
+  },
+  
+  // Step 4B: Success criteria
+  successCriteria: {
+    status: criteriaStatus,
+    total: criteria.length,
+    met: metCriteria.length,
+    unmet: unmetCriteria.length,
+    criteria: criteriaWithEvidence
+  },
+  
+  // Step 3: Code quality
+  codeQuality: qualityResults,
+  
+  // Step 5: Documentation
+  documentation: docResults,
+  
+  // Derived: Overall status
+  overallStatus: calculateOverallStatus(testResults, completenessData, criteriaStatus, qualityResults)
+};
 ```
 
----
+**3. Calculate Overall Status**
 
-*Generated by reis_verifier on {timestamp}*
+```javascript
+function calculateOverallStatus(tests, completeness, criteria, quality) {
+  // CRITICAL: Feature completeness MUST be 100% to pass
+  if (completeness.percentage < 100) {
+    return {
+      status: 'FAIL',
+      reason: `Feature completeness: ${completeness.percentage}% (${completeness.incomplete} tasks incomplete)`
+    };
+  }
+  
+  // Tests must pass
+  if (tests.metrics.failed > 0) {
+    return {
+      status: 'FAIL',
+      reason: `${tests.metrics.failed} tests failing`
+    };
+  }
+  
+  // Success criteria must be met
+  if (criteria.unmet > 0) {
+    return {
+      status: 'FAIL',
+      reason: `${criteria.unmet} success criteria unmet`
+    };
+  }
+  
+  // Code quality failures block
+  if (quality.status === 'FAIL') {
+    return {
+      status: 'FAIL',
+      reason: 'Code quality failures detected'
+    };
+  }
+  
+  // Warnings don't block (unless strict mode)
+  if (quality.status === 'WARNINGS' || tests.metrics.total === 0) {
+    return {
+      status: 'PASS_WITH_WARNINGS',
+      warnings: [
+        quality.status === 'WARNINGS' ? 'Code quality warnings' : null,
+        tests.metrics.total === 0 ? 'No tests configured' : null
+      ].filter(Boolean)
+    };
+  }
+  
+  // All checks passed
+  return {
+    status: 'PASS',
+    reason: 'All verification checks passed'
+  };
+}
 ```
 
-**Write report:**
-```bash
-mkdir -p .planning/verification/{phase-name}
-cat > .planning/verification/{phase-name}/{plan-name}.VERIFICATION_REPORT.md << 'EOF'
-{report content}
-EOF
+**4. Generate Executive Summary**
+
+```javascript
+function generateExecutiveSummary(reportData) {
+  const { overallStatus, tests, featureCompleteness, successCriteria, codeQuality } = reportData;
+  
+  const emoji = overallStatus.status === 'PASS' ? '✅' : 
+                overallStatus.status === 'PASS_WITH_WARNINGS' ? '⚠️' : '❌';
+  
+  return `
+## Executive Summary
+
+Verification ${overallStatus.status === 'PASS' ? 'PASSED' : 'FAILED'} for ${reportData.metadata.phaseName}.
+
+**Overall Status:** ${emoji} ${overallStatus.status}  
+**Tests:** ${tests.metrics.passed}/${tests.metrics.total} passed  
+**Feature Completeness:** ${featureCompleteness.complete}/${featureCompleteness.total} tasks (${featureCompleteness.percentage}%)  
+**Success Criteria:** ${successCriteria.met}/${successCriteria.total} met  
+**Code Quality:** ${codeQuality.status}  
+**Critical Issues:** ${countCriticalIssues(reportData)}
+
+${overallStatus.reason ? `**Reason:** ${overallStatus.reason}` : ''}
+
+${overallStatus.status !== 'PASS' ? `
+**Action Required:** Address issues below and re-verify before proceeding.
+` : `
+**Result:** All verification checks passed. Ready to proceed to next phase.
+`}
+`;
+}
 ```
+
+**5. Generate Feature Completeness Section (FR4.1) - CRITICAL**
+
+```javascript
+function generateFeatureCompletenessSection(featureCompleteness) {
+  const { status, percentage, complete, total, tasks } = featureCompleteness;
+  
+  const emoji = percentage === 100 ? '✅' : '❌';
+  
+  let section = `
+## Feature Completeness (FR4.1)
+
+**Status:** ${emoji} ${status} (${percentage}%)  
+**Tasks Completed:** ${complete}/${total}
+
+### Task-by-Task Analysis
+
+`;
+
+  for (const task of tasks) {
+    const taskEmoji = task.status === 'COMPLETE' ? '✅' : '❌';
+    
+    section += `
+#### ${taskEmoji} Task: ${task.name}
+
+**Status:** ${task.status}
+
+`;
+
+    if (task.status === 'COMPLETE') {
+      section += `**Evidence:**\n`;
+      for (const evidence of task.evidence) {
+        const { deliverable, location, confidence } = evidence;
+        const confidencePercent = Math.round(confidence * 100);
+        section += `- ${deliverable.type}: \`${location}\` (confidence: ${confidencePercent}%)\n`;
+      }
+    } else {
+      section += `**Status:** INCOMPLETE - FEATURE MISSING\n\n`;
+      section += `**Missing Deliverables:**\n`;
+      
+      for (const missing of task.missing) {
+        const { deliverable, searchAttempts } = missing;
+        const name = deliverable.name || deliverable.path;
+        section += `- ${deliverable.type}: \`${name}\` NOT FOUND\n`;
+      }
+      
+      // Add search evidence
+      section += `\n**Search Evidence:**\n\`\`\`bash\n`;
+      for (const attempt of task.missing[0]?.searchAttempts || []) {
+        section += `$ ${attempt.method}: ${attempt.pattern}\n`;
+        section += `# ${attempt.result ? 'Found' : 'No matches'}\n`;
+      }
+      section += `\`\`\`\n\n`;
+      
+      // Impact assessment
+      const impact = assessTaskImpact(task);
+      section += `**Impact:** ${impact.level} - ${impact.description}\n`;
+      
+      // Recommendation
+      const recommendation = getTaskRecommendation(task);
+      section += `**Recommendation:** ${recommendation}\n`;
+    }
+    
+    section += `\n`;
+  }
+  
+  return section;
+}
+
+function assessTaskImpact(task) {
+  // Heuristics for impact assessment
+  const keywords = task.name.toLowerCase();
+  
+  if (keywords.includes('auth') || keywords.includes('security') || keywords.includes('login')) {
+    return { level: 'HIGH', description: 'Critical security/authentication feature missing' };
+  }
+  
+  if (keywords.includes('api') || keywords.includes('endpoint') || keywords.includes('route')) {
+    return { level: 'HIGH', description: 'Core API functionality missing' };
+  }
+  
+  if (keywords.includes('test') || keywords.includes('validation')) {
+    return { level: 'MEDIUM', description: 'Testing/validation incomplete' };
+  }
+  
+  if (keywords.includes('doc') || keywords.includes('readme')) {
+    return { level: 'LOW', description: 'Documentation incomplete' };
+  }
+  
+  return { level: 'MEDIUM', description: 'Planned feature not implemented' };
+}
+
+function getTaskRecommendation(task) {
+  const missingTypes = [...new Set(task.missing.map(m => m.deliverable.type))];
+  
+  if (missingTypes.includes('file')) {
+    return `Implement missing file(s): ${task.missing.filter(m => m.deliverable.type === 'file').map(m => m.deliverable.path).join(', ')}`;
+  }
+  
+  if (missingTypes.includes('function')) {
+    return `Implement missing function(s): ${task.missing.filter(m => m.deliverable.type === 'function').map(m => m.deliverable.name).join(', ')}`;
+  }
+  
+  return `Complete task implementation as specified in PLAN.md`;
+}
+```
+
+**6. Generate Other Sections**
+
+(Test Results, Success Criteria, Code Quality, Documentation sections follow similar pattern - populate template with data)
+
+**7. Generate Issues Summary**
+
+```javascript
+function generateIssuesSummary(reportData) {
+  const issues = {
+    critical: [],
+    major: [],
+    minor: []
+  };
+  
+  // Feature completeness issues (CRITICAL)
+  if (reportData.featureCompleteness.percentage < 100) {
+    for (const task of reportData.featureCompleteness.tasks) {
+      if (task.status === 'INCOMPLETE') {
+        issues.critical.push({
+          type: 'INCOMPLETE_TASK',
+          description: `Task incomplete: ${task.name}`,
+          impact: assessTaskImpact(task).level,
+          task: task
+        });
+      }
+    }
+  }
+  
+  // Test failures (CRITICAL)
+  if (reportData.tests.metrics.failed > 0) {
+    for (const failure of reportData.tests.failures) {
+      issues.critical.push({
+        type: 'TEST_FAILURE',
+        description: `Test failing: ${failure.name}`,
+        file: failure.file,
+        error: failure.error
+      });
+    }
+  }
+  
+  // Unmet success criteria (MAJOR)
+  for (const criterion of reportData.successCriteria.criteria) {
+    if (!criterion.met) {
+      issues.major.push({
+        type: 'UNMET_CRITERION',
+        description: criterion.text,
+        evidence: criterion.evidence
+      });
+    }
+  }
+  
+  // Code quality issues
+  if (reportData.codeQuality.errors?.length > 0) {
+    issues.major.push(...reportData.codeQuality.errors.map(e => ({
+      type: 'QUALITY_ERROR',
+      description: e
+    })));
+  }
+  
+  if (reportData.codeQuality.warnings?.length > 0) {
+    issues.minor.push(...reportData.codeQuality.warnings.map(w => ({
+      type: 'QUALITY_WARNING',
+      description: w
+    })));
+  }
+  
+  return issues;
+}
+```
+
+**8. Generate Recommendations**
+
+```javascript
+function generateRecommendations(reportData, issues) {
+  const recommendations = {
+    immediate: [],
+    beforeNext: [],
+    optional: []
+  };
+  
+  // Immediate: Fix incomplete tasks
+  if (issues.critical.filter(i => i.type === 'INCOMPLETE_TASK').length > 0) {
+    recommendations.immediate.push(
+      'Complete all planned tasks before proceeding (Feature Completeness: 100% required)'
+    );
+    
+    for (const issue of issues.critical.filter(i => i.type === 'INCOMPLETE_TASK')) {
+      recommendations.immediate.push(
+        `- ${issue.description}: ${getTaskRecommendation(issue.task)}`
+      );
+    }
+  }
+  
+  // Immediate: Fix test failures
+  if (issues.critical.filter(i => i.type === 'TEST_FAILURE').length > 0) {
+    recommendations.immediate.push('Fix all failing tests');
+  }
+  
+  // Before next: Meet success criteria
+  if (issues.major.filter(i => i.type === 'UNMET_CRITERION').length > 0) {
+    recommendations.beforeNext.push('Satisfy all success criteria from PLAN.md');
+  }
+  
+  // Optional: Address warnings
+  if (issues.minor.length > 0) {
+    recommendations.optional.push('Address code quality warnings');
+  }
+  
+  if (reportData.tests.metrics.total === 0) {
+    recommendations.optional.push('Add test suite for better validation');
+  }
+  
+  return recommendations;
+}
+```
+
+**9. Write Report to File**
+
+```javascript
+function writeReport(reportContent, reportData) {
+  // Create directory if needed
+  const reportDir = `.planning/verification/${reportData.metadata.phaseName}`;
+  fs.mkdirSync(reportDir, { recursive: true });
+  
+  // Generate filename
+  const timestamp = reportData.metadata.timestamp.replace(/:/g, '-').split('.')[0];
+  const reportPath = `${reportDir}/VERIFICATION_REPORT_${timestamp}.md`;
+  
+  // Write file
+  fs.writeFileSync(reportPath, reportContent, 'utf8');
+  
+  // Also create/update latest symlink
+  const latestPath = `${reportDir}/VERIFICATION_REPORT.md`;
+  if (fs.existsSync(latestPath)) {
+    fs.unlinkSync(latestPath);
+  }
+  fs.writeFileSync(latestPath, reportContent, 'utf8');
+  
+  return reportPath;
+}
+```
+
+**Report Generation Order:**
+1. Executive Summary (with FR4.1 metrics)
+2. **Feature Completeness (FR4.1) - SECOND, PROMINENT**
+3. Test Results
+4. Success Criteria Validation
+5. Code Quality
+6. Documentation
+7. Issues Summary
+8. Recommendations
+9. Next Steps
+
+**Critical Rules:**
+- ✅ Feature Completeness appears EARLY (right after summary)
+- ✅ Task-by-task breakdown with evidence
+- ✅ Missing deliverables clearly listed
+- ✅ Impact assessment for incomplete tasks
+- ✅ Specific, actionable recommendations
+- ✅ Clear PASS/FAIL determination
+- ❌ Don't bury FR4.1 results at end
+- ❌ Don't pass if any task incomplete
 
 ### Step 7: Update STATE.md
 
@@ -1392,7 +2010,138 @@ No issues found. Ready to proceed to next plan.
 ✨ Next: Ready for phase-1/1-2-profile
 ```
 
-### Example 2: Failing with Test Errors
+### Example 2: Test Execution Scenarios
+
+#### Scenario A: All Tests Passing
+
+**Command:**
+```bash
+npm test
+```
+
+**Output:**
+```
+PASS test/auth/login.test.js
+  ✓ authenticates valid user (45ms)
+  ✓ rejects invalid password (12ms)
+  ✓ handles missing fields (8ms)
+
+Tests: 3 passed, 3 total
+Time: 1.234s
+```
+
+**Parsed Results:**
+```javascript
+{
+  framework: 'jest',
+  status: 'PASS',
+  metrics: { total: 3, passed: 3, failed: 0, duration: 1234 },
+  failures: []
+}
+```
+
+**Report Section:**
+```markdown
+## Test Results ✅
+
+**Status:** All tests pass
+**Framework:** Jest
+
+**Metrics:**
+- Total: 3
+- Passed: 3 ✅
+- Failed: 0
+- Duration: 1234ms
+```
+
+#### Scenario B: Tests Failing
+
+**Output:**
+```
+FAIL test/auth/password-reset.test.js
+  ✗ sends reset email (156ms)
+  
+    Error: Function 'sendResetEmail' is not defined
+    at test/auth/password-reset.test.js:15:5
+
+Tests: 2 passed, 1 failed, 3 total
+```
+
+**Parsed Results:**
+```javascript
+{
+  framework: 'jest',
+  status: 'FAIL',
+  metrics: { total: 3, passed: 2, failed: 1 },
+  failures: [{
+    name: 'sends reset email',
+    file: 'test/auth/password-reset.test.js',
+    line: '15',
+    error: "Function 'sendResetEmail' is not defined"
+  }]
+}
+```
+
+**Report Section:**
+```markdown
+## Test Results ❌
+
+**Status:** 1 test failing
+**Framework:** Jest
+
+**Metrics:**
+- Total: 3
+- Passed: 2 ✅
+- Failed: 1 ❌
+- Duration: 2345ms
+
+### Failed Tests
+
+**Test:** sends reset email
+**File:** test/auth/password-reset.test.js:15
+**Error:** Function 'sendResetEmail' is not defined
+
+**Analysis:** This failure indicates Task 2 (Password Reset) may be incomplete.
+See Feature Completeness section for full analysis.
+```
+
+#### Scenario C: No Tests Configured
+
+**Check:**
+```bash
+$ cat package.json | grep "\"test\":"
+# No match
+```
+
+**Result:**
+```javascript
+{
+  status: 'WARNING',
+  message: 'No tests configured',
+  metrics: { total: 0, passed: 0, failed: 0 }
+}
+```
+
+**Report Section:**
+```markdown
+## Test Results ⚠️
+
+**Status:** No tests found
+**Framework:** None
+
+**Note:** This project has no test suite configured. This is not a verification 
+failure, but tests are recommended for production code.
+
+**Recommendation:** Add tests in future iterations.
+```
+
+**Key Learning Points:**
+1. Parse output reliably across frameworks
+2. Extract failure details for debugging
+3. Handle missing tests gracefully (warning, not failure)
+4. Link test failures to feature completeness analysis
+
+### Example 3: Failing with Test Errors
 
 **Scenario:** All tasks complete, but tests fail.
 
