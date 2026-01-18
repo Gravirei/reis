@@ -9,7 +9,7 @@ const chalk = require('chalk');
 
 // Show welcome banner (always, not just first run)
 function showBanner() {
-  console.log(chalk.cyan.bold(`
+  console.log(chalk.white.bold(`
   ██████  ███████ ██ ███████
   ██   ██ ██      ██ ██     
   ██████  █████   ██ ███████
@@ -75,6 +75,15 @@ const todoCmd = require('../lib/commands/todo.js');
 const todosCmd = require('../lib/commands/todos.js');
 const debugCmd = require('../lib/commands/debug.js');
 const configCmd = require('../lib/commands/config.js');
+
+// Check for --help or -h flag before Commander parses
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  // If it's just "reis --help" or "reis -h" (no subcommand), show our custom help
+  if (process.argv.length === 3) {
+    helpCmd();
+    process.exit(0);
+  }
+}
 
 // Set up commander
 program
