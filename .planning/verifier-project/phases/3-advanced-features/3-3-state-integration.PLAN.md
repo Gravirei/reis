@@ -1,693 +1,371 @@
 # Plan: 3-3 - Implement STATE.md Integration
 
 ## Objective
-Add STATE.md update functionality to reis_verifier specification, enabling automatic state tracking after verification runs.
+Implement Step 7 of the verification protocol: update STATE.md with verification results including FR4.1 feature completeness metrics.
 
 ## Context
-All verification checks are now complete (Steps 2-5). The final protocol step (Step 7) updates STATE.md with verification results so the project state reflects what's been verified. This creates a living memory of verification history.
+STATE.md tracking is the final step in verification. It records verification history, including FR4.1 task completion percentages, for project tracking and iteration planning.
 
 **Key Requirements:**
-- Read existing STATE.md without corruption
-- Add verification entry under "Recent Progress"
+- Read current STATE.md without corruption
+- Add verification entry with FR4.1 metrics
 - Update phase status if verification passed
-- Add blockers if verification failed
-- Preserve all existing state data
-- Use state-manager.js utilities
-- Handle missing STATE.md (create if needed)
-
-**Integration Points:**
-- Uses lib/utils/state-manager.js for STATE.md manipulation
-- Verification report saved before STATE.md update (Step 6)
-- STATE.md format defined in Wave 1.2
+- Preserve existing state data
+- Handle missing STATE.md
 
 ## Dependencies
-- Wave 2.4 (Report Generation) - Need report generated before updating state
+- Wave 2.4 (Report generation with FR4.1 data)
 
 ## Tasks
 
 <task type="auto">
-<name>Add STATE.md update protocol to reis_verifier</name>
+<name>Add STATE.md integration section to reis_verifier spec</name>
 <files>subagents/reis_verifier.md</files>
 <action>
-Expand the "Step 7: Update STATE.md" section in the Seven-Step Verification Protocol with comprehensive STATE.md integration instructions.
+Enhance Step 7 of the verification protocol with STATE.md update logic.
 
-**Location:** Find "Step 7: Update STATE.md" in the protocol section (should be the last step).
+**Locate:** Find "Step 7: Update STATE.md" in the protocol.
 
-**Replace/Expand with:**
+**Enhance with:**
 
 ```markdown
 ### Step 7: Update STATE.md
 
-Update project state with verification results to maintain verification history and current status.
+**Objective:** Record verification results in STATE.md for project tracking and history.
 
-#### STATE.md Structure Review
+**Process:**
 
-STATE.md follows this structure (see templates/STATE.md):
-
-```markdown
-# Project State
-
-## Current Status
-**Active Phase**: Phase [N] - [Name]
-**Last Verified**: Phase [M] - [Name] (✅ Passed on [Date])
-**Last Updated**: [Date]
-**Overall Progress**: [X/Y phases complete]
-
-## Recent Progress
-[Chronological entries with most recent first]
-
-## Active Blockers
-[Current issues blocking progress]
-
-## Open Questions
-[Unresolved questions]
-
-## Next Session
-[What to work on next]
-
-## Memory
-[Long-term project memory]
-```
-
-#### Reading STATE.md
-
-**Load existing state without corruption:**
+**1. Read Current STATE.md**
 
 ```javascript
-const fs = require('fs');
-const path = require('path');
-
-function loadStateFile(planningDir) {
-  const statePath = path.join(planningDir, 'STATE.md');
+function readStateFile() {
+  const statePath = '.planning/STATE.md';
   
   if (!fs.existsSync(statePath)) {
-    console.log('⚠️ STATE.md not found - will create new one');
+    // Create new STATE.md
     return {
       exists: false,
-      content: null,
-      sections: {},
+      content: generateNewState(),
+      verificationHistory: []
     };
   }
   
   const content = fs.readFileSync(statePath, 'utf8');
   
-  // Parse sections for easier manipulation
-  const sections = parseStateSections(content);
-  
   return {
     exists: true,
-    content,
-    sections,
+    content: content,
+    verificationHistory: parseVerificationHistory(content)
   };
 }
 
-function parseStateSections(content) {
-  const sections = {
-    currentStatus: '',
-    recentProgress: '',
-    activeBlockers: '',
-    openQuestions: '',
-    nextSession: '',
-    memory: '',
-  };
-  
-  // Extract each section
-  const currentStatusMatch = content.match(/## Current Status\s+([\s\S]*?)(?=\n## |$)/);
-  if (currentStatusMatch) sections.currentStatus = currentStatusMatch[1].trim();
-  
-  const recentProgressMatch = content.match(/## Recent Progress\s+([\s\S]*?)(?=\n## |$)/);
-  if (recentProgressMatch) sections.recentProgress = recentProgressMatch[1].trim();
-  
-  const activeBlockersMatch = content.match(/## Active Blockers\s+([\s\S]*?)(?=\n## |$)/);
-  if (activeBlockersMatch) sections.activeBlockers = activeBlockersMatch[1].trim();
-  
-  const openQuestionsMatch = content.match(/## Open Questions\s+([\s\S]*?)(?=\n## |$)/);
-  if (openQuestionsMatch) sections.openQuestions = openQuestionsMatch[1].trim();
-  
-  const nextSessionMatch = content.match(/## Next Session\s+([\s\S]*?)(?=\n## |$)/);
-  if (nextSessionMatch) sections.nextSession = nextSessionMatch[1].trim();
-  
-  const memoryMatch = content.match(/## Memory\s+([\s\S]*?)$/);
-  if (memoryMatch) sections.memory = memoryMatch[1].trim();
-  
-  return sections;
+function generateNewState() {
+  return `# Project State
+
+## Current Phase
+Phase: TBD
+Status: In Progress
+
+## Verification History
+
+(No verifications yet)
+
+---
+*STATE.md tracks project progress and verification results*
+`;
 }
 ```
 
-#### Creating Verification Entry
-
-**Generate verification entry for Recent Progress:**
+**2. Parse Existing Verification History**
 
 ```javascript
-function createVerificationEntry(verificationData, overallStatus) {
-  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-  const statusEmoji = overallStatus.emoji;
-  const statusText = overallStatus.status;
+function parseVerificationHistory(content) {
+  const history = [];
+  const historySection = content.match(/## Verification History\n([\s\S]*?)(?=\n##|$)/);
   
-  const entry = `### ${date} - Verification: ${verificationData.phaseName}
+  if (!historySection) {
+    return history;
+  }
+  
+  const entries = historySection[1].match(/### Verification:[\s\S]*?(?=\n###|\n---|\n##|$)/g) || [];
+  
+  for (const entry of entries) {
+    const dateMatch = entry.match(/\*\*Date:\*\* (.+)/);
+    const statusMatch = entry.match(/\*\*Status:\*\* (.+)/);
+    
+    history.push({
+      date: dateMatch ? dateMatch[1] : 'Unknown',
+      status: statusMatch ? statusMatch[1] : 'Unknown',
+      entry: entry
+    });
+  }
+  
+  return history;
+}
+```
 
-**Status**: ${statusEmoji} ${statusText}
+**3. Load Verification Entry Template**
 
-**Verified**:
-${generateVerifiedList(verificationData)}
+```javascript
+const entryTemplate = fs.readFileSync('templates/STATE_VERIFICATION_ENTRY.md', 'utf8');
+```
 
-**Test Results**: ${verificationData.testResults.metrics.passed}/${verificationData.testResults.metrics.total} tests passing
-**Success Criteria**: ${verificationData.criteriaResults.passed}/${verificationData.criteriaResults.totalCriteria} criteria met
-**Code Quality**: ${generateQualityStatus(verificationData.qualityResults)}
+**4. Populate Template with Results**
 
-**Report**: \`${verificationData.reportPath}\`
-${overallStatus.status === 'FAILED' || overallStatus.status === 'PARTIAL' ? 
-  '\n**Issues Found**:\n' + generateIssuesList(verificationData) : ''}
-**Next Action**: ${generateNextAction(overallStatus)}
-`;
+```javascript
+function generateVerificationEntry(verificationResults) {
+  const { metadata, overallStatus, tests, featureCompleteness, successCriteria, codeQuality, issues } = verificationResults;
+  
+  let entry = `### Verification: ${metadata.phaseName}\n`;
+  entry += `**Date:** ${metadata.timestamp}\n`;
+  entry += `**Status:** ${overallStatus.status}\n`;
+  entry += `**Verifier:** reis_verifier v${metadata.verifierVersion}\n\n`;
+  
+  entry += `**Results:**\n`;
+  entry += `- Tests: ${tests.metrics.passed}/${tests.metrics.total} passed\n`;
+  entry += `- Feature Completeness: ${featureCompleteness.complete}/${featureCompleteness.total} tasks (${featureCompleteness.percentage}%)\n`;
+  entry += `- Success Criteria: ${successCriteria.met}/${successCriteria.total} met\n`;
+  entry += `- Code Quality: ${codeQuality.status}\n\n`;
+  
+  const criticalCount = issues.critical.length;
+  const majorCount = issues.major.length;
+  const minorCount = issues.minor.length;
+  entry += `**Issues:** ${criticalCount} critical, ${majorCount} major, ${minorCount} minor\n\n`;
+  
+  const reportPath = `.planning/verification/${metadata.phaseName}/VERIFICATION_REPORT.md`;
+  entry += `**Report:** \`${reportPath}\`\n\n`;
+  
+  if (overallStatus.status === 'FAIL') {
+    entry += `**Action Required:** Fix issues and re-verify before proceeding\n`;
+    
+    // Highlight FR4.1 issues if present
+    if (featureCompleteness.percentage < 100) {
+      entry += `- **Feature Completeness:** ${featureCompleteness.incomplete} tasks incomplete\n`;
+    }
+  } else if (overallStatus.status === 'PASS') {
+    entry += `**Next Phase:** Ready to proceed\n`;
+  } else if (overallStatus.status === 'PASS_WITH_WARNINGS') {
+    entry += `**Note:** Passed with warnings (see report)\n`;
+  }
   
   return entry;
 }
-
-function generateVerifiedList(verificationData) {
-  const items = [];
-  
-  // Add key accomplishments from success criteria
-  const passedCriteria = verificationData.criteriaResults.criteria
-    .filter(c => c.status === 'pass')
-    .slice(0, 3); // Top 3
-  
-  passedCriteria.forEach(criterion => {
-    items.push(`- ${criterion.criterion}`);
-  });
-  
-  // Add generic items if few criteria
-  if (items.length < 2) {
-    if (verificationData.testResults.metrics.passed > 0) {
-      items.push(`- Test suite passing (${verificationData.testResults.metrics.passed} tests)`);
-    }
-    if (verificationData.qualityResults.issueCount === 0) {
-      items.push('- Code quality checks passed');
-    }
-  }
-  
-  return items.join('\n');
-}
-
-function generateQualityStatus(qualityResults) {
-  if (qualityResults.issueCount === 0) {
-    return 'No issues found';
-  } else if (qualityResults.syntax.passed === false) {
-    return `${qualityResults.issueCount} issues (syntax errors present)`;
-  } else {
-    return `${qualityResults.issueCount} issues found`;
-  }
-}
-
-function generateIssuesList(verificationData) {
-  const issues = [];
-  
-  // Failed tests
-  if (verificationData.testResults.metrics.failed > 0) {
-    issues.push(`- ${verificationData.testResults.metrics.failed} tests failing`);
-  }
-  
-  // Failed criteria
-  const failedCriteria = verificationData.criteriaResults.criteria.filter(c => c.status === 'fail');
-  failedCriteria.slice(0, 3).forEach(criterion => {
-    issues.push(`- Criterion not met: ${criterion.criterion}`);
-  });
-  
-  // Quality issues
-  if (verificationData.qualityResults.syntax.passed === false) {
-    issues.push('- Syntax errors in code');
-  }
-  
-  return issues.slice(0, 5).join('\n'); // Max 5 issues
-}
-
-function generateNextAction(overallStatus) {
-  switch (overallStatus.status) {
-    case 'PASSED':
-      return 'Proceed to next phase/plan';
-    case 'FAILED':
-      return 'Fix critical issues and re-verify';
-    case 'PARTIAL':
-      return 'Review warnings and decide whether to proceed';
-    default:
-      return 'Review verification report';
-  }
-}
 ```
 
-#### Updating Current Status
-
-**Update phase status if verification passed:**
+**5. Insert Entry into STATE.md**
 
 ```javascript
-function updateCurrentStatus(sections, verificationData, overallStatus) {
-  const date = new Date().toISOString().split('T')[0];
-  let currentStatus = sections.currentStatus;
+function insertVerificationEntry(stateContent, newEntry) {
+  // Find Verification History section
+  const historyMarker = '## Verification History';
   
-  if (overallStatus.status === 'PASSED') {
-    // Update "Last Verified" line
-    const lastVerifiedPattern = /\*\*Last Verified\*\*:.*$/m;
-    const lastVerifiedLine = `**Last Verified**: ${verificationData.phaseName} (✅ Passed on ${date})`;
+  if (!stateContent.includes(historyMarker)) {
+    // Add section if missing
+    stateContent += `\n\n${historyMarker}\n\n`;
+  }
+  
+  // Find insertion point (after "## Verification History")
+  const sections = stateContent.split(/\n##\s+/);
+  let updated = '';
+  
+  for (let i = 0; i < sections.length; i++) {
+    if (i > 0) updated += '\n## ';
     
-    if (lastVerifiedPattern.test(currentStatus)) {
-      currentStatus = currentStatus.replace(lastVerifiedPattern, lastVerifiedLine);
+    if (sections[i].startsWith('Verification History')) {
+      // Insert new entry at top of this section
+      const existingContent = sections[i].replace(/^Verification History\n+/, '');
+      updated += 'Verification History\n\n';
+      updated += newEntry + '\n\n';
+      updated += (existingContent.trim() === '(No verifications yet)' ? '' : existingContent);
     } else {
-      // Add Last Verified line after Active Phase
-      const activePhasePattern = /(\*\*Active Phase\*\*:.*$)/m;
-      if (activePhasePattern.test(currentStatus)) {
-        currentStatus = currentStatus.replace(
-          activePhasePattern,
-          `$1\n${lastVerifiedLine}`
-        );
-      } else {
-        // Add at beginning if no Active Phase line
-        currentStatus = `${lastVerifiedLine}\n${currentStatus}`;
-      }
+      updated += sections[i];
     }
   }
   
-  // Always update Last Updated
-  const lastUpdatedPattern = /\*\*Last Updated\*\*:.*$/m;
-  const lastUpdatedLine = `**Last Updated**: ${date}`;
-  
-  if (lastUpdatedPattern.test(currentStatus)) {
-    currentStatus = currentStatus.replace(lastUpdatedPattern, lastUpdatedLine);
-  } else {
-    currentStatus = `${currentStatus}\n${lastUpdatedLine}`;
-  }
-  
-  return currentStatus;
+  return updated;
 }
 ```
 
-#### Adding to Recent Progress
-
-**Prepend verification entry to Recent Progress:**
+**6. Update Phase Status (if verification passed)**
 
 ```javascript
-function updateRecentProgress(sections, verificationEntry) {
-  // Add new entry at the top (most recent first)
-  if (sections.recentProgress) {
-    return `${verificationEntry}\n\n${sections.recentProgress}`;
-  } else {
-    return verificationEntry;
+function updatePhaseStatus(stateContent, phaseName, verificationPassed) {
+  if (!verificationPassed) {
+    return stateContent; // Don't update if verification failed
   }
+  
+  // Find Current Phase section
+  const phaseRegex = /## Current Phase\n([\s\S]*?)(?=\n##|$)/;
+  const match = stateContent.match(phaseRegex);
+  
+  if (!match) {
+    return stateContent; // No phase section to update
+  }
+  
+  let phaseSection = match[1];
+  
+  // Update status to "Verified"
+  phaseSection = phaseSection.replace(
+    /Status: .+/,
+    `Status: Verified ✅`
+  );
+  
+  // Add verified timestamp
+  if (!phaseSection.includes('Verified:')) {
+    phaseSection += `\nVerified: ${new Date().toISOString()}\n`;
+  }
+  
+  return stateContent.replace(phaseRegex, `## Current Phase\n${phaseSection}\n`);
 }
 ```
 
-#### Managing Blockers
-
-**Add or remove blockers based on verification status:**
+**7. Write Updated STATE.md**
 
 ```javascript
-function updateBlockers(sections, verificationData, overallStatus) {
-  let blockers = sections.activeBlockers;
+function updateStateFile(verificationResults) {
+  // Read current state
+  const state = readStateFile();
   
-  if (overallStatus.status === 'FAILED') {
-    // Add blocker for failed verification
-    const blockerEntry = `- [ ] **${verificationData.phaseName} Verification Failed**: ${overallStatus.summary} - See \`${verificationData.reportPath}\``;
-    
-    // Check if blocker already exists for this phase
-    const phasePattern = new RegExp(`${verificationData.phaseName}.*Verification Failed`, 'i');
-    if (!phasePattern.test(blockers)) {
-      // Add new blocker
-      if (blockers) {
-        blockers = `${blockerEntry}\n${blockers}`;
-      } else {
-        blockers = blockerEntry;
-      }
-    }
-  } else if (overallStatus.status === 'PASSED') {
-    // Remove blocker if it exists for this phase
-    const phasePattern = new RegExp(`^- \\[ \\] \\*\\*${verificationData.phaseName}.*Verification Failed.*$`, 'gm');
-    blockers = blockers.replace(phasePattern, '').trim();
-    
-    // Clean up empty lines
-    blockers = blockers.replace(/\n\n+/g, '\n\n');
+  // Generate verification entry
+  const entry = generateVerificationEntry(verificationResults);
+  
+  // Insert entry
+  let updatedContent = state.exists ? state.content : generateNewState();
+  updatedContent = insertVerificationEntry(updatedContent, entry);
+  
+  // Update phase status if passed
+  if (verificationResults.overallStatus.status === 'PASS') {
+    updatedContent = updatePhaseStatus(
+      updatedContent,
+      verificationResults.metadata.phaseName,
+      true
+    );
   }
   
-  return blockers;
-}
-```
-
-#### Reconstructing STATE.md
-
-**Rebuild STATE.md with updated sections:**
-
-```javascript
-function rebuildStateFile(sections) {
-  const stateContent = `# Project State
-
-## Current Status
-
-${sections.currentStatus}
-
-## Recent Progress
-
-${sections.recentProgress}
-
-## Active Blockers
-
-${sections.activeBlockers || '*No active blockers*'}
-
-## Open Questions
-
-${sections.openQuestions || '*No open questions*'}
-
-## Next Session
-
-${sections.nextSession || '*To be determined*'}
-
-## Memory
-
-${sections.memory || '*No memory entries yet*'}
-
----
-
-*This is your living memory. Update it frequently.*
-`;
+  // Write back
+  fs.writeFileSync('.planning/STATE.md', updatedContent, 'utf8');
   
-  return stateContent;
-}
-```
-
-#### Creating New STATE.md
-
-**If STATE.md doesn't exist, create initial version:**
-
-```javascript
-function createInitialState(verificationData, overallStatus) {
-  const date = new Date().toISOString().split('T')[0];
-  const statusEmoji = overallStatus.emoji;
-  
-  const verificationEntry = createVerificationEntry(verificationData, overallStatus);
-  
-  const stateContent = `# Project State
-
-## Current Status
-
-**Active Phase**: ${verificationData.phaseName}
-**Last Verified**: ${overallStatus.status === 'PASSED' ? `${verificationData.phaseName} (${statusEmoji} Passed on ${date})` : 'None'}
-**Last Updated**: ${date}
-**Overall Progress**: Initial verification
-
-## Recent Progress
-
-${verificationEntry}
-
-## Active Blockers
-
-${overallStatus.status === 'FAILED' ? 
-  `- [ ] **${verificationData.phaseName} Verification Failed**: ${overallStatus.summary} - See \`${verificationData.reportPath}\`` : 
-  '*No active blockers*'}
-
-## Open Questions
-
-*No open questions*
-
-## Next Session
-
-**Focus**: ${generateNextAction(overallStatus)}
-
-**Context Needed**:
-- Review verification report: \`${verificationData.reportPath}\`
-
-## Memory
-
-### Technical Decisions
-- ${date}: Initial verification completed
-
-### Patterns to Follow
-- Run verification after completing each phase
-
----
-
-*This is your living memory. Update it frequently.*
-`;
-  
-  return stateContent;
-}
-```
-
-#### Writing STATE.md
-
-**Save updated STATE.md:**
-
-```bash
-# Backup existing STATE.md before updating
-if [ -f .planning/STATE.md ]; then
-  cp .planning/STATE.md .planning/STATE.md.backup
-  echo "✅ Backed up existing STATE.md"
-fi
-
-# Write updated STATE.md
-cat > .planning/STATE.md << 'EOF'
-[new state content]
-EOF
-
-echo "✅ STATE.md updated with verification results"
-
-# Verify the update
-if [ -f .planning/STATE.md ]; then
-  echo "STATE.md size: $(wc -l < .planning/STATE.md) lines"
-else
-  echo "⚠️ Warning: STATE.md write may have failed"
-fi
-```
-
-#### Complete Update Function
-
-**Full STATE.md update workflow:**
-
-```javascript
-async function updateStateWithVerification(verificationData, overallStatus) {
-  const planningDir = verificationData.planningDir;
-  
-  // Load existing state
-  const state = loadStateFile(planningDir);
-  
-  // Create verification entry
-  const verificationEntry = createVerificationEntry(verificationData, overallStatus);
-  
-  let newStateContent;
-  
-  if (state.exists) {
-    // Update existing STATE.md
-    const sections = state.sections;
-    
-    // Update sections
-    sections.currentStatus = updateCurrentStatus(sections, verificationData, overallStatus);
-    sections.recentProgress = updateRecentProgress(sections, verificationEntry);
-    sections.activeBlockers = updateBlockers(sections, verificationData, overallStatus);
-    
-    // Rebuild STATE.md
-    newStateContent = rebuildStateFile(sections);
-  } else {
-    // Create new STATE.md
-    newStateContent = createInitialState(verificationData, overallStatus);
-  }
-  
-  // Write STATE.md
-  const statePath = path.join(planningDir, 'STATE.md');
-  
-  // Backup if exists
-  if (fs.existsSync(statePath)) {
-    fs.copyFileSync(statePath, `${statePath}.backup`);
-    console.log('✅ Backed up existing STATE.md');
-  }
-  
-  fs.writeFileSync(statePath, newStateContent, 'utf8');
   console.log('✅ STATE.md updated with verification results');
-  
-  // Verify write succeeded
-  if (fs.existsSync(statePath)) {
-    const lines = fs.readFileSync(statePath, 'utf8').split('\n').length;
-    console.log(`STATE.md size: ${lines} lines`);
-    return { success: true, path: statePath };
-  } else {
-    console.error('⚠️ Warning: STATE.md write may have failed');
-    return { success: false, path: statePath };
-  }
 }
 ```
 
-#### Using state-manager.js
+**Integration Notes:**
 
-**Leverage existing state-manager utilities:**
+- Always preserve existing STATE.md content
+- Add new verification entries at TOP of history (most recent first)
+- Include FR4.1 task completion percentage in entry
+- Only update phase status to "Verified" if verification PASSED
+- Handle missing STATE.md by creating new one
+- Never corrupt or lose existing state data
 
-```javascript
-// If lib/utils/state-manager.js has relevant utilities, use them
-const stateManager = require('../lib/utils/state-manager');
+**FR4.1 in STATE.md:**
 
-// Example: Use state-manager functions if available
-// stateManager.readState()
-// stateManager.updateState()
-// stateManager.addEntry()
-
-// Check state-manager.js for available functions and integrate
-// This ensures consistency with other REIS commands
+Each verification entry MUST include feature completeness metrics:
+```
+**Results:**
+- Tests: 17/18 passed
+- Feature Completeness: 2/3 tasks (66%)  ← FR4.1 metric
+- Success Criteria: 5/6 met
+- Code Quality: PASS
 ```
 
-#### Best Practices
+This allows tracking completion progress across iterations.
 
-1. **Always backup** - Create STATE.md.backup before updates
-2. **Preserve content** - Don't overwrite unrelated sections
-3. **Chronological order** - Recent Progress newest first
-4. **Clean formatting** - Consistent spacing, proper markdown
-5. **Atomic updates** - Write complete file, don't partial update
-6. **Verify writes** - Check file exists and is reasonable size
-7. **Use state-manager** - Leverage existing utilities when available
-
-#### Error Handling
-
-| Error | Response |
-|-------|----------|
-| Cannot read STATE.md | Create new STATE.md |
-| Cannot write STATE.md | Error and abort (keep backup) |
-| Malformed STATE.md | Create new STATE.md (backup old) |
-| Backup fails | Warning but continue |
-| Section not found | Add section to STATE.md |
-
-#### Example STATE.md After Update
+**Example STATE.md Entry:**
 
 ```markdown
-# Project State
+### Verification: Phase 2 - Core Implementation
+**Date:** 2024-01-15T14:30:00Z  
+**Status:** FAIL  
+**Verifier:** reis_verifier v1.0
 
-## Current Status
+**Results:**
+- Tests: 17/18 passed
+- Feature Completeness: 2/3 tasks (66%)
+- Success Criteria: 5/6 met
+- Code Quality: PASS
 
-**Active Phase**: Phase 2 - Core Implementation
-**Last Verified**: Phase 1 - Design (✅ Passed on 2024-01-18)
-**Last Updated**: 2024-01-18
-**Overall Progress**: 1/4 phases complete
+**Issues:** 2 critical, 1 major, 3 minor
 
-## Recent Progress
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT.md`
 
-### 2024-01-18 - Verification: Phase 1 - Design & Specification
+**Action Required:** Fix issues and re-verify before proceeding
+- **Feature Completeness:** 1 tasks incomplete
 
-**Status**: ✅ PASSED
+---
 
-**Verified**:
-- Subagent specification complete and follows format
-- Template created with all required sections
-- Documentation updated
+### Verification: Phase 2 - Core Implementation (Re-verification)
+**Date:** 2024-01-15T16:45:00Z  
+**Status:** PASS  
+**Verifier:** reis_verifier v1.0
 
-**Test Results**: 10/10 tests passing
-**Success Criteria**: 7/7 criteria met
-**Code Quality**: No issues found
+**Results:**
+- Tests: 18/18 passed
+- Feature Completeness: 3/3 tasks (100%)
+- Success Criteria: 6/6 met
+- Code Quality: PASS
 
-**Report**: `.planning/verification/phase-1-design/2024-01-18T15-30-00.md`
+**Issues:** 0 critical, 0 major, 1 minor
 
-**Next Action**: Proceed to next phase/plan
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT_2.md`
 
-### 2024-01-18 - Completed Phase 1 Tasks
-
-Completed specification and template design.
-
-...
-
-## Active Blockers
-
-*No active blockers*
-
-...
-```
-
-#### Integration Check
-
-After updating STATE.md, verify integration:
-
-```bash
-# Verify STATE.md is valid markdown
-cat .planning/STATE.md | head -20
-
-# Check verification entry was added
-grep -q "Verification:" .planning/STATE.md && echo "✅ Verification entry added"
-
-# Check Last Verified updated (if passed)
-grep "Last Verified" .planning/STATE.md
-
-# Verify backup exists
-[ -f .planning/STATE.md.backup ] && echo "✅ Backup created"
+**Next Phase:** Ready to proceed
 ```
 ```
 
-**Key Points:**
-- Complete STATE.md manipulation workflow
-- Preserve existing content while adding verification entry
-- Update phase status on successful verification
-- Manage blockers based on verification results
-- Create new STATE.md if missing
-- Always backup before updating
-- Use state-manager.js utilities when available
-
+Save changes to subagents/reis_verifier.md
 </action>
 <verify>
 ```bash
-# Verify Step 7 section added
-grep -q "### Step 7: Update STATE.md" subagents/reis_verifier.md && echo "✅ Step 7 section present"
+# Check Step 7 exists
+grep -q "Step 7.*STATE\|Update STATE" subagents/reis_verifier.md && echo "✅ Step 7 STATE.md integration present"
 
-# Check for key components
-grep -q "STATE.md Structure" subagents/reis_verifier.md && echo "✅ Structure documented"
-grep -q "Reading STATE.md" subagents/reis_verifier.md && echo "✅ Reading logic present"
-grep -q "Creating Verification Entry" subagents/reis_verifier.md && echo "✅ Entry creation included"
-grep -q "Updating Current Status" subagents/reis_verifier.md && echo "✅ Status update logic present"
-grep -q "Managing Blockers" subagents/reis_verifier.md && echo "✅ Blocker management included"
+# Verify read/write functions
+grep -q "readStateFile\|updateStateFile" subagents/reis_verifier.md && echo "✅ STATE.md read/write logic present"
 
-# Verify functions
-grep -q "loadStateFile\|createVerificationEntry\|updateStateWithVerification" subagents/reis_verifier.md && echo "✅ Key functions present"
+# Check entry generation
+grep -q "generateVerificationEntry\|insertVerificationEntry" subagents/reis_verifier.md && echo "✅ Entry generation logic present"
 
-# Check for backup logic
-grep -q "backup\|.backup" subagents/reis_verifier.md && echo "✅ Backup logic included"
+# Verify FR4.1 metrics included
+grep -q "Feature Completeness.*tasks.*%" subagents/reis_verifier.md && echo "✅ FR4.1 metrics in STATE.md entries"
 ```
 </verify>
 <done>
-- subagents/reis_verifier.md updated with comprehensive STATE.md integration
-- STATE.md Structure Review section
-- Reading STATE.md with section parsing
-- Creating Verification Entry with formatted output
-- Updating Current Status with Last Verified field
-- Adding to Recent Progress (chronological, newest first)
-- Managing Blockers (add on failure, remove on success)
-- Reconstructing STATE.md with all sections preserved
-- Creating New STATE.md if missing
-- Writing STATE.md with backup functionality
-- Complete Update Function with full workflow
-- Using state-manager.js utilities integration
-- Best Practices and Error Handling
-- Example STATE.md After Update
-- Integration Check verification
-- Section is ~250-300 lines with executable code
+- Step 7 enhanced with STATE.md integration
+- Read current STATE.md without corruption
+- Parse existing verification history
+- Generate verification entry with FR4.1 metrics
+- Insert entry at top of history (most recent first)
+- Update phase status if verification passed
+- Write updated STATE.md preserving all data
+- Handle missing STATE.md gracefully
+- FR4.1 task completion percentage included in entries
+- Example STATE.md entry format documented
 </done>
 </task>
 
 ## Success Criteria
-- ✅ Step 7 (Update STATE.md) in reis_verifier.md fully documented
-- ✅ STATE.md reading without corruption
-- ✅ Verification entry creation with proper formatting
-- ✅ Current status updates (Last Verified field)
-- ✅ Recent Progress updates (chronological order)
-- ✅ Blocker management (add on failure, remove on success)
-- ✅ STATE.md reconstruction preserving all sections
-- ✅ New STATE.md creation if missing
-- ✅ Backup before updating
-- ✅ Complete JavaScript functions and bash commands provided
-- ✅ Integration with state-manager.js utilities
+- ✅ Step 7 of reis_verifier protocol includes STATE.md integration
+- ✅ Read STATE.md without corrupting existing content
+- ✅ Parse verification history
+- ✅ Generate verification entry with all metrics including FR4.1
+- ✅ Insert entry at top of history section
+- ✅ Update phase status to "Verified" if passed
+- ✅ Handle missing STATE.md by creating new one
+- ✅ FR4.1 task completion percentage prominently displayed
+- ✅ Example entry format documented
 
 ## Verification
 
 ```bash
-# Check Step 7 section
-grep -A100 "### Step 7: Update STATE.md" subagents/reis_verifier.md | head -50
+# Check Step 7 content
+grep -A60 "Step 7.*STATE" subagents/reis_verifier.md | head -70
 
-# Verify completeness
-echo "Checking for key components:"
-grep -q "loadStateFile" subagents/reis_verifier.md && echo "✅ State loading function"
-grep -q "createVerificationEntry" subagents/reis_verifier.md && echo "✅ Entry creation function"
-grep -q "updateStateWithVerification" subagents/reis_verifier.md && echo "✅ Main update function"
-grep -q "backup" subagents/reis_verifier.md && echo "✅ Backup logic present"
+# Verify entry generation
+grep -n "generateVerificationEntry" subagents/reis_verifier.md
 
-# Verify all 7 steps documented
-grep "^### Step" subagents/reis_verifier.md
+# Check FR4.1 integration
+grep -n "Feature Completeness.*tasks" subagents/reis_verifier.md | head -5
 ```
 
 ---

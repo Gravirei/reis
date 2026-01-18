@@ -1,558 +1,646 @@
-# Plan: 4-2 - Complete Documentation and Finalize
+# Plan: 4-2 - Documentation and Project Completion
 
 ## Objective
-Complete all documentation, update README and CHANGELOG, create verification guide, and finalize the reis_verifier subagent for release.
+Complete project documentation, update README and CHANGELOG, create verification guide with FR4.1 details, and finalize the REIS Verifier for production use.
 
 ## Context
-All verification functionality is implemented and tested (Phases 1-3, Wave 4.1). Now we need comprehensive documentation so developers can use the verifier effectively. This includes updating main README, creating a verification guide, adding examples, and updating CHANGELOG.
+This is the final wave. All verification components are implemented, including FR4.1 Feature Completeness Validation. Now we document everything and prepare for release.
 
-**Key Requirements:**
-- Update main README.md with verifier information
+**Key Deliverables:**
+- Update README.md with verifier documentation
 - Create comprehensive docs/VERIFICATION.md guide
-- Add practical examples and workflows
-- Update command help text
-- Add CHANGELOG.md entry for verifier
-- Create release notes summary
-- Verify all documentation is consistent
-
-**Documentation Audience:**
-- Solo developers using REIS
-- Contributors to REIS project
-- Future maintainers
+- Document FR4.1 feature completeness validation
+- Add examples of verification workflows
+- Update CHANGELOG.md
+- Final integration testing
 
 ## Dependencies
-- Wave 4.1 (Testing) - Need tests complete before documenting
+- Wave 4.1 (All tests passing)
+- All previous phases complete
 
 ## Tasks
 
 <task type="auto">
-<name>Update main README.md with verifier</name>
+<name>Update README.md with verifier documentation</name>
 <files>README.md</files>
 <action>
-Update the main README.md to include reis_verifier in commands, workflows, and feature lists.
+Add comprehensive documentation about the reis_verifier to the main README.
 
-**Sections to Update:**
+**Locate:** Find the Commands section or Usage section in README.md
 
-1. **Commands Section** - Add verify command:
+**Add Verification Section:**
+
 ```markdown
-### reis verify
+### Verification
 
-Verify that a phase or plan has been completed successfully.
+Verify that executed plans meet all success criteria and feature completeness requirements.
 
-**Usage:**
 ```bash
-# Verify entire phase
-reis verify <phase-number>
+# Verify a phase
+reis verify 2
+reis verify phase-2
+reis verify core-implementation
 
 # Verify specific plan
-reis verify path/to/PLAN.md
+reis verify path/to/plan.PLAN.md
+
+# Options
+reis verify 2 --verbose      # Detailed output
+reis verify 2 --strict       # Fail on warnings
 ```
 
-**What it does:**
-- Runs test suite (npm test)
-- Validates success criteria from PLAN.md
-- Checks code quality (syntax, linting)
-- Verifies documentation completeness
-- Generates comprehensive verification report
-- Updates STATE.md with results
+**What Gets Verified:**
 
-**Reports saved to:** `.planning/verification/{phase-name}/`
+1. **Feature Completeness (FR4.1)** - Critical
+   - Verifies ALL planned tasks are implemented
+   - Checks files, functions, classes, endpoints exist
+   - Reports missing deliverables with evidence
+   - **Requires 100% task completion to pass**
+
+2. **Test Results**
+   - Runs `npm test`
+   - Reports pass/fail counts
+   - Shows failing test details
+
+3. **Success Criteria**
+   - Validates each criterion from PLAN.md
+   - Documents evidence
+   - Reports unmet criteria
+
+4. **Code Quality**
+   - Syntax validation
+   - Linting (if configured)
+   - Quality scoring
+
+5. **Documentation**
+   - Checks README.md, CHANGELOG.md
+   - Reports completeness
+
+**Verification Report:**
+
+Generated at `.planning/verification/{phase}/VERIFICATION_REPORT.md` with:
+- Executive summary with overall status
+- **Feature Completeness breakdown** (task-by-task)
+- Test results and failures
+- Success criteria validation
+- Code quality metrics
+- Actionable recommendations
+
+**FR4.1: Why Feature Completeness Matters:**
+
+Tests passing ≠ features complete. Executors may skip tasks without errors.
+
+FR4.1 catches this by:
+- Parsing all tasks from PLAN.md
+- Verifying each deliverable exists (files, functions, tests)
+- Calculating completion: 100% = PASS, <100% = FAIL
+
+**Example:**
+
+```bash
+$ reis verify phase-2
+
+🔍 REIS Verifier
+📄 Plan: .planning/phase-2/plan.PLAN.md
+
+Verification Scope:
+  Tasks: 3
+  Success Criteria: 6
+
+🔄 Running verification...
+
+❌ VERIFICATION FAILED
+
+Issues found:
+  - Feature Completeness: 66% (1 task incomplete)
+  - Task 2: Build Password Reset - INCOMPLETE
+    Missing: src/auth/password-reset.js, sendResetEmail()
+  - 1 test failing (related to incomplete task)
+
+Report: .planning/verification/phase-2/VERIFICATION_REPORT.md
+
+Action Required: Complete all tasks before proceeding
 ```
 
-2. **Workflow Section** - Add verification to the REIS workflow:
-```markdown
-## REIS Workflow
+After fixing:
+```bash
+$ reis verify phase-2
 
-1. **Plan** - `reis plan` - Create executable plans
-2. **Execute** - `reis execute-plan` - Implement the plan
-3. **Verify** - `reis verify` - Validate completion ✨ NEW
-4. **Iterate** - Fix issues and re-verify
-5. **Repeat** - Move to next phase
+✅ VERIFICATION PASSED
+
+All checks passed:
+  ✅ Feature Completeness: 100% (3/3 tasks)
+  ✅ Tests: 18/18 passing
+  ✅ Success Criteria: 6/6 met
+  ✅ Code Quality: PASS
+
+Ready to proceed to Phase 3
 ```
 
-3. **Features List** - Add verification features:
-```markdown
-- ✅ **Autonomous Verification** - Automated testing, quality checks, and validation
-- ✅ **Comprehensive Reports** - Detailed verification reports with actionable recommendations
-- ✅ **State Tracking** - Automatic STATE.md updates with verification history
+**See also:** `docs/VERIFICATION.md` for detailed verification guide.
 ```
 
-4. **Subagents Section** - Already updated in Wave 1.1, verify it's there.
+**Integration Note:** Place this after the `execute-plan` section and before the Advanced Usage section.
 
-5. **Quick Start** - Add verification example:
-```markdown
-# After executing a plan
-reis verify 1  # Verify Phase 1 completed successfully
-```
-
-**Keep it concise** - Don't duplicate the full guide, just introduce the command and link to docs/VERIFICATION.md for details.
-
-**Add link to guide:**
-```markdown
-For detailed verification guide, see [docs/VERIFICATION.md](docs/VERIFICATION.md).
-```
 </action>
 <verify>
 ```bash
 # Check README was updated
-grep -q "reis verify" README.md && echo "✅ verify command documented"
-grep -q "Verification" README.md && echo "✅ Verification mentioned"
-grep -q "docs/VERIFICATION.md" README.md && echo "✅ Link to guide added"
+grep -q "reis verify\|Verification" README.md && echo "✅ Verification section added to README"
 
-# Verify workflow includes verification
-grep -A10 "Workflow" README.md | grep -q "Verify" && echo "✅ Workflow updated"
+# Verify FR4.1 mentioned
+grep -q "FR4.1\|Feature Completeness" README.md && echo "✅ FR4.1 documented in README"
+
+# Check for examples
+grep -q "reis verify.*phase" README.md && echo "✅ Verification examples present"
+
+# Verify comprehensive coverage
+grep -A50 "### Verification" README.md | grep -q "Test Results\|Success Criteria\|Code Quality" && echo "✅ All verification aspects documented"
 ```
 </verify>
 <done>
-- README.md updated with reis verify command
-- Command usage and description added
-- Workflow section includes verification step
-- Features list mentions verification
-- Link to docs/VERIFICATION.md added
-- Quick start example includes verification
+- README.md updated with comprehensive verification documentation
+- Verification command usage and options documented
+- All 5 verification aspects explained (FR4.1, tests, criteria, quality, docs)
+- FR4.1 Feature Completeness prominently featured
+- Example workflows showing failure and success
+- Clear explanation of 100% completion requirement
+- Links to detailed guide (docs/VERIFICATION.md)
 </done>
 </task>
 
 <task type="auto">
-<name>Create comprehensive verification guide</name>
+<name>Create comprehensive VERIFICATION.md guide</name>
 <files>docs/VERIFICATION.md</files>
 <action>
-Create a detailed guide explaining verification concepts, usage, and workflows.
+Create detailed verification guide explaining all aspects including FR4.1.
 
-**Guide Structure:**
+**Content:**
 
 ```markdown
-# Verification Guide
-
-Complete guide to using reis_verifier for automated verification in REIS.
-
-## Table of Contents
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-- [How Verification Works](#how-verification-works)
-- [Verification Protocol](#verification-protocol)
-- [Using reis verify](#using-reis-verify)
-- [Verification Reports](#verification-reports)
-- [Success Criteria](#success-criteria)
-- [Verification Scenarios](#verification-scenarios)
-- [Iteration Workflow](#iteration-workflow)
-- [Best Practices](#best-practices)
-- [Troubleshooting](#troubleshooting)
+# REIS Verification Guide
 
 ## Overview
 
-reis_verifier automates the verification of completed work, ensuring quality and completeness before moving forward.
+The REIS Verifier (`reis_verifier` subagent) provides automated verification of execution results against plan specifications. It ensures not only that tests pass, but that **all planned features are actually implemented** (FR4.1).
 
-**What gets verified:**
-- ✅ Test suite results (all tests passing)
-- ✅ Success criteria from PLAN.md (each criterion validated)
-- ✅ Code quality (syntax, linting, common issues)
-- ✅ Documentation (README, CHANGELOG, comments)
-- ✅ Overall project health
+## Why Verification Matters
 
-**Benefits:**
-- Catch issues early
-- Maintain quality standards
-- Document verification history
-- Clear pass/fail determination
-- Actionable recommendations
+**The Problem:** Executors (human or AI) may skip tasks, leaving features unimplemented without errors or test failures.
 
-## Quick Start
-
-```bash
-# Complete a phase
-reis execute-plan .planning/phases/1-setup/1-1-init.PLAN.md
-
-# Verify it's complete
-reis verify 1
-
-# Check verification report
-cat .planning/verification/phase-1-setup/[timestamp].md
-
-# If verification passed, proceed to next phase
-reis plan 2
-```
-
-## How Verification Works
-
-reis_verifier follows a **7-step protocol**:
-
-1. **Load Context** - Read PLAN.md, success criteria, STATE.md
-2. **Run Tests** - Execute test suite, capture results
-3. **Validate Criteria** - Check each success criterion with evidence
-4. **Check Quality** - Syntax validation, linting, common issues
-5. **Verify Docs** - README, CHANGELOG, code comments
-6. **Generate Report** - Comprehensive verification report
-7. **Update State** - Add verification entry to STATE.md
+**The Solution:** FR4.1 Feature Completeness Validation catches incomplete implementations by verifying that ALL planned tasks and deliverables exist in the codebase.
 
 ## Verification Protocol
 
-[Include 7-step details - reference subagents/reis_verifier.md]
+The verifier follows a 7-step protocol:
 
-## Using reis verify
+1. **Load Verification Context** - Parse PLAN.md for tasks and criteria
+2. **Run Test Suite** - Execute `npm test`, parse results
+3. **Validate Code Quality** - Check syntax, run linter
+4. **Validate Success Criteria & Feature Completeness (FR4.1)** - CRITICAL
+5. **Verify Documentation** - Check README, CHANGELOG
+6. **Generate Report** - Create VERIFICATION_REPORT.md
+7. **Update STATE.md** - Record verification results
 
-### Verify Entire Phase
+## FR4.1: Feature Completeness Validation (Critical)
 
+### What It Does
+
+Verifies that ALL tasks from PLAN.md are completely implemented:
+
+1. **Parse Tasks** - Extract all `<task>` blocks from PLAN.md
+2. **Extract Deliverables** - Identify expected files, functions, classes, endpoints
+3. **Verify Existence** - Check that each deliverable exists in codebase
+4. **Calculate Completion** - Tasks completed / Total tasks = %
+5. **Report** - Show evidence for complete tasks, missing items for incomplete
+
+### Verification Methods
+
+**File Existence:**
 ```bash
-reis verify <phase-number>
+# Direct check
+test -f src/auth/login.js && echo "Found"
+
+# Git ls-files (handles renames)
+git ls-files | grep "login.js"
 ```
 
-Verifies all plans in the specified phase.
-
-**Example:**
+**Code Patterns:**
 ```bash
-reis verify 1  # Verify all Phase 1 plans
+# Function/class search
+grep -r "function authenticateUser" src/
+grep -r "class UserModel" src/
+
+# Endpoint search
+grep -r "post('/api/login'" routes/
 ```
 
-### Verify Specific Plan
-
+**Test Presence:**
 ```bash
-reis verify <path-to-plan>
+# Check for corresponding test file
+test -f test/auth/login.test.js
 ```
 
-Verifies a single plan file.
+### Completion Calculation
 
-**Example:**
-```bash
-reis verify .planning/phases/1-setup/1-1-init.PLAN.md
+```
+Completion % = (Tasks Complete / Total Tasks) × 100
+
+100% = PASS ✅
+<100% = FAIL ❌
 ```
 
-### Command Options
+**Why 100% Required:**
 
-Currently, `reis verify` accepts:
-- Phase number (1, 2, 3, etc.)
-- Plan file path (absolute or relative)
+Incomplete implementations cause downstream issues:
+- Missing features break dependent tasks
+- Tests may pass but functionality is absent
+- Integration problems in later phases
 
-## Verification Reports
+### Example: Detecting Incomplete Implementation
 
-Reports are saved to `.planning/verification/{phase-name}/{timestamp}.md`
+**PLAN.md:**
+```xml
+<task type="auto">
+<name>Build User Login</name>
+<files>src/auth/login.js, test/auth/login.test.js</files>
+<action>
+Implement authenticateUser() function that validates credentials
+and returns JWT token.
+</action>
+</task>
 
-**Report Structure:**
-- Executive Summary (pass/fail, key findings)
-- Test Results (pass/fail counts, failed tests)
-- Success Criteria (criterion-by-criterion validation)
-- Code Quality (syntax, linting, quality score)
-- Documentation (required docs, TODOs, completeness)
-- Recommendations (critical issues, warnings, suggestions)
-- Next Steps (what to do based on results)
+<task type="auto">
+<name>Build Password Reset</name>
+<files>src/auth/password-reset.js, test/auth/password-reset.test.js</files>
+<action>
+Implement sendResetEmail() function that generates reset token
+and sends email.
+</action>
+</task>
+```
 
-**Example Report:** See `.planning/verifier-project/examples/example-verification-report.md`
+**Actual Implementation:**
+- Task 1: ✅ login.js and authenticateUser() exist
+- Task 2: ❌ password-reset.js MISSING, sendResetEmail() NOT FOUND
 
-## Success Criteria
+**FR4.1 Detection:**
+```markdown
+## Feature Completeness (FR4.1)
 
-Success criteria define "done" for each plan. They're listed in PLAN.md:
+**Status:** ❌ INCOMPLETE (50%)
+**Tasks Completed:** 1/2
+
+### Task-by-Task Analysis
+
+#### ✅ Task: Build User Login
+**Status:** COMPLETE
+**Evidence:**
+- file: `src/auth/login.js` (confidence: 100%)
+- function: `src/auth/login.js:15` (confidence: 90%)
+- test: `test/auth/login.test.js` (confidence: 100%)
+
+#### ❌ Task: Build Password Reset
+**Status:** INCOMPLETE - FEATURE MISSING
+**Missing Deliverables:**
+- file: `src/auth/password-reset.js` NOT FOUND
+- function: `sendResetEmail` NOT FOUND (0 matches)
+- test: `test/auth/password-reset.test.js` NOT FOUND
+
+**Search Evidence:**
+```bash
+$ git ls-files | grep "password-reset"
+# No matches
+
+$ grep -r "sendResetEmail" src/
+# No matches
+```
+
+**Impact:** HIGH - Critical authentication feature missing
+**Recommendation:** Implement src/auth/password-reset.js with sendResetEmail()
+```
+
+**Result:** Verification FAILS (50% < 100%)
+
+## Running Verification
+
+### Basic Usage
+
+```bash
+# Verify current phase
+reis verify 2
+
+# Verify by phase name
+reis verify core-implementation
+
+# Verify specific plan
+reis verify .planning/phases/2-core/2-1-command.PLAN.md
+```
+
+### Options
+
+```bash
+--verbose, -v    # Show detailed output
+--strict, -s     # Fail on warnings (not just errors)
+```
+
+### Interpreting Results
+
+**✅ PASSED:**
+- All tasks complete (100%)
+- All tests passing
+- All success criteria met
+- Code quality acceptable
+
+**❌ FAILED:**
+- Tasks incomplete (<100%)
+- Tests failing
+- Success criteria unmet
+- Code quality errors
+
+**⚠️ PASSED WITH WARNINGS:**
+- All tasks complete (100%)
+- Tests passing
+- Minor issues (no tests, lint warnings, etc.)
+
+## Verification Report
+
+### Report Location
+
+`.planning/verification/{phase-name}/VERIFICATION_REPORT.md`
+
+### Report Structure
+
+1. **Executive Summary** - Overall status, key metrics
+2. **Feature Completeness (FR4.1)** - Task-by-task breakdown
+3. **Test Results** - Pass/fail counts, failures
+4. **Success Criteria** - Individual criterion status
+5. **Code Quality** - Syntax, linting results
+6. **Documentation** - Doc completeness
+7. **Issues Summary** - Categorized by severity
+8. **Recommendations** - Actionable next steps
+9. **Next Steps** - Re-verification or proceed
+
+### Key Sections
+
+**Feature Completeness (Most Important):**
+- Shows each task's status (COMPLETE/INCOMPLETE)
+- Provides evidence for completed tasks
+- Lists missing deliverables with search evidence
+- Assesses impact (HIGH/MEDIUM/LOW)
+- Gives specific recommendations
+
+**Test Results:**
+- Framework detected
+- Pass/fail/pending counts
+- Failed test details (file, line, error)
+
+**Success Criteria:**
+- Each criterion validated individually
+- Evidence for met criteria
+- Explanation for unmet criteria
+
+## STATE.md Integration
+
+Verification results are recorded in `.planning/STATE.md`:
 
 ```markdown
-## Success Criteria
-- ✅ File X exists and contains Y
-- ✅ All tests passing
-- ✅ README updated with new feature
-- ✅ No syntax errors
+### Verification: Phase 2 - Core Implementation
+**Date:** 2024-01-15T14:30:00Z
+**Status:** FAIL
+**Verifier:** reis_verifier v1.0
+
+**Results:**
+- Tests: 17/18 passed
+- Feature Completeness: 1/2 tasks (50%)
+- Success Criteria: 5/6 met
+- Code Quality: PASS
+
+**Issues:** 2 critical, 1 major, 0 minor
+
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT.md`
+
+**Action Required:** Fix issues and re-verify before proceeding
+- **Feature Completeness:** 1 tasks incomplete
 ```
-
-**Types of Criteria:**
-- File existence ("File X exists")
-- Content checks ("File contains Y")
-- Test results ("All tests passing")
-- Documentation ("README updated")
-- Quality ("No syntax errors")
-- Generic (manually verified)
-
-**Best Practices:**
-- Make criteria specific and testable
-- Include file paths and exact expectations
-- Avoid vague criteria like "Feature works"
-- Each criterion should be independently verifiable
-
-## Verification Scenarios
-
-### ✅ Passing Verification
-
-**Result:** All checks pass
-- Tests: All passing
-- Criteria: All met
-- Quality: No issues
-- Docs: Complete
-
-**Next Step:** Proceed to next phase
-
-### ❌ Failed Verification
-
-**Result:** Critical issues found
-- Tests failing
-- Criteria not met
-- Syntax errors
-
-**Next Steps:**
-1. Review verification report
-2. Fix critical issues
-3. Re-run verification
-4. Repeat until passed
-
-### ⚠️ Partial Verification
-
-**Result:** Warnings but no failures
-- Tests pass
-- Some warnings (no linter, TODOs, etc.)
-- Non-critical issues
-
-**Next Steps:**
-- Review warnings
-- Decide whether to fix or proceed
-- Document decision in STATE.md
 
 ## Iteration Workflow
 
-Complete workflow with verification:
+### 1. Execute Plan
 
 ```bash
-# 1. Plan phase
-reis plan myproject-phase-1
-
-# 2. Execute plans
-reis execute-plan .planning/phases/1-setup/1-1-init.PLAN.md
-reis execute-plan .planning/phases/1-setup/1-2-config.PLAN.md
-
-# 3. Verify phase
-reis verify 1
-
-# 4a. If PASSED - proceed
-reis plan 2
-
-# 4b. If FAILED - fix and re-verify
-# Fix issues from report
-reis verify 1  # Try again
-
-# 4c. If PARTIAL - decide
-# Review warnings, make decision
-# Document in STATE.md
+reis execute-plan phase-2
 ```
 
-**Continuous Verification:**
-- Verify after each phase
-- Re-verify after fixing issues
-- Keep verification reports for history
+### 2. Verify Results
+
+```bash
+reis verify phase-2
+```
+
+### 3A. If Failed - Fix and Re-verify
+
+```bash
+# Read report
+cat .planning/verification/phase-2/VERIFICATION_REPORT.md
+
+# Fix issues (implement missing tasks, fix tests, etc.)
+# ...
+
+# Re-verify
+reis verify phase-2
+```
+
+### 3B. If Passed - Proceed
+
+```bash
+# Move to next phase
+reis plan phase-3
+reis execute-plan phase-3
+reis verify phase-3
+```
 
 ## Best Practices
 
-### Writing Testable Criteria
+### For Plan Creators
 
-**Good:**
-```markdown
-- ✅ File src/app.js exists with >100 lines
-- ✅ All 15 tests passing
-- ✅ README.md contains "Installation" section
-- ✅ Command `npm start` runs without errors
-```
+1. **Be Specific in PLAN.md:**
+   - List all expected files in `<files>` tags
+   - Mention key functions/classes in `<action>`
+   - Clear acceptance criteria
 
-**Bad:**
-```markdown
-- ✅ App works correctly
-- ✅ Code is good
-- ✅ Everything is done
-```
+2. **Make Tasks Atomic:**
+   - One clear responsibility per task
+   - Independently verifiable
+   - 15-45 minutes of work
 
-### Maintaining Quality
+3. **Write Verifiable Success Criteria:**
+   - Observable outcomes
+   - Testable assertions
+   - Clear evidence
 
-1. **Run tests regularly** - Don't wait until verification
-2. **Keep README updated** - Update as you build
-3. **Fix linting issues early** - Don't accumulate tech debt
-4. **Document decisions** - Explain why, not just what
+### For Executors
 
-### Verification Frequency
+1. **Complete ALL Tasks:**
+   - Don't skip tasks (FR4.1 will catch it)
+   - Implement all deliverables
+   - Add tests for new features
 
-- **After each plan** - Lightweight verification
-- **After each phase** - Comprehensive verification
-- **Before milestones** - Extra careful verification
-- **After bug fixes** - Ensure fix didn't break anything
+2. **Test Before Submitting:**
+   - Run `npm test` locally
+   - Check that files exist
+   - Verify functionality
+
+3. **Document Changes:**
+   - Update README if needed
+   - Add CHANGELOG entry
+   - Comment code appropriately
+
+### For Verifiers
+
+1. **Read Full Report:**
+   - Don't just check pass/fail
+   - Understand what's missing
+   - Assess impact
+
+2. **Prioritize Issues:**
+   - Fix critical first (incomplete tasks, test failures)
+   - Then major (unmet criteria)
+   - Then minor (warnings)
+
+3. **Re-verify After Fixes:**
+   - Don't assume fixes work
+   - Run verification again
+   - Confirm 100% completion
 
 ## Troubleshooting
 
-### "No tests found"
+### "Feature Completeness: 66%" - Why Did It Fail?
 
-**Issue:** Project has no test suite
-**Solution:** 
-- Add tests (recommended)
-- Or accept warning and proceed (not ideal)
+FR4.1 requires 100% task completion. Check the report:
+- Which tasks are incomplete?
+- What deliverables are missing?
+- Implement missing features and re-verify
 
-### "Syntax errors found"
+### "Tests Pass But Verification Fails"
 
-**Issue:** Code has syntax errors
-**Solution:**
-- Run `node --check` on files
-- Fix syntax errors
-- Re-verify
+This is exactly what FR4.1 catches:
+- Tests might not cover all features
+- Some tasks may be unimplemented
+- Check Feature Completeness section in report
 
-### "Linting failed"
+### "No Tests Found" - Is This a Failure?
 
-**Issue:** ESLint/linter found issues
-**Solution:**
-- Run `npm run lint` to see issues
-- Fix linting problems
-- Or disable linter rules if intentional
+No, missing tests = WARNING, not failure:
+- Verification can pass without tests
+- But tests are recommended
+- Add tests in future iterations
 
-### "Criterion not met"
+### "Linting Errors" - Do They Block Verification?
 
-**Issue:** Success criterion validation failed
-**Solution:**
-- Check what was expected
-- Verify files exist, tests pass, etc.
-- Update criterion if it was wrong
-- Or fix implementation to meet criterion
-
-### "Verification report not generated"
-
-**Issue:** Report creation failed
-**Solution:**
-- Check `.planning/verification/` directory exists
-- Verify write permissions
-- Check disk space
-- Review error messages
-
-### "STATE.md corrupted"
-
-**Issue:** STATE.md update failed
-**Solution:**
-- Restore from `.planning/STATE.md.backup`
-- Check STATE.md format
-- Re-run verification
+Yes, by default:
+- Syntax errors always fail
+- Lint errors fail by default
+- Use `--lenient` to allow lint errors (not recommended)
 
 ## Advanced Usage
 
-### Custom Success Criteria
+### Custom Verification Criteria
 
-You can add custom validation logic to PLAN.md:
+Add project-specific checks by extending reis_verifier.md specification.
 
-```markdown
-## Verification
+### Integration with CI/CD
 
-```bash
-# Custom validation
-curl http://localhost:3000/api/health | grep -q "OK"
+```yaml
+# .github/workflows/verify.yml
+name: Verify Implementation
+on: [push]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: npm install
+      - run: npx reis verify ${{ github.ref_name }}
 ```
 
-### Multiple Verification Runs
-
-Each verification creates a new timestamped report:
-- Track verification history
-- Compare results over time
-- Document progress toward passing
-
-### Integrating with CI/CD
+### Batch Verification
 
 ```bash
-# In CI pipeline
-reis verify $PHASE_NUMBER || exit 1
+# Verify all phases
+for phase in 1 2 3 4; do
+  echo "Verifying phase $phase..."
+  reis verify $phase
+done
 ```
 
-## Examples
+## FAQ
 
-### Example 1: Simple Feature Verification
+**Q: Why is 100% completion required?**
+A: Incomplete features cause downstream issues and technical debt.
 
-```bash
-# Completed feature implementation
-reis execute-plan .planning/phases/2-feature/2-1-implement.PLAN.md
+**Q: Can I skip FR4.1 checks?**
+A: No, feature completeness is non-negotiable for quality.
 
-# Verify
-reis verify .planning/phases/2-feature/2-1-implement.PLAN.md
+**Q: What if a task was refactored?**
+A: FR4.1 handles renames/moves with confidence scoring and git history.
 
-# Result: ✅ PASSED
-# - 12/12 tests passing
-# - 4/4 success criteria met
-# - No quality issues
-```
+**Q: How long does verification take?**
+A: 30 seconds to 2 minutes depending on test suite size.
 
-### Example 2: Failed Verification with Fix
+**Q: Can I verify without tests?**
+A: Yes, but you'll get a warning. Tests are recommended.
 
-```bash
-# Verify
-reis verify 3
+## Summary
 
-# Result: ❌ FAILED
-# - 2 tests failing
-# - README not updated
+REIS Verification ensures:
+- ✅ All planned tasks are implemented (FR4.1)
+- ✅ Tests pass
+- ✅ Success criteria met
+- ✅ Code quality acceptable
+- ✅ Documentation complete
 
-# Fix issues
-# - Fix failing tests
-# - Update README
-
-# Re-verify
-reis verify 3
-
-# Result: ✅ PASSED
-```
-
-### Example 3: Partial with Decision
-
-```bash
-# Verify
-reis verify 1
-
-# Result: ⚠️ PARTIAL
-# - All tests pass
-# - No linter configured (warning)
-# - 5 TODO comments
-
-# Decision: Proceed
-# - TODOs are not critical
-# - Add linter in future phase
-# - Document decision in STATE.md
-```
-
-## See Also
-
-- [PLAN.md Template](../templates/PLAN.md) - How to write success criteria
-- [Subagent Specification](../subagents/reis_verifier.md) - Technical details
-- [Verification Report Template](../templates/VERIFICATION_REPORT.md) - Report format
+**Key Takeaway:** Verification is not just about tests. FR4.1 Feature Completeness ensures nothing is missing.
 
 ---
 
-**Ready to verify?** Run `reis verify <phase>` and ensure your work is complete!
+For technical details, see `subagents/reis_verifier.md`
 ```
 
-**Key Points:**
-- Start with overview and quick start
-- Explain the 7-step protocol
-- Show practical examples
-- Include troubleshooting
-- Link to related docs
-- Make it actionable
-
-**Aim for ~400 lines** with clear sections, examples, and practical advice.
+Save to `docs/VERIFICATION.md`
 </action>
 <verify>
 ```bash
 # Check guide was created
-test -f docs/VERIFICATION.md && echo "✅ Guide created"
+test -f docs/VERIFICATION.md && echo "✅ Verification guide created"
 
-# Verify key sections
-grep -q "## Overview" docs/VERIFICATION.md && echo "✅ Overview section"
-grep -q "## Quick Start" docs/VERIFICATION.md && echo "✅ Quick Start section"
-grep -q "7-step protocol" docs/VERIFICATION.md && echo "✅ Protocol explained"
-grep -q "## Troubleshooting" docs/VERIFICATION.md && echo "✅ Troubleshooting section"
+# Verify FR4.1 coverage
+grep -q "FR4.1.*Feature Completeness" docs/VERIFICATION.md && echo "✅ FR4.1 documented"
 
-# Check examples
-grep -q "### Example" docs/VERIFICATION.md && echo "✅ Examples included"
+# Check for examples
+grep -c "Example\|```bash" docs/VERIFICATION.md
 
-# Verify reasonable length
+# Verify comprehensive coverage
+grep -q "Why Verification Matters\|Verification Protocol\|Iteration Workflow" docs/VERIFICATION.md && echo "✅ Comprehensive guide"
+
 wc -l docs/VERIFICATION.md
 ```
 </verify>
 <done>
-- docs/VERIFICATION.md created with comprehensive guide
-- Table of contents with all major sections
-- Overview explaining what and why
-- Quick start for immediate use
-- How Verification Works section with 7-step protocol
-- Using reis verify with command examples
-- Verification Reports section
-- Success Criteria best practices
-- Verification Scenarios (pass/fail/partial)
-- Iteration Workflow with complete example
-- Best Practices section
-- Troubleshooting common issues
-- Advanced usage and examples
-- Guide is ~400 lines, well-structured and actionable
+- docs/VERIFICATION.md created with comprehensive guide (~500+ lines)
+- Explains why verification matters (FR4.1 problem/solution)
+- Documents 7-step verification protocol
+- FR4.1 Feature Completeness extensively covered
+- Detection methods explained (file existence, code patterns, tests)
+- Completion calculation (100% requirement)
+- Example of incomplete task detection
+- Usage instructions and options
+- Report structure explained
+- STATE.md integration documented
+- Iteration workflow (execute → verify → fix → re-verify)
+- Best practices for plan creators, executors, verifiers
+- Troubleshooting section
+- FAQ section
 </done>
 </task>
 
@@ -560,357 +648,290 @@ wc -l docs/VERIFICATION.md
 <name>Update CHANGELOG.md with verifier release</name>
 <files>CHANGELOG.md</files>
 <action>
-Add a new version entry to CHANGELOG.md documenting the reis_verifier addition.
+Add comprehensive changelog entry for the REIS Verifier release.
 
-**Add at the top of CHANGELOG.md:**
+**Add to Top of CHANGELOG.md:**
 
 ```markdown
-## [2.0.0-beta.1] - 2024-01-18
+## [2.0.0-beta.1] - 2024-01-XX
 
-### Added
+### Added - REIS Verifier 🔍
 
-**🎉 reis_verifier Subagent**
-- New `reis verify` command for automated verification
-- 7-step verification protocol (tests, criteria, quality, docs, reporting)
-- Comprehensive verification reports saved to `.planning/verification/`
-- Automatic STATE.md updates with verification results
-- Support for multiple test frameworks (Jest, Vitest, Node test runner)
-- Code quality checks (syntax validation, ESLint integration)
-- Documentation verification (README, CHANGELOG, code comments)
-- Success criteria validation with evidence collection
-- Verification status indicators (✅ PASSED / ❌ FAILED / ⚠️ PARTIAL)
-- Actionable recommendations when verification fails
+**Major Feature: Automated Verification with FR4.1 Feature Completeness Validation**
 
-**Verification Features:**
-- Verify entire phases or individual plans
-- Test suite execution with result parsing
-- Success criteria validation from PLAN.md
-- Syntax checking for JS/TS files
-- Linting integration (ESLint)
-- Common issue detection (console.logs, debuggers, TODOs)
-- Quality score calculation with grading
-- README/CHANGELOG completeness checking
-- TODO/FIXME comment tracking
-- Code comment density analysis
+- **`reis verify` command** - Automated verification of execution results
+  - Verify phases: `reis verify 2` or `reis verify phase-2`
+  - Verify plans: `reis verify path/to/plan.PLAN.md`
+  - Options: `--verbose` for detailed output, `--strict` for strict mode
 
-**Documentation:**
-- New comprehensive verification guide (docs/VERIFICATION.md)
-- Verification report template (templates/VERIFICATION_REPORT.md)
-- Updated README with verification workflow
-- Example verification report included
+- **reis_verifier subagent** - Comprehensive verification agent
+  - 7-step verification protocol
+  - Automated test execution and parsing
+  - Code quality checks (syntax, linting)
+  - Success criteria validation
+  - Documentation verification
+  - Detailed report generation
+  - STATE.md integration
 
-**Tests:**
-- 25+ new tests for verify command and verification scenarios
-- Integration tests for pass/fail/partial scenarios
-- Test fixtures for realistic verification testing
+- **FR4.1: Feature Completeness Validation** - CRITICAL NEW CAPABILITY
+  - Detects when executor skips tasks or leaves features incomplete
+  - Parses all tasks from PLAN.md
+  - Extracts expected deliverables (files, functions, classes, endpoints)
+  - Verifies each deliverable exists in codebase using multiple methods:
+    * File existence checks (fs, git ls-files)
+    * Code pattern matching (grep for functions/classes)
+    * Git diff analysis
+    * Test presence verification
+  - Calculates task completion percentage (Tasks complete / Total tasks)
+  - **Requires 100% task completion to pass verification**
+  - Reports missing deliverables with search evidence
+  - Impact assessment (HIGH/MEDIUM/LOW) for incomplete tasks
+  - Specific recommendations for fixing incomplete features
 
-### Changed
-- README.md updated with verification workflow
-- REIS workflow now includes Plan → Execute → Verify → Iterate cycle
+- **Verification Reports** - Comprehensive markdown reports
+  - Executive summary with key metrics
+  - Feature Completeness section (task-by-task breakdown)
+  - Test results with failure details
+  - Success criteria validation
+  - Code quality metrics
+  - Documentation status
+  - Issues summary (critical/major/minor)
+  - Actionable recommendations
+  - Saved to `.planning/verification/{phase}/VERIFICATION_REPORT.md`
+
+- **Templates**
+  - `templates/VERIFICATION_REPORT.md` - Report template with FR4.1 section
+  - `templates/STATE_VERIFICATION_ENTRY.md` - STATE.md entry template
+
+- **Documentation**
+  - `docs/VERIFICATION.md` - Comprehensive verification guide
+  - README.md updated with verification section
+  - FR4.1 Feature Completeness extensively documented
+  - Examples and best practices
+
+- **Test Suite**
+  - Comprehensive tests for verify command
+  - FR4.1 feature completeness validation tests
+  - Scenario tests (complete/incomplete tasks, tests pass/fail)
+  - Test coverage for all verification components
+
+### Why FR4.1 Matters
+
+Previous verification approaches only checked if tests passed. This meant:
+- ❌ Executor could skip tasks without detection
+- ❌ Tests might pass but features were missing
+- ❌ Incomplete implementations went unnoticed
+
+FR4.1 solves this by:
+- ✅ Verifying ALL planned tasks are implemented
+- ✅ Checking that deliverables actually exist
+- ✅ Providing evidence for completeness
+- ✅ Requiring 100% task completion before proceeding
+
+### Example
+
+```bash
+$ reis verify phase-2
+
+❌ VERIFICATION FAILED
+- Feature Completeness: 66% (1 task incomplete)
+- Task 2: Build Password Reset - INCOMPLETE
+  Missing: src/auth/password-reset.js, sendResetEmail()
+
+# After fixing
+$ reis verify phase-2
+
+✅ VERIFICATION PASSED
+- Feature Completeness: 100% (3/3 tasks)
+- All checks passed
+```
 
 ### Technical Details
-- New subagent specification: `subagents/reis_verifier.md` (~500 lines)
-- Enhanced verify command: `lib/commands/verify.js` (~250 lines)
-- New template: `templates/VERIFICATION_REPORT.md` (~150 lines)
-- Verification guide: `docs/VERIFICATION.md` (~400 lines)
-- Total: ~1,550 lines of new code and documentation
+
+- Verification protocol: 7 steps (load → test → quality → FR4.1 → docs → report → state)
+- FR4.1 uses file existence, grep patterns, git diff for verification
+- Confidence scoring (0.7-1.0) prevents false positives
+- Handles refactoring and file renames gracefully
+- Integration with STATE.md for verification history
+
+### Breaking Changes
+
+None - This is a new feature addition.
+
+### Migration
+
+No migration needed. Existing projects can immediately use `reis verify`.
+
+### Credits
+
+FR4.1 Feature Completeness Validation was designed to solve the critical gap of detecting incomplete implementations that tests alone cannot catch.
 
 ---
 ```
 
-**If CHANGELOG.md doesn't exist, create it:**
-
-```markdown
-# Changelog
-
-All notable changes to REIS will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [2.0.0-beta.1] - 2024-01-18
-
-[content as above]
-
-## [Previous versions]
-
-...
-```
-
-**Follow Keep a Changelog format:**
-- Version and date at top
-- Categories: Added, Changed, Deprecated, Removed, Fixed, Security
-- Most recent first
-- Clear, concise descriptions
+**Placement:** Add at the very top of CHANGELOG.md, before any existing entries.
 </action>
 <verify>
 ```bash
 # Check CHANGELOG was updated
-grep -q "reis_verifier" CHANGELOG.md && echo "✅ Verifier entry added"
-grep -q "2.0.0-beta.1" CHANGELOG.md && echo "✅ Version number present"
-grep -q "### Added" CHANGELOG.md && echo "✅ Proper format"
+grep -q "2.0.0-beta.1\|REIS Verifier\|reis verify" CHANGELOG.md && echo "✅ CHANGELOG updated"
 
-# Verify date
-grep -q "2024-01-18" CHANGELOG.md && echo "✅ Date included"
+# Verify FR4.1 mentioned
+grep -q "FR4.1.*Feature Completeness" CHANGELOG.md && echo "✅ FR4.1 in CHANGELOG"
 
-# Check for key features
-grep -q "verify command" CHANGELOG.md && echo "✅ Command documented"
-grep -q "7-step" CHANGELOG.md && echo "✅ Protocol mentioned"
+# Check for comprehensive entry
+grep -A50 "2.0.0-beta.1" CHANGELOG.md | grep -q "Why FR4.1 Matters\|Example" && echo "✅ Comprehensive entry"
 ```
 </verify>
 <done>
-- CHANGELOG.md updated with v2.0.0-beta.1 entry
-- reis_verifier addition documented comprehensively
-- All major features listed under "Added" section
-- Verification features enumerated
-- Documentation updates noted
-- Test additions mentioned
-- Technical details included
-- Follows Keep a Changelog format
-- Date and version number included
+- CHANGELOG.md updated with 2.0.0-beta.1 release entry
+- REIS Verifier feature documented
+- FR4.1 Feature Completeness Validation highlighted
+- All components listed (command, subagent, templates, docs, tests)
+- "Why FR4.1 Matters" section explains value
+- Example workflow included
+- Technical details documented
+- Breaking changes and migration sections included
 </done>
 </task>
 
 <task type="auto">
-<name>Create release summary document</name>
-<files>.planning/verifier-project/RELEASE_SUMMARY.md</files>
+<name>Final integration verification</name>
+<files>bin/reis.js, lib/commands/verify.js, subagents/reis_verifier.md</files>
 <action>
-Create a release summary document for the reis_verifier completion.
+Perform final checks to ensure all components are properly integrated.
 
-```markdown
-# reis_verifier Release Summary
+**Checklist:**
 
-**Version:** v2.0.0-beta.1  
-**Release Date:** 2024-01-18  
-**Status:** ✅ Complete and Ready for Release
-
-## Overview
-
-Successfully implemented reis_verifier, the 4th REIS subagent, completing the autonomous development cycle: Plan → Execute → Verify → Iterate.
-
-## Deliverables
-
-### Core Implementation ✅
-
-- **subagents/reis_verifier.md** (527 lines)
-  - Complete 7-step verification protocol
-  - Test execution, criteria validation, quality checks
-  - Documentation verification, report generation, STATE.md integration
-
-- **lib/commands/verify.js** (248 lines)
-  - Command implementation with context loading
-  - Support for phase and plan-level verification
-  - Prompt generation for reis_verifier subagent
-
-### Templates & Examples ✅
-
-- **templates/VERIFICATION_REPORT.md** (156 lines)
-  - Comprehensive report structure
-  - Status indicators, recommendations, next steps
-
-- **.planning/verifier-project/examples/example-verification-report.md**
-  - Realistic example demonstrating PARTIAL verification
-
-### Documentation ✅
-
-- **docs/VERIFICATION.md** (428 lines)
-  - Complete verification guide
-  - Quick start, troubleshooting, best practices
-  - Examples for all verification scenarios
-
-- **README.md** (updated)
-  - Verification workflow added
-  - Command documentation included
-
-- **CHANGELOG.md** (updated)
-  - v2.0.0-beta.1 entry with full feature list
-
-### Tests ✅
-
-- **tests/commands/verify.test.js** (18 test cases)
-  - Argument parsing, context loading, prompt generation
-  - Error handling coverage
-
-- **tests/integration/verification-scenarios.test.js** (12 scenarios)
-  - Passing, failing, partial verification
-  - Quality issues, documentation, multiple runs
-
-**Total Test Count:** 334+ tests (309 existing + 25+ new)
-
-## Features Implemented
-
-### Verification Protocol (7 Steps)
-
-1. ✅ Load verification context
-2. ✅ Run test suite (Jest, Vitest, Node, Mocha support)
-3. ✅ Validate success criteria (7 criterion types)
-4. ✅ Check code quality (syntax, linting, scoring)
-5. ✅ Verify documentation (README, CHANGELOG, comments)
-6. ✅ Generate verification report
-7. ✅ Update STATE.md
-
-### Key Capabilities
-
-- ✅ Automated test execution and result parsing
-- ✅ Success criteria validation with evidence
-- ✅ Syntax checking (node --check)
-- ✅ ESLint integration
-- ✅ Code quality scoring (A-F grades)
-- ✅ README/CHANGELOG completeness checking
-- ✅ TODO/FIXME detection with critical flagging
-- ✅ Comprehensive report generation
-- ✅ STATE.md integration with backup
-- ✅ Verification history tracking
-
-### Verification Scenarios
-
-- ✅ PASSED: All checks pass, proceed to next phase
-- ❌ FAILED: Critical issues found, must fix
-- ⚠️ PARTIAL: Warnings present, decide whether to proceed
-
-## Metrics
-
-**Development Time:** 5.5 hours (target: 6 hours) ✅  
-**Lines of Code:** ~1,550 lines  
-**Test Coverage:** >85% for new code  
-**Phase Completion:**
-- Phase 1: Design & Specification ✅
-- Phase 2: Core Implementation ✅
-- Phase 3: Advanced Features ✅
-- Phase 4: Integration & Polish ✅
-
-## Quality Checks
-
-### Self-Verification
-
-Verified using REIS itself (dogfooding):
-
+1. **CLI Integration:**
 ```bash
-reis verify verifier-phase-1  # ✅ PASSED
-reis verify verifier-phase-2  # ✅ PASSED
-reis verify verifier-phase-3  # ✅ PASSED
-reis verify verifier-phase-4  # ✅ PASSED
+# Verify command is registered
+node bin/reis.js --help | grep verify
+
+# Test help text
+node bin/reis.js verify --help
 ```
 
-### Test Results
-
-- All 334+ tests passing
-- No regressions in existing functionality
-- Integration tests cover all scenarios
-- Error handling tested thoroughly
-
-### Documentation Quality
-
-- Comprehensive guide written
-- Examples included for all scenarios
-- Troubleshooting section complete
-- README and CHANGELOG updated
-
-## Known Limitations
-
-1. **Test Framework Detection:** Currently supports Jest, Vitest, Node, Mocha. Other frameworks may not parse correctly (graceful fallback).
-
-2. **Criterion Classification:** Generic criteria requiring human judgment return warnings, not failures.
-
-3. **TypeScript Support:** Requires `tsc` installed for TS syntax checking.
-
-4. **Linting:** Only ESLint is explicitly supported (others may work if they follow similar patterns).
-
-## Future Enhancements (Not in Scope)
-
-- Visual verification dashboards
-- Parallel verification execution
-- Custom verification plugins
-- Verification metrics trending
-- Git commit integration
-- PR verification automation
-
-## Recommendation
-
-**Status:** ✅ Ready for v2.0.0-beta.1 Release
-
-The reis_verifier subagent is complete, tested, and documented. All success criteria met. Recommend proceeding with release.
-
-**Next Steps:**
-1. Merge verifier implementation to main branch
-2. Tag v2.0.0-beta.1
-3. Publish to npm (if applicable)
-4. Announce in release notes
-5. Gather user feedback for future iterations
-
----
-
-**Built with REIS** | **Verified by reis_verifier** | **Shipped by autonomous development**
+2. **File Structure:**
+```bash
+# Verify all files exist
+test -f subagents/reis_verifier.md && echo "✅ Subagent spec"
+test -f lib/commands/verify.js && echo "✅ Verify command"
+test -f templates/VERIFICATION_REPORT.md && echo "✅ Report template"
+test -f templates/STATE_VERIFICATION_ENTRY.md && echo "✅ STATE template"
+test -f docs/VERIFICATION.md && echo "✅ Verification guide"
+test -f test/commands/verify.test.js && echo "✅ Test suite"
 ```
 
+3. **Content Verification:**
+```bash
+# Check reis_verifier.md completeness
+grep -q "FR4.1\|Feature Completeness" subagents/reis_verifier.md
+grep -q "Step 1:\|Step 2:\|Step 3:\|Step 4:\|Step 5:\|Step 6:\|Step 7:" subagents/reis_verifier.md
+grep -q "parseTasksFromPlan\|extractDeliverables\|verifyDeliverables" subagents/reis_verifier.md
+
+# Check verify command
+grep -q "function verify\|resolvePlanPath\|parsePlan" lib/commands/verify.js
+grep -q "FR4.1\|Feature Completeness" lib/commands/verify.js
+
+# Check templates
+grep -q "Feature Completeness.*FR4.1" templates/VERIFICATION_REPORT.md
+grep -q "Task-by-Task Analysis" templates/VERIFICATION_REPORT.md
+
+# Check documentation
+grep -q "FR4.1" README.md
+grep -q "Feature Completeness" docs/VERIFICATION.md
+```
+
+4. **Line Count Verification:**
+```bash
+# Verify expected sizes
+wc -l subagents/reis_verifier.md  # ~550 lines
+wc -l lib/commands/verify.js      # ~250 lines
+wc -l docs/VERIFICATION.md         # ~500 lines
+wc -l test/commands/verify.test.js # ~200 lines
+```
+
+5. **FR4.1 Integration Check:**
+```bash
+# Count FR4.1 mentions (should be substantial)
+grep -c "FR4.1\|Feature Completeness" subagents/reis_verifier.md
+grep -c "FR4.1\|Feature Completeness" docs/VERIFICATION.md
+grep -c "FR4.1\|Feature Completeness" README.md
+```
+
+**If any checks fail, document in verification report for fixing.**
+
+**Success Indicators:**
+- ✅ All files present and non-empty
+- ✅ FR4.1 extensively documented in subagent spec
+- ✅ Verify command includes FR4.1 prompts
+- ✅ Templates include Feature Completeness section
+- ✅ Documentation covers FR4.1 thoroughly
+- ✅ Tests cover FR4.1 scenarios
+- ✅ CLI help text mentions feature completeness
 </action>
 <verify>
 ```bash
-# Check release summary created
-test -f .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Release summary created"
+# Run all integration checks
+echo "=== File Existence ==="
+ls -lh subagents/reis_verifier.md lib/commands/verify.js templates/*.md docs/VERIFICATION.md test/commands/verify.test.js
 
-# Verify key sections
-grep -q "## Overview" .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Overview present"
-grep -q "## Deliverables" .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Deliverables listed"
-grep -q "## Metrics" .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Metrics included"
-grep -q "## Recommendation" .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Recommendation present"
+echo "=== FR4.1 Coverage ==="
+echo "Subagent spec:" && grep -c "FR4.1\|Feature Completeness" subagents/reis_verifier.md
+echo "Verify command:" && grep -c "FR4.1\|Feature Completeness" lib/commands/verify.js
+echo "Docs:" && grep -c "FR4.1\|Feature Completeness" docs/VERIFICATION.md
+echo "README:" && grep -c "FR4.1" README.md
 
-# Check for completion indicators
-grep -q "✅ Complete" .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Status indicated"
+echo "=== Line Counts ==="
+wc -l subagents/reis_verifier.md lib/commands/verify.js docs/VERIFICATION.md
+
+echo "=== Protocol Steps ==="
+grep "Step [1-7]:" subagents/reis_verifier.md | head -7
 ```
 </verify>
 <done>
-- .planning/verifier-project/RELEASE_SUMMARY.md created
-- Overview of reis_verifier completion
-- All deliverables listed with line counts
-- Features implemented enumerated
-- Metrics and timeline documented
-- Self-verification results included
-- Known limitations documented
-- Release recommendation provided
-- Professional format suitable for release notes
+- All files exist and are properly structured
+- FR4.1 integrated throughout all components
+- Subagent spec includes FR4.1 in Step 4 with full implementation
+- Verify command includes FR4.1 in prompts and instructions
+- Templates include Feature Completeness section
+- Documentation comprehensively covers FR4.1
+- Tests cover FR4.1 scenarios
+- CLI integration complete
+- Line counts match expected sizes (~550, ~250, ~500 lines)
+- FR4.1 mentioned extensively (50+ times across files)
 </done>
 </task>
 
 ## Success Criteria
-- ✅ README.md updated with verifier information
-- ✅ docs/VERIFICATION.md comprehensive guide created (~400 lines)
-- ✅ Practical examples and workflows included
-- ✅ CHANGELOG.md updated with v2.0.0-beta.1 entry
-- ✅ Release summary document created
-- ✅ All documentation is consistent and professional
-- ✅ Links between documents work correctly
-- ✅ Documentation covers all verification scenarios
-- ✅ Ready for release
+- ✅ README.md updated with comprehensive verification documentation
+- ✅ FR4.1 Feature Completeness prominently featured in README
+- ✅ docs/VERIFICATION.md created with ~500 lines of detailed guide
+- ✅ FR4.1 extensively documented with examples
+- ✅ CHANGELOG.md updated with 2.0.0-beta.1 entry
+- ✅ All verification components documented
+- ✅ "Why FR4.1 Matters" explained
+- ✅ Final integration checks passed
+- ✅ All files present and properly integrated
+- ✅ FR4.1 coverage verified across all components
 
 ## Verification
 
 ```bash
-# Verify all documentation files
-ls -lh README.md
-ls -lh docs/VERIFICATION.md
-ls -lh CHANGELOG.md
-ls -lh .planning/verifier-project/RELEASE_SUMMARY.md
+# Verify documentation
+cat README.md | grep -A30 "### Verification"
+cat docs/VERIFICATION.md | head -100
+cat CHANGELOG.md | head -100
 
-# Check documentation completeness
-grep -q "reis verify" README.md && echo "✅ README updated"
-grep -q "7-step" docs/VERIFICATION.md && echo "✅ Guide complete"
-grep -q "2.0.0-beta.1" CHANGELOG.md && echo "✅ CHANGELOG updated"
-grep -q "Ready for Release" .planning/verifier-project/RELEASE_SUMMARY.md && echo "✅ Release summary complete"
+# Check integration
+ls -lh subagents/reis_verifier.md lib/commands/verify.js templates/*.md docs/VERIFICATION.md
 
-# Verify documentation consistency
-grep -c "reis_verifier" README.md docs/VERIFICATION.md CHANGELOG.md
+# Verify FR4.1 coverage
+grep -c "FR4.1" subagents/reis_verifier.md docs/VERIFICATION.md README.md CHANGELOG.md
 
-# Check line counts
-echo "README additions:"
-git diff README.md | grep "^+" | wc -l
-echo "Verification guide:"
-wc -l docs/VERIFICATION.md
-echo "CHANGELOG entry:"
-grep -A50 "2.0.0-beta.1" CHANGELOG.md | wc -l
-
-# Final check
-echo "Documentation complete and ready for release!"
+# Test command availability
+node bin/reis.js verify --help
 ```
 
 ---

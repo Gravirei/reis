@@ -1,604 +1,750 @@
-# Plan: 2-4 - Implement Report Generation
+# Plan: 2-4 - Implement Report Generation with FR4.1
 
 ## Objective
-Define comprehensive verification report generation logic in reis_verifier specification, assembling all verification results into structured reports.
+Implement Step 6 of the verification protocol: generate comprehensive VERIFICATION_REPORT.md including the FR4.1 Feature Completeness section.
 
 ## Context
-Steps 2 and 3 have collected test results and success criteria validation data. Now we need to assemble everything into a clear, actionable verification report using the VERIFICATION_REPORT.md template (created in Wave 1.2).
+The verification report consolidates all verification results (tests, feature completeness, success criteria, quality) into a single, actionable document. The FR4.1 Feature Completeness section is CRITICAL and must be prominently displayed.
 
-**Key Requirements:**
-- Populate all sections of VERIFICATION_REPORT.md template
-- Generate executive summary with clear pass/fail determination
-- Include detailed test results, success criteria validation, and recommendations
-- Save reports to `.planning/verification/{phase-name}/` directory
-- Generate timestamped filenames for tracking
-- Provide actionable recommendations when verification fails
+**Report Structure:**
+1. Executive Summary (overall pass/fail, key metrics including FR4.1)
+2. **Feature Completeness (FR4.1) - PROMINENTLY PLACED**
+3. Test Results
+4. Success Criteria Validation
+5. Code Quality
+6. Documentation
+7. Issues Summary
+8. Recommendations
+9. Next Steps
 
-**Report Inputs:**
-- Test results (from Step 2)
-- Success criteria validation (from Step 3)
-- Code quality checks (from Step 4 - will be added in Phase 3)
-- Documentation verification (from Step 5 - will be added in Phase 3)
-- Plan context (loaded by verify command)
+**FR4.1 Integration:**
+- Feature Completeness section appears SECOND (right after executive summary)
+- Task-by-task breakdown with evidence/missing deliverables
+- Completion percentage prominently displayed
+- Clear impact assessment
+- Specific recommendations for incomplete tasks
 
 ## Dependencies
-- Wave 2.2 (Test Execution) - Need test results
-- Wave 2.3 (Success Criteria Validation) - Need criteria validation results
+- Wave 2.2 (Test execution results)
+- Wave 2.3 (Success criteria and FR4.1 completeness data)
 
 ## Tasks
 
 <task type="auto">
-<name>Add report generation protocol to reis_verifier</name>
+<name>Add report generation section to reis_verifier spec</name>
 <files>subagents/reis_verifier.md</files>
 <action>
-Expand the "Step 6: Generate Report" section in the Seven-Step Verification Protocol with comprehensive report generation instructions.
+Enhance Step 6 of the verification protocol with comprehensive report generation logic, including FR4.1 Feature Completeness section.
 
-**Location:** Find "Step 6: Generate Report" in the protocol section.
+**Locate:** Find "Step 6: Generate Report" in the verification protocol.
 
-**Replace/Expand with:**
+**Enhance with:**
 
 ```markdown
-### Step 6: Generate Report
+### Step 6: Generate Verification Report
 
-Assemble all verification results into a comprehensive verification report using the VERIFICATION_REPORT.md template.
+**Objective:** Consolidate all verification results into VERIFICATION_REPORT.md with clear pass/fail determination.
 
-#### Report Assembly Process
+**Process:**
 
-**Inputs from previous steps:**
-1. Test results (Step 2) - Test metrics, output, pass/fail status
-2. Success criteria validation (Step 3) - Criterion-by-criterion results
-3. Code quality checks (Step 4) - Syntax, linting, quality metrics
-4. Documentation verification (Step 5) - Doc status, completeness
-
-**Output:**
-- Populated VERIFICATION_REPORT.md saved to `.planning/verification/{phase-name}/{timestamp}.md`
-- Overall pass/fail/partial determination
-- Actionable recommendations
-
-#### Overall Status Determination
-
-Calculate overall verification status from all checks:
+**1. Load Report Template**
 
 ```javascript
-function calculateOverallStatus(testResults, criteriaResults, qualityResults, docResults) {
-  const checks = {
-    tests: testResults.status,      // 'passed' | 'failed' | 'warning'
-    criteria: calculateCriteriaStatus(criteriaResults),
-    quality: qualityResults.status,
-    documentation: docResults.status,
-  };
+const templatePath = 'templates/VERIFICATION_REPORT.md';
+const template = fs.readFileSync(templatePath, 'utf8');
+```
+
+**2. Prepare Report Data**
+
+Collect all verification results from previous steps:
+
+```javascript
+const reportData = {
+  metadata: {
+    phaseName: extractPhaseName(planPath),
+    planName: extractPlanName(planPath),
+    timestamp: new Date().toISOString(),
+    verifierVersion: '1.0.0'
+  },
   
-  // Count failures
-  const failures = Object.values(checks).filter(s => s === 'failed').length;
-  const warnings = Object.values(checks).filter(s => s === 'warning').length;
+  // Step 2: Test results
+  tests: testResults,
   
-  if (failures > 0) {
+  // Step 4A: Feature completeness (FR4.1)
+  featureCompleteness: {
+    status: completenessData.status, // PASS/FAIL
+    percentage: completenessData.percentage,
+    total: completenessData.total,
+    complete: completenessData.complete,
+    incomplete: completenessData.incomplete,
+    tasks: tasksWithEvidenceAndMissing
+  },
+  
+  // Step 4B: Success criteria
+  successCriteria: {
+    status: criteriaStatus,
+    total: criteria.length,
+    met: metCriteria.length,
+    unmet: unmetCriteria.length,
+    criteria: criteriaWithEvidence
+  },
+  
+  // Step 3: Code quality
+  codeQuality: qualityResults,
+  
+  // Step 5: Documentation
+  documentation: docResults,
+  
+  // Derived: Overall status
+  overallStatus: calculateOverallStatus(testResults, completenessData, criteriaStatus, qualityResults)
+};
+```
+
+**3. Calculate Overall Status**
+
+```javascript
+function calculateOverallStatus(tests, completeness, criteria, quality) {
+  // CRITICAL: Feature completeness MUST be 100% to pass
+  if (completeness.percentage < 100) {
     return {
-      status: 'FAILED',
-      emoji: '❌',
-      summary: `${failures} critical issues found`,
+      status: 'FAIL',
+      reason: `Feature completeness: ${completeness.percentage}% (${completeness.incomplete} tasks incomplete)`
     };
   }
   
-  if (warnings > 0) {
+  // Tests must pass
+  if (tests.metrics.failed > 0) {
     return {
-      status: 'PARTIAL',
-      emoji: '⚠️',
-      summary: `${warnings} warnings found`,
+      status: 'FAIL',
+      reason: `${tests.metrics.failed} tests failing`
     };
   }
   
+  // Success criteria must be met
+  if (criteria.unmet > 0) {
+    return {
+      status: 'FAIL',
+      reason: `${criteria.unmet} success criteria unmet`
+    };
+  }
+  
+  // Code quality failures block
+  if (quality.status === 'FAIL') {
+    return {
+      status: 'FAIL',
+      reason: 'Code quality failures detected'
+    };
+  }
+  
+  // Warnings don't block (unless strict mode)
+  if (quality.status === 'WARNINGS' || tests.metrics.total === 0) {
+    return {
+      status: 'PASS_WITH_WARNINGS',
+      warnings: [
+        quality.status === 'WARNINGS' ? 'Code quality warnings' : null,
+        tests.metrics.total === 0 ? 'No tests configured' : null
+      ].filter(Boolean)
+    };
+  }
+  
+  // All checks passed
   return {
-    status: 'PASSED',
-    emoji: '✅',
-    summary: 'All checks passed',
+    status: 'PASS',
+    reason: 'All verification checks passed'
   };
 }
-
-function calculateCriteriaStatus(criteriaResults) {
-  const failed = criteriaResults.criteria.filter(c => c.status === 'fail').length;
-  const warnings = criteriaResults.criteria.filter(c => c.status === 'warning').length;
-  
-  if (failed > 0) return 'failed';
-  if (warnings > 0) return 'warning';
-  return 'passed';
-}
 ```
 
-#### Executive Summary Generation
-
-Create a concise 2-3 sentence summary at the top of the report:
+**4. Generate Executive Summary**
 
 ```javascript
-function generateExecutiveSummary(overallStatus, testResults, criteriaResults, qualityResults) {
-  const parts = [];
+function generateExecutiveSummary(reportData) {
+  const { overallStatus, tests, featureCompleteness, successCriteria, codeQuality } = reportData;
   
-  // Overall status
-  parts.push(`Verification ${overallStatus.status.toLowerCase()}.`);
+  const emoji = overallStatus.status === 'PASS' ? '✅' : 
+                overallStatus.status === 'PASS_WITH_WARNINGS' ? '⚠️' : '❌';
   
-  // Test summary
-  if (testResults.metrics.total > 0) {
-    if (testResults.metrics.failed === 0) {
-      parts.push(`All ${testResults.metrics.passed} tests passed.`);
-    } else {
-      parts.push(`${testResults.metrics.failed} of ${testResults.metrics.total} tests failed.`);
-    }
-  } else {
-    parts.push('No tests found (warning).');
-  }
-  
-  // Criteria summary
-  const criteriaPassed = criteriaResults.criteria.filter(c => c.status === 'pass').length;
-  const criteriaTotal = criteriaResults.criteria.length;
-  parts.push(`${criteriaPassed}/${criteriaTotal} success criteria met.`);
-  
-  // Quality issues
-  if (qualityResults.issueCount > 0) {
-    parts.push(`${qualityResults.issueCount} code quality issues found.`);
-  }
-  
-  return parts.join(' ');
-}
-```
+  return `
+## Executive Summary
 
-#### Report Population
+Verification ${overallStatus.status === 'PASS' ? 'PASSED' : 'FAILED'} for ${reportData.metadata.phaseName}.
 
-Load template and populate all sections:
+**Overall Status:** ${emoji} ${overallStatus.status}  
+**Tests:** ${tests.metrics.passed}/${tests.metrics.total} passed  
+**Feature Completeness:** ${featureCompleteness.complete}/${featureCompleteness.total} tasks (${featureCompleteness.percentage}%)  
+**Success Criteria:** ${successCriteria.met}/${successCriteria.total} met  
+**Code Quality:** ${codeQuality.status}  
+**Critical Issues:** ${countCriticalIssues(reportData)}
 
-```javascript
-async function generateVerificationReport(verificationData, projectInfo) {
-  const fs = require('fs');
-  const path = require('path');
-  
-  // Load template
-  const templatePath = path.join(projectInfo.reisRoot, 'templates/VERIFICATION_REPORT.md');
-  let template = fs.readFileSync(templatePath, 'utf8');
-  
-  // Calculate overall status
-  const overallStatus = calculateOverallStatus(
-    verificationData.testResults,
-    verificationData.criteriaResults,
-    verificationData.qualityResults,
-    verificationData.docResults
-  );
-  
-  // Generate executive summary
-  const executiveSummary = generateExecutiveSummary(
-    overallStatus,
-    verificationData.testResults,
-    verificationData.criteriaResults,
-    verificationData.qualityResults
-  );
-  
-  // Replace template variables
-  const timestamp = new Date().toISOString();
-  const report = template
-    .replace(/\[Phase\/Plan Name\]/g, projectInfo.phaseName)
-    .replace(/\[ISO 8601 timestamp\]/g, timestamp)
-    .replace(/\[Phase number and name\]/g, projectInfo.phaseName)
-    .replace(/\[Plan file path\]/g, projectInfo.planPath)
-    .replace(/✅ PASSED \| ❌ FAILED \| ⚠️ PARTIAL/g, `${overallStatus.emoji} ${overallStatus.status}`)
-    .replace(/\[2-3 sentence summary of verification results\]/g, executiveSummary)
-    .replace(/\[Pass\/Fail\/Partial with explanation\]/g, overallStatus.summary);
-  
-  // Populate Test Results section
-  report = populateTestResults(report, verificationData.testResults);
-  
-  // Populate Success Criteria section
-  report = populateSuccessCriteria(report, verificationData.criteriaResults);
-  
-  // Populate Code Quality section
-  report = populateCodeQuality(report, verificationData.qualityResults);
-  
-  // Populate Documentation section
-  report = populateDocumentation(report, verificationData.docResults);
-  
-  // Generate Recommendations section
-  report = generateRecommendations(report, verificationData, overallStatus);
-  
-  // Add Next Steps
-  report = addNextSteps(report, overallStatus);
-  
-  // Add metadata
-  report = addMetadata(report, verificationData, timestamp);
-  
-  return report;
-}
-```
+${overallStatus.reason ? `**Reason:** ${overallStatus.reason}` : ''}
 
-#### Section Population Functions
-
-**Test Results Section:**
-```javascript
-function populateTestResults(report, testResults) {
-  const testSection = `
-**Test Framework**: ${testResults.framework}
-**Tests Run**: ${testResults.metrics.total}
-**Tests Passed**: ${testResults.metrics.passed}
-**Tests Failed**: ${testResults.metrics.failed}
-**Tests Pending**: ${testResults.metrics.pending}
-**Coverage**: ${testResults.coverage || 'Not available'}
-
-### Test Output
-
-\`\`\`
-${testResults.output.substring(0, 2000)}${testResults.output.length > 2000 ? '...\n[truncated]' : ''}
-\`\`\`
-
-### Failed Tests
-
-${testResults.metrics.failed > 0 ? formatFailedTests(testResults.failedTests) : '*No failed tests*'}
-
-**Status**: ${testResults.metrics.failed === 0 ? '✅ All tests pass' : `❌ ${testResults.metrics.failed} tests failing`}
+${overallStatus.status !== 'PASS' ? `
+**Action Required:** Address issues below and re-verify before proceeding.
+` : `
+**Result:** All verification checks passed. Ready to proceed to next phase.
+`}
 `;
-  
-  return report.replace(/## Test Results[\s\S]*?(?=\n## )/m, `## Test Results\n\n${testSection}\n`);
-}
-
-function formatFailedTests(failedTests) {
-  if (!failedTests || failedTests.length === 0) {
-    return '*No failed tests*';
-  }
-  
-  return failedTests.map(test => 
-    `- ❌ **${test.name}**: ${test.error || 'Failed'}`
-  ).join('\n');
 }
 ```
 
-**Success Criteria Section:**
+**5. Generate Feature Completeness Section (FR4.1) - CRITICAL**
+
 ```javascript
-function populateSuccessCriteria(report, criteriaResults) {
-  const criteriaSection = criteriaResults.criteria.map((criterion, index) => {
-    const statusEmoji = criterion.status === 'pass' ? '✅' : criterion.status === 'fail' ? '❌' : '⚠️';
-    const statusText = criterion.status.toUpperCase();
+function generateFeatureCompletenessSection(featureCompleteness) {
+  const { status, percentage, complete, total, tasks } = featureCompleteness;
+  
+  const emoji = percentage === 100 ? '✅' : '❌';
+  
+  let section = `
+## Feature Completeness (FR4.1)
+
+**Status:** ${emoji} ${status} (${percentage}%)  
+**Tasks Completed:** ${complete}/${total}
+
+### Task-by-Task Analysis
+
+`;
+
+  for (const task of tasks) {
+    const taskEmoji = task.status === 'COMPLETE' ? '✅' : '❌';
     
-    return `
-### Criterion ${index + 1}: ${criterion.criterion}
-**Status**: ${statusEmoji} ${statusText}
-**Evidence**: ${criterion.evidence}
-**Notes**: ${criterion.notes || 'None'}
+    section += `
+#### ${taskEmoji} Task: ${task.name}
+
+**Status:** ${task.status}
+
 `;
-  }).join('\n');
-  
-  const summary = `**Overall**: ${criteriaResults.passed === criteriaResults.totalCriteria ? 
-    '✅ All criteria met' : 
-    `❌ ${criteriaResults.totalCriteria - criteriaResults.passed} criteria not met`}`;
-  
-  return report.replace(
-    /## Success Criteria Validation[\s\S]*?(?=\n## )/m,
-    `## Success Criteria Validation\n\n${criteriaSection}\n${summary}\n`
-  );
-}
-```
 
-**Code Quality Section:**
-```javascript
-function populateCodeQuality(report, qualityResults) {
-  const qualitySection = `
-### Syntax Check
-**Status**: ${qualityResults.syntax.passed ? '✅ PASS' : '❌ FAIL'}
-**Details**: ${qualityResults.syntax.details}
-
-### Linting
-**Tool**: ${qualityResults.linting.tool || 'None detected'}
-**Status**: ${qualityResults.linting.status || '⚠️ Not configured'}
-**Issues Found**: ${qualityResults.linting.issueCount || 0}
-**Details**: ${qualityResults.linting.summary || 'N/A'}
-
-### Common Issues
-${qualityResults.issues.length > 0 ? qualityResults.issues.map(i => `- ${i}`).join('\n') : '*No issues found*'}
-
-**Overall**: ${qualityResults.issueCount === 0 ? '✅ No quality issues' : `❌ ${qualityResults.issueCount} issues found`}
-`;
-  
-  return report.replace(/## Code Quality[\s\S]*?(?=\n## )/m, `## Code Quality\n\n${qualitySection}\n`);
-}
-```
-
-**Documentation Section:**
-```javascript
-function populateDocumentation(report, docResults) {
-  const docSection = `
-### Required Documents
-- ${docResults.readme.exists ? '✅' : '❌'} README.md exists and up-to-date
-- ${docResults.changelog.exists ? '✅' : '❌'} CHANGELOG.md updated
-- ${docResults.api.exists ? '✅' : '❌'} API documentation (if applicable)
-- ${docResults.comments.adequate ? '✅' : '❌'} Code comments adequate
-
-### Documentation Issues
-${docResults.issues.length > 0 ? docResults.issues.map(i => `- ${i}`).join('\n') : '*No issues found*'}
-
-### TODO/FIXME Comments
-**Found**: ${docResults.todos.count}
-**Critical**: ${docResults.todos.critical}
-${docResults.todos.critical > 0 ? '\n' + docResults.todos.list.slice(0, 5).map(t => `- ${t}`).join('\n') : ''}
-
-**Overall**: ${docResults.complete ? '✅ Documentation complete' : docResults.issues.length > 0 ? '❌ Missing required docs' : '⚠️ Needs improvement'}
-`;
-  
-  return report.replace(/## Documentation[\s\S]*?(?=\n## )/m, `## Documentation\n\n${docSection}\n`);
-}
-```
-
-#### Recommendations Generation
-
-Generate actionable recommendations based on findings:
-
-```javascript
-function generateRecommendations(report, verificationData, overallStatus) {
-  if (overallStatus.status === 'PASSED') {
-    // No recommendations needed for passed verification
-    return report.replace(/## Recommendations[\s\S]*?(?=\n## )/m, '## Recommendations\n\n*Verification passed - no issues to address.*\n\n');
+    if (task.status === 'COMPLETE') {
+      section += `**Evidence:**\n`;
+      for (const evidence of task.evidence) {
+        const { deliverable, location, confidence } = evidence;
+        const confidencePercent = Math.round(confidence * 100);
+        section += `- ${deliverable.type}: \`${location}\` (confidence: ${confidencePercent}%)\n`;
+      }
+    } else {
+      section += `**Status:** INCOMPLETE - FEATURE MISSING\n\n`;
+      section += `**Missing Deliverables:**\n`;
+      
+      for (const missing of task.missing) {
+        const { deliverable, searchAttempts } = missing;
+        const name = deliverable.name || deliverable.path;
+        section += `- ${deliverable.type}: \`${name}\` NOT FOUND\n`;
+      }
+      
+      // Add search evidence
+      section += `\n**Search Evidence:**\n\`\`\`bash\n`;
+      for (const attempt of task.missing[0]?.searchAttempts || []) {
+        section += `$ ${attempt.method}: ${attempt.pattern}\n`;
+        section += `# ${attempt.result ? 'Found' : 'No matches'}\n`;
+      }
+      section += `\`\`\`\n\n`;
+      
+      // Impact assessment
+      const impact = assessTaskImpact(task);
+      section += `**Impact:** ${impact.level} - ${impact.description}\n`;
+      
+      // Recommendation
+      const recommendation = getTaskRecommendation(task);
+      section += `**Recommendation:** ${recommendation}\n`;
+    }
+    
+    section += `\n`;
   }
   
-  const recommendations = {
+  return section;
+}
+
+function assessTaskImpact(task) {
+  // Heuristics for impact assessment
+  const keywords = task.name.toLowerCase();
+  
+  if (keywords.includes('auth') || keywords.includes('security') || keywords.includes('login')) {
+    return { level: 'HIGH', description: 'Critical security/authentication feature missing' };
+  }
+  
+  if (keywords.includes('api') || keywords.includes('endpoint') || keywords.includes('route')) {
+    return { level: 'HIGH', description: 'Core API functionality missing' };
+  }
+  
+  if (keywords.includes('test') || keywords.includes('validation')) {
+    return { level: 'MEDIUM', description: 'Testing/validation incomplete' };
+  }
+  
+  if (keywords.includes('doc') || keywords.includes('readme')) {
+    return { level: 'LOW', description: 'Documentation incomplete' };
+  }
+  
+  return { level: 'MEDIUM', description: 'Planned feature not implemented' };
+}
+
+function getTaskRecommendation(task) {
+  const missingTypes = [...new Set(task.missing.map(m => m.deliverable.type))];
+  
+  if (missingTypes.includes('file')) {
+    return `Implement missing file(s): ${task.missing.filter(m => m.deliverable.type === 'file').map(m => m.deliverable.path).join(', ')}`;
+  }
+  
+  if (missingTypes.includes('function')) {
+    return `Implement missing function(s): ${task.missing.filter(m => m.deliverable.type === 'function').map(m => m.deliverable.name).join(', ')}`;
+  }
+  
+  return `Complete task implementation as specified in PLAN.md`;
+}
+```
+
+**6. Generate Other Sections**
+
+(Test Results, Success Criteria, Code Quality, Documentation sections follow similar pattern - populate template with data)
+
+**7. Generate Issues Summary**
+
+```javascript
+function generateIssuesSummary(reportData) {
+  const issues = {
     critical: [],
-    warnings: [],
-    suggestions: [],
+    major: [],
+    minor: []
   };
   
-  // Failed tests
-  if (verificationData.testResults.metrics.failed > 0) {
-    recommendations.critical.push(
-      `Fix ${verificationData.testResults.metrics.failed} failing tests - see Test Results section for details`
+  // Feature completeness issues (CRITICAL)
+  if (reportData.featureCompleteness.percentage < 100) {
+    for (const task of reportData.featureCompleteness.tasks) {
+      if (task.status === 'INCOMPLETE') {
+        issues.critical.push({
+          type: 'INCOMPLETE_TASK',
+          description: `Task incomplete: ${task.name}`,
+          impact: assessTaskImpact(task).level,
+          task: task
+        });
+      }
+    }
+  }
+  
+  // Test failures (CRITICAL)
+  if (reportData.tests.metrics.failed > 0) {
+    for (const failure of reportData.tests.failures) {
+      issues.critical.push({
+        type: 'TEST_FAILURE',
+        description: `Test failing: ${failure.name}`,
+        file: failure.file,
+        error: failure.error
+      });
+    }
+  }
+  
+  // Unmet success criteria (MAJOR)
+  for (const criterion of reportData.successCriteria.criteria) {
+    if (!criterion.met) {
+      issues.major.push({
+        type: 'UNMET_CRITERION',
+        description: criterion.text,
+        evidence: criterion.evidence
+      });
+    }
+  }
+  
+  // Code quality issues
+  if (reportData.codeQuality.errors?.length > 0) {
+    issues.major.push(...reportData.codeQuality.errors.map(e => ({
+      type: 'QUALITY_ERROR',
+      description: e
+    })));
+  }
+  
+  if (reportData.codeQuality.warnings?.length > 0) {
+    issues.minor.push(...reportData.codeQuality.warnings.map(w => ({
+      type: 'QUALITY_WARNING',
+      description: w
+    })));
+  }
+  
+  return issues;
+}
+```
+
+**8. Generate Recommendations**
+
+```javascript
+function generateRecommendations(reportData, issues) {
+  const recommendations = {
+    immediate: [],
+    beforeNext: [],
+    optional: []
+  };
+  
+  // Immediate: Fix incomplete tasks
+  if (issues.critical.filter(i => i.type === 'INCOMPLETE_TASK').length > 0) {
+    recommendations.immediate.push(
+      'Complete all planned tasks before proceeding (Feature Completeness: 100% required)'
     );
-  }
-  
-  // Failed criteria
-  const failedCriteria = verificationData.criteriaResults.criteria.filter(c => c.status === 'fail');
-  failedCriteria.forEach(criterion => {
-    recommendations.critical.push(`Address criterion: "${criterion.criterion}" - ${criterion.evidence}`);
-  });
-  
-  // Quality issues
-  if (verificationData.qualityResults.issueCount > 0) {
-    if (verificationData.qualityResults.syntax.passed === false) {
-      recommendations.critical.push('Fix syntax errors - code will not run');
-    } else {
-      recommendations.warnings.push(`Address ${verificationData.qualityResults.issueCount} linting issues`);
+    
+    for (const issue of issues.critical.filter(i => i.type === 'INCOMPLETE_TASK')) {
+      recommendations.immediate.push(
+        `- ${issue.description}: ${getTaskRecommendation(issue.task)}`
+      );
     }
   }
   
-  // Missing tests
-  if (verificationData.testResults.metrics.total === 0) {
-    recommendations.warnings.push('Add test coverage to improve verification confidence');
+  // Immediate: Fix test failures
+  if (issues.critical.filter(i => i.type === 'TEST_FAILURE').length > 0) {
+    recommendations.immediate.push('Fix all failing tests');
   }
   
-  // Documentation issues
-  if (!verificationData.docResults.complete) {
-    recommendations.warnings.push('Update required documentation (README, CHANGELOG)');
+  // Before next: Meet success criteria
+  if (issues.major.filter(i => i.type === 'UNMET_CRITERION').length > 0) {
+    recommendations.beforeNext.push('Satisfy all success criteria from PLAN.md');
   }
   
-  // Partial criteria
-  const partialCriteria = verificationData.criteriaResults.criteria.filter(c => c.status === 'warning');
-  partialCriteria.forEach(criterion => {
-    recommendations.suggestions.push(`Review criterion: "${criterion.criterion}" - ${criterion.notes}`);
-  });
+  // Optional: Address warnings
+  if (issues.minor.length > 0) {
+    recommendations.optional.push('Address code quality warnings');
+  }
   
-  const recSection = `
-### Critical Issues (Must Fix)
-${recommendations.critical.length > 0 ? recommendations.critical.map((r, i) => `${i + 1}. ${r}`).join('\n') : '*None*'}
-
-### Warnings (Should Fix)
-${recommendations.warnings.length > 0 ? recommendations.warnings.map((r, i) => `${i + 1}. ${r}`).join('\n') : '*None*'}
-
-### Suggestions (Nice to Have)
-${recommendations.suggestions.length > 0 ? recommendations.suggestions.map((r, i) => `${i + 1}. ${r}`).join('\n') : '*None*'}
-`;
+  if (reportData.tests.metrics.total === 0) {
+    recommendations.optional.push('Add test suite for better validation');
+  }
   
-  return report.replace(/## Recommendations[\s\S]*?(?=\n## )/m, `## Recommendations\n\n${recSection}\n`);
+  return recommendations;
 }
 ```
 
-#### Next Steps Section
+**9. Write Report to File**
 
 ```javascript
-function addNextSteps(report, overallStatus) {
-  let nextSteps = '';
+function writeReport(reportContent, reportData) {
+  // Create directory if needed
+  const reportDir = `.planning/verification/${reportData.metadata.phaseName}`;
+  fs.mkdirSync(reportDir, { recursive: true });
   
-  if (overallStatus.status === 'PASSED') {
-    nextSteps = `
-- ✅ Phase/Plan verified successfully
-- → Proceed to next phase/plan
-- → Update STATE.md with verification status
-`;
-  } else if (overallStatus.status === 'FAILED') {
-    nextSteps = `
-- ❌ Verification failed
-- → Review and fix critical issues listed above
-- → Re-run verification after fixes: \`reis verify <phase/plan>\`
-- → Consider running \`reis gap-analyze\` if stuck
-`;
-  } else {
-    nextSteps = `
-- ⚠️ Verification partially passed
-- → Review warnings and suggestions
-- → Decide whether to proceed or fix issues
-- → Document decision in STATE.md
-`;
+  // Generate filename
+  const timestamp = reportData.metadata.timestamp.replace(/:/g, '-').split('.')[0];
+  const reportPath = `${reportDir}/VERIFICATION_REPORT_${timestamp}.md`;
+  
+  // Write file
+  fs.writeFileSync(reportPath, reportContent, 'utf8');
+  
+  // Also create/update latest symlink
+  const latestPath = `${reportDir}/VERIFICATION_REPORT.md`;
+  if (fs.existsSync(latestPath)) {
+    fs.unlinkSync(latestPath);
   }
+  fs.writeFileSync(latestPath, reportContent, 'utf8');
   
-  return report.replace(/## Next Steps[\s\S]*?(?=\n## )/m, `## Next Steps\n\n${nextSteps}\n`);
+  return reportPath;
 }
 ```
 
-#### Report Saving
+**Report Generation Order:**
+1. Executive Summary (with FR4.1 metrics)
+2. **Feature Completeness (FR4.1) - SECOND, PROMINENT**
+3. Test Results
+4. Success Criteria Validation
+5. Code Quality
+6. Documentation
+7. Issues Summary
+8. Recommendations
+9. Next Steps
 
-Save the report to the correct location with timestamp:
-
-```bash
-# Create verification directory
-PHASE_NAME=$(echo "$PLAN_PATH" | grep -oP 'phase-\d+-[a-z-]+' | head -1)
-VERIFICATION_DIR=".planning/verification/$PHASE_NAME"
-mkdir -p "$VERIFICATION_DIR"
-
-# Generate timestamp filename
-TIMESTAMP=$(date +%Y-%m-%dT%H-%M-%S)
-REPORT_FILE="$VERIFICATION_DIR/$TIMESTAMP.md"
-
-# Write report
-cat > "$REPORT_FILE" << 'EOF'
-[populated report content]
-EOF
-
-echo "✅ Verification report saved to: $REPORT_FILE"
+**Critical Rules:**
+- ✅ Feature Completeness appears EARLY (right after summary)
+- ✅ Task-by-task breakdown with evidence
+- ✅ Missing deliverables clearly listed
+- ✅ Impact assessment for incomplete tasks
+- ✅ Specific, actionable recommendations
+- ✅ Clear PASS/FAIL determination
+- ❌ Don't bury FR4.1 results at end
+- ❌ Don't pass if any task incomplete
 ```
 
-#### Report Validation
-
-Verify the generated report is complete:
-
-```javascript
-function validateReport(report) {
-  const requiredSections = [
-    '# Verification Report:',
-    '## Executive Summary',
-    '## Test Results',
-    '## Success Criteria Validation',
-    '## Code Quality',
-    '## Documentation',
-    '## Recommendations',
-    '## Next Steps',
-    '## Verification Metadata',
-  ];
-  
-  const missing = requiredSections.filter(section => !report.includes(section));
-  
-  if (missing.length > 0) {
-    console.error('⚠️ Report missing sections:', missing);
-    return false;
-  }
-  
-  // Check for placeholder variables
-  if (report.includes('[') && report.includes(']')) {
-    const placeholders = report.match(/\[[^\]]+\]/g);
-    if (placeholders) {
-      console.warn('⚠️ Unpopulated placeholders:', placeholders);
-    }
-  }
-  
-  return true;
-}
-```
-
-#### Metadata Addition
-
-Add verification metadata at the end:
-
-```javascript
-function addMetadata(report, verificationData, timestamp) {
-  const duration = verificationData.endTime - verificationData.startTime;
-  const durationSeconds = (duration / 1000).toFixed(1);
-  
-  const metadata = `
-**Verifier Version**: REIS v${verificationData.reisVersion}
-**Generated By**: reis_verifier
-**Verification Duration**: ${durationSeconds}s
-**Report Location**: \`${verificationData.reportPath}\`
-`;
-  
-  return report.replace(
-    /## Verification Metadata[\s\S]*?(?=\n---|\z)/m,
-    `## Verification Metadata\n\n${metadata}\n`
-  );
-}
-```
-
-#### Best Practices
-
-1. **Clear status indicators** - Use ✅/❌/⚠️ consistently
-2. **Actionable recommendations** - Tell developers exactly what to fix
-3. **Evidence-based** - Include specific file paths, line numbers, counts
-4. **Scannable format** - Use headers, bullets, short paragraphs
-5. **Complete but concise** - Include all data but truncate very long outputs
-6. **Timestamped filenames** - Enable tracking multiple verification runs
-7. **Link to sources** - Reference test output, files checked, commands run
-
-#### Example Complete Report
-
-See `.planning/verifier-project/examples/example-verification-report.md` for a complete example of a populated report.
-```
-
-**Key Points:**
-- Complete report generation pipeline from data to saved file
-- All template sections populated with real data
-- Overall status calculation from multiple checks
-- Actionable recommendations generated automatically
-- Reports saved with timestamps for tracking
-- Report validation ensures completeness
-- Integration with all previous steps (2, 3, 4, 5)
-
+Save changes to subagents/reis_verifier.md
 </action>
 <verify>
 ```bash
-# Verify Step 6 section added
-grep -q "### Step 6: Generate Report" subagents/reis_verifier.md && echo "✅ Step 6 section present"
+# Check Step 6 was enhanced
+grep -q "Step 6.*Generate Report\|Generate.*Report" subagents/reis_verifier.md && echo "✅ Step 6 report generation present"
 
-# Check for key components
-grep -q "Report Assembly Process" subagents/reis_verifier.md && echo "✅ Assembly process documented"
-grep -q "Overall Status Determination" subagents/reis_verifier.md && echo "✅ Status calculation present"
-grep -q "Executive Summary Generation" subagents/reis_verifier.md && echo "✅ Summary generation included"
-grep -q "generateVerificationReport" subagents/reis_verifier.md && echo "✅ Main function present"
+# Verify FR4.1 section generation
+grep -q "generateFeatureCompletenessSection\|Feature Completeness.*FR4.1" subagents/reis_verifier.md && echo "✅ FR4.1 section generation present"
 
-# Verify section population functions
-grep -q "populateTestResults\|populateSuccessCriteria\|populateCodeQuality" subagents/reis_verifier.md && echo "✅ Population functions included"
+# Check overall status calculation
+grep -q "calculateOverallStatus\|overallStatus" subagents/reis_verifier.md && echo "✅ Overall status calculation present"
 
-# Check for recommendations generation
-grep -q "generateRecommendations" subagents/reis_verifier.md && echo "✅ Recommendations logic present"
+# Verify executive summary
+grep -q "generateExecutiveSummary\|Executive Summary" subagents/reis_verifier.md && echo "✅ Executive summary generation present"
 
-# Verify report saving logic
-grep -q "VERIFICATION_DIR\|mkdir -p" subagents/reis_verifier.md && echo "✅ Report saving documented"
+# Check recommendations logic
+grep -q "generateRecommendations\|recommendations" subagents/reis_verifier.md && echo "✅ Recommendations logic present"
+
+wc -l subagents/reis_verifier.md
 ```
 </verify>
 <done>
-- subagents/reis_verifier.md updated with comprehensive report generation protocol
-- Report Assembly Process with inputs from all verification steps
-- Overall Status Determination logic (PASSED/FAILED/PARTIAL)
-- Executive Summary Generation with concise summaries
-- Report Population with complete generateVerificationReport function
-- Section Population Functions for tests, criteria, quality, documentation
-- Recommendations Generation with critical/warnings/suggestions categories
-- Next Steps Section with context-specific guidance
-- Report Saving with timestamped filenames and directory creation
-- Report Validation to ensure completeness
-- Metadata Addition for tracking
-- Best Practices and complete example reference
-- Section is ~250-300 lines with executable code
+- Step 6 enhanced with comprehensive report generation
+- Executive Summary includes FR4.1 metrics
+- Feature Completeness section generates task-by-task breakdown
+- Evidence display for complete tasks
+- Missing deliverables list for incomplete tasks
+- Impact assessment and recommendations per task
+- Overall status calculation (100% completeness required)
+- Issues summary categorizes by severity
+- Recommendations are specific and actionable
+- Report written to .planning/verification/{phase}/ directory
+- FR4.1 section prominently placed (second, after exec summary)
+</done>
+</task>
+
+<task type="auto">
+<name>Add report generation example to reis_verifier spec</name>
+<files>subagents/reis_verifier.md</files>
+<action>
+Add a comprehensive example showing full report generation with FR4.1 to the Examples section.
+
+**Add to Examples Section:**
+
+```markdown
+### Example 3: Complete Verification with FR4.1
+
+**Scenario:** Verify Phase 2 plan with 3 tasks, 2 complete, 1 incomplete
+
+**Input:** PLAN.md with tasks:
+1. Task 1: Build User Login (COMPLETE)
+2. Task 2: Build Password Reset (INCOMPLETE - FR4.1 DETECTS)
+3. Task 3: Build Profile Page (COMPLETE)
+
+**Verification Results:**
+
+**Tests:**
+- Total: 17/18 passed (1 failing: password reset test)
+
+**Feature Completeness (FR4.1):**
+- Task 1: ✅ COMPLETE
+  - File: src/auth/login.js found
+  - Function: authenticateUser() found at line 15
+  - Test: test/auth/login.test.js found
+  
+- Task 2: ❌ INCOMPLETE
+  - File: src/auth/password-reset.js NOT FOUND
+  - Function: sendResetEmail() NOT FOUND
+  - Test: test/auth/password-reset.test.js NOT FOUND
+  
+- Task 3: ✅ COMPLETE
+  - File: src/pages/profile.js found
+  - Component: ProfilePage found at line 10
+
+**Completion:** 2/3 tasks (66%) → FAIL
+
+**Generated Report:**
+
+\`\`\`markdown
+# Verification Report: Phase 2 - Core Implementation
+
+**Date:** 2024-01-15T14:30:00Z  
+**Verified By:** reis_verifier v1.0  
+**Status:** ❌ FAILED
+
+---
+
+## Executive Summary
+
+Verification FAILED for Phase 2 - Core Implementation.
+
+**Overall Status:** ❌ FAIL  
+**Tests:** 17/18 passed  
+**Feature Completeness:** 2/3 tasks (66%)  
+**Success Criteria:** 5/6 met  
+**Code Quality:** PASS  
+**Critical Issues:** 2
+
+**Reason:** Feature completeness: 66% (1 task incomplete)
+
+**Action Required:** Address issues below and re-verify before proceeding.
+
+---
+
+## Feature Completeness (FR4.1)
+
+**Status:** ❌ INCOMPLETE (66%)  
+**Tasks Completed:** 2/3
+
+### Task-by-Task Analysis
+
+#### ✅ Task: Build User Login
+
+**Status:** COMPLETE
+
+**Evidence:**
+- file: \`src/auth/login.js\` (confidence: 100%)
+- function: \`src/auth/login.js:15\` (confidence: 90%)
+- test: \`test/auth/login.test.js\` (confidence: 100%)
+
+#### ❌ Task: Build Password Reset
+
+**Status:** INCOMPLETE - FEATURE MISSING
+
+**Missing Deliverables:**
+- file: \`src/auth/password-reset.js\` NOT FOUND
+- function: \`sendResetEmail\` NOT FOUND
+- test: \`test/auth/password-reset.test.js\` NOT FOUND
+
+**Search Evidence:**
+\`\`\`bash
+$ fs.existsSync: src/auth/password-reset.js
+# No matches
+
+$ grep -r "sendResetEmail" src/
+# No matches
+
+$ git ls-files | grep "password-reset"
+# No matches
+\`\`\`
+
+**Impact:** HIGH - Critical authentication feature missing  
+**Recommendation:** Implement missing file: src/auth/password-reset.js
+
+#### ✅ Task: Build Profile Page
+
+**Status:** COMPLETE
+
+**Evidence:**
+- file: \`src/pages/profile.js\` (confidence: 100%)
+- component: \`src/pages/profile.js:10\` (confidence: 90%)
+
+---
+
+## Test Results
+
+**Status:** ❌ 1 test failing  
+**Framework:** Jest
+
+**Metrics:**
+- Total: 18
+- Passed: 17 ✅
+- Failed: 1 ❌
+
+### Failed Tests
+
+**Test:** sends reset email  
+**File:** test/auth/password-reset.test.js:15  
+**Error:** Function 'sendResetEmail' is not defined
+
+**Analysis:** This test failure is directly related to incomplete Task 2 (FR4.1 detected).
+
+---
+
+## Issues Summary
+
+### Critical Issues (2)
+
+1. **INCOMPLETE_TASK:** Task incomplete: Build Password Reset
+   - Impact: HIGH
+   - Missing: src/auth/password-reset.js, sendResetEmail()
+
+2. **TEST_FAILURE:** Test failing: sends reset email
+   - Related to incomplete Task 2
+
+---
+
+## Recommendations
+
+**Immediate Actions Required:**
+1. Complete all planned tasks before proceeding (Feature Completeness: 100% required)
+   - Build Password Reset: Implement missing file: src/auth/password-reset.js
+
+2. Fix all failing tests
+   - The test failure is caused by incomplete Task 2
+
+**Before Proceeding to Next Phase:**
+- All 3 tasks must be 100% complete
+- All 18 tests must pass
+- Verify password reset functionality works end-to-end
+
+---
+
+## Next Steps
+
+❌ FAILED → Fix issues above and re-verify
+
+**Re-verification Command:**
+\`\`\`bash
+reis verify phase-2
+\`\`\`
+
+After implementing password reset feature, re-run verification to confirm 100% task completion.
+
+---
+
+**Verification Complete**  
+*Report generated by reis_verifier v1.0*
+\`\`\`
+
+**Key Takeaways:**
+1. FR4.1 detected missing feature (Task 2 incomplete)
+2. Test failure correlated with missing feature
+3. Clear 66% vs 100% completion shown
+4. Specific recommendations provided
+5. Verification correctly failed (<100% completeness)
+```
+
+**Learning Points:**
+- FR4.1 catches incomplete implementations
+- Tests alone don't guarantee completeness
+- Report clearly shows what's missing
+- Actionable recommendations guide fixes
+- Re-verification validates fixes
+</action>
+<verify>
+```bash
+# Check example was added
+grep -q "Example 3.*Complete Verification\|Verification with FR4.1" subagents/reis_verifier.md && echo "✅ FR4.1 example added"
+
+# Verify it shows incomplete task
+grep -A50 "Example 3" subagents/reis_verifier.md | grep -q "INCOMPLETE\|66%" && echo "✅ Shows incomplete scenario"
+
+# Check for full report
+grep -A100 "Example 3" subagents/reis_verifier.md | grep -q "Feature Completeness.*FR4.1" && echo "✅ Full report example present"
+```
+</verify>
+<done>
+- Example 3 added showing complete verification with FR4.1
+- Demonstrates 3-task scenario with 1 incomplete
+- Shows full report generation with all sections
+- Feature Completeness section prominently displayed
+- Task-by-task breakdown with evidence and missing items
+- Correlates test failure with incomplete task
+- Shows 66% completion triggering FAIL status
+- Includes actionable recommendations
+- Demonstrates re-verification workflow
 </done>
 </task>
 
 ## Success Criteria
-- ✅ Step 6 (Generate Report) in reis_verifier.md fully documented
-- ✅ Overall status determination from multiple checks (tests, criteria, quality, docs)
-- ✅ Executive summary generation with clear pass/fail determination
-- ✅ All template sections populated (tests, criteria, quality, docs, recommendations, next steps)
-- ✅ Actionable recommendations generated based on findings
-- ✅ Reports saved to `.planning/verification/{phase-name}/{timestamp}.md`
-- ✅ Report validation ensures completeness
-- ✅ Metadata tracking included (version, duration, location)
-- ✅ Complete JavaScript functions and bash commands provided
-- ✅ Integration with all previous verification steps (2, 3, 4, 5)
+- ✅ Step 6 enhanced with comprehensive report generation
+- ✅ Executive Summary includes FR4.1 completeness metrics
+- ✅ Feature Completeness section generates second (prominently placed)
+- ✅ Task-by-task breakdown with evidence for complete tasks
+- ✅ Missing deliverables list with search evidence for incomplete tasks
+- ✅ Impact assessment logic (HIGH/MEDIUM/LOW)
+- ✅ Recommendation generation per incomplete task
+- ✅ Overall status calculation requires 100% task completion
+- ✅ Issues summary categorizes by severity
+- ✅ Report written to .planning/verification/{phase}/ directory
+- ✅ Complete example demonstrates FR4.1 detection of incomplete task
 
 ## Verification
 
 ```bash
-# Check Step 6 section
-grep -A100 "### Step 6: Generate Report" subagents/reis_verifier.md | head -50
+# Check Step 6 content
+grep -A80 "Step 6.*Generate Report" subagents/reis_verifier.md | head -100
 
-# Verify completeness
-echo "Checking for key components:"
-grep -q "calculateOverallStatus" subagents/reis_verifier.md && echo "✅ Status calculation function"
-grep -q "generateExecutiveSummary" subagents/reis_verifier.md && echo "✅ Summary generation function"
-grep -q "generateVerificationReport" subagents/reis_verifier.md && echo "✅ Main generation function"
-grep -q "populateTestResults" subagents/reis_verifier.md && echo "✅ Test results population"
-grep -q "generateRecommendations" subagents/reis_verifier.md && echo "✅ Recommendations generation"
+# Verify FR4.1 section generation
+grep -n "generateFeatureCompletenessSection" subagents/reis_verifier.md
 
-# Count functions
-grep -c "^function " subagents/reis_verifier.md
+# Check overall status calculation
+grep -n "calculateOverallStatus" subagents/reis_verifier.md
 
-# Verify structure
-grep "^### Step" subagents/reis_verifier.md
+# Verify example
+grep -A150 "Example 3.*Complete Verification" subagents/reis_verifier.md | head -160
 ```
 
 ---

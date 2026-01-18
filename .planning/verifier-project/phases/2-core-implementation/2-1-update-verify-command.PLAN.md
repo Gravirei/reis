@@ -1,506 +1,450 @@
-# Plan: 2-1 - Update verify Command with reis_verifier Integration
+# Plan: 2-1 - Update verify Command
 
 ## Objective
-Transform the stub verify command into a functional command that invokes the reis_verifier subagent with proper context loading and prompt generation.
+Update `lib/commands/verify.js` to integrate with the reis_verifier subagent, including support for FR4.1 Feature Completeness validation.
 
 ## Context
-Currently, `lib/commands/verify.js` is a minimal stub that just shows a prompt. We need to upgrade it to:
-1. Parse phase/plan arguments correctly
-2. Load relevant PLAN.md files and success criteria
-3. Detect verification scope (phase vs individual plan)
-4. Generate a comprehensive prompt for reis_verifier subagent
-5. Invoke the subagent through Rovo Dev's agent system
+Currently, `lib/commands/verify.js` is a stub. We need to transform it into a fully functional command that loads PLAN.md files, invokes the reis_verifier subagent, and coordinates the verification process.
+
+**Key Integration Points:**
+- Load PLAN.md from phase or plan argument
+- Extract success criteria and tasks (for FR4.1)
+- Invoke reis_verifier subagent via Rovo Dev
+- Handle verification results
+- Display summary to user
 
 **Reference Files:**
-- `lib/commands/verify.js` - Current stub implementation
-- `lib/commands/plan.js` - Similar command pattern for reference
-- `lib/commands/execute-plan.js` - Subagent invocation pattern
-- `lib/utils/state-manager.js` - For STATE.md interaction
-- `lib/utils/command-helpers.js` - Validation utilities
-- `subagents/reis_verifier.md` - Specification (created in Phase 1)
-
-**Key Design Decisions:**
-- Support both `reis verify <phase>` (verify entire phase) and `reis verify <plan-file>` (verify specific plan)
-- Load all relevant context (PLAN.md, success criteria, STATE.md)
-- Generate rich prompt including verification checklist
-- Use existing command patterns from plan/execute-plan
+- `lib/commands/plan.js` - Similar subagent invocation pattern
+- `lib/commands/execute-plan.js` - Plan loading logic
+- `subagents/reis_verifier.md` - Subagent specification (from Wave 1.1)
+- `lib/utils/state-manager.js` - STATE.md integration
 
 ## Dependencies
-- Phase 1 complete (subagents/reis_verifier.md and templates exist)
+- Wave 1.1 (reis_verifier.md specification must exist)
+- Wave 1.2 (Templates must exist for reference)
 
 ## Tasks
 
 <task type="auto">
-<name>Update verify command with context loading</name>
+<name>Update verify command with subagent integration</name>
 <files>lib/commands/verify.js</files>
 <action>
-Rewrite the verify command to properly load verification context and prepare for subagent invocation.
+Completely rewrite the verify command to integrate with reis_verifier subagent.
 
-**Replace the current stub with:**
+**Current State:** Stub function that prints a message.
+
+**Target State:** Full command that:
+1. Parses phase/plan argument
+2. Loads PLAN.md file
+3. Extracts success criteria and tasks
+4. Generates verification prompt for Rovo Dev
+5. Invokes reis_verifier subagent
+6. Displays results
+
+**Implementation:**
 
 ```javascript
 const fs = require('fs');
 const path = require('path');
-const { showPrompt, showError, checkPlanningDir, validatePhaseNumber } = require('../utils/command-helpers');
-const stateManager = require('../utils/state-manager');
+const { spawn } = require('child_process');
+const chalk = require('chalk');
 
-module.exports = function verify(args) {
-  // Check if .planning/ exists
-  if (!checkPlanningDir()) {
-    showError('Not a REIS project. Run "reis new" or "reis map" first.');
+/**
+ * Verify command - Runs reis_verifier subagent
+ * @param {string} target - Phase number, phase name, or path to PLAN.md
+ * @param {object} options - Command options
+ */
+async function verify(target, options = {}) {
+  console.log(chalk.blue('🔍 REIS Verifier'));
+  console.log();
+
+  try {
+    // Step 1: Resolve target to PLAN.md file
+    const planPath = resolvePlanPath(target);
+    
+    if (!fs.existsSync(planPath)) {
+      console.error(chalk.red(`❌ Error: Plan file not found: ${planPath}`));
+      console.log(chalk.yellow('Usage: reis verify <phase-number|phase-name|plan-file>'));
+      process.exit(1);
+    }
+
+    console.log(chalk.gray(`📄 Plan: ${planPath}`));
+    console.log();
+
+    // Step 2: Load and parse PLAN.md
+    const planContent = fs.readFileSync(planPath, 'utf8');
+    const planData = parsePlan(planContent);
+
+    // Step 3: Display what will be verified
+    console.log(chalk.bold('Verification Scope:'));
+    console.log(chalk.gray(`  Objective: ${planData.objective}`));
+    console.log(chalk.gray(`  Tasks: ${planData.tasks.length}`));
+    console.log(chalk.gray(`  Success Criteria: ${planData.successCriteria.length}`));
+    console.log();
+
+    // Step 4: Generate verification prompt
+    const verificationPrompt = generateVerificationPrompt(planPath, planData, options);
+
+    // Step 5: Invoke reis_verifier via Rovo Dev
+    console.log(chalk.blue('🔄 Running verification...'));
+    console.log();
+
+    const result = await invokeVerifier(verificationPrompt, options);
+
+    // Step 6: Display results summary
+    displayResults(result);
+
+    // Exit with appropriate code
+    process.exit(result.passed ? 0 : 1);
+
+  } catch (error) {
+    console.error(chalk.red(`❌ Verification failed: ${error.message}`));
+    if (options.verbose) {
+      console.error(error.stack);
+    }
     process.exit(1);
   }
-  
-  const input = args.phase || args._?.[0];
-  if (!input) {
-    showError('Usage: reis verify <phase> or reis verify <plan-file>');
-    console.log('\nExamples:');
-    console.log('  reis verify 1           # Verify entire Phase 1');
-    console.log('  reis verify path/to/PLAN.md  # Verify specific plan');
-    process.exit(1);
-  }
-  
-  // Determine verification scope
-  let verificationScope;
-  let targetPlans = [];
-  
-  if (input.endsWith('.PLAN.md') || input.endsWith('.md')) {
-    // Specific plan file
-    verificationScope = 'plan';
-    if (!fs.existsSync(input)) {
-      showError(`Plan file not found: ${input}`);
-      process.exit(1);
-    }
-    targetPlans.push(input);
-  } else {
-    // Phase number
-    const phaseNum = validatePhaseNumber(input);
-    if (phaseNum === null) {
-      process.exit(1);
-    }
-    
-    verificationScope = 'phase';
-    
-    // Find phase directory
-    const planningDir = path.join(process.cwd(), '.planning');
-    const phaseDir = findPhaseDirectory(planningDir, phaseNum);
-    
-    if (!phaseDir) {
-      showError(`Phase ${phaseNum} directory not found in .planning/`);
-      process.exit(1);
-    }
-    
-    // Find all PLAN.md files in phase
-    targetPlans = findPlanFiles(phaseDir);
-    
-    if (targetPlans.length === 0) {
-      showError(`No PLAN.md files found in phase ${phaseNum}`);
-      process.exit(1);
-    }
-  }
-  
-  // Load verification context
-  const context = loadVerificationContext(targetPlans, verificationScope);
-  
-  // Generate verification prompt
-  const prompt = generateVerificationPrompt(context);
-  
-  // Show the prompt (Rovo Dev will invoke reis_verifier)
-  showPrompt(prompt);
-  
-  return 0;
-};
-
-// Helper: Find phase directory
-function findPhaseDirectory(planningDir, phaseNum) {
-  const phasesDir = path.join(planningDir, 'phases');
-  if (!fs.existsSync(phasesDir)) {
-    const entries = fs.readdirSync(planningDir);
-    const phaseDir = entries.find(e => {
-      const match = e.match(/^(\d+)-/);
-      return match && parseInt(match[1]) === phaseNum;
-    });
-    return phaseDir ? path.join(planningDir, phaseDir) : null;
-  }
-  
-  const entries = fs.readdirSync(phasesDir);
-  const phaseDir = entries.find(e => {
-    const match = e.match(/^(\d+)-/);
-    return match && parseInt(match[1]) === phaseNum;
-  });
-  return phaseDir ? path.join(phasesDir, phaseDir) : null;
 }
 
-// Helper: Find all PLAN.md files recursively
-function findPlanFiles(dir) {
-  const plans = [];
+/**
+ * Resolve target argument to PLAN.md file path
+ * @param {string} target - Phase number, name, or file path
+ * @returns {string} Absolute path to PLAN.md
+ */
+function resolvePlanPath(target) {
+  // If target is a file path, use it directly
+  if (target.endsWith('.PLAN.md') || target.endsWith('.md')) {
+    return path.resolve(target);
+  }
+
+  // Look in .planning/ directory
+  const planningDir = path.join(process.cwd(), '.planning');
   
-  function walk(currentDir) {
-    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
-    for (const entry of entries) {
-      const fullPath = path.join(currentDir, entry.name);
-      if (entry.isDirectory()) {
-        walk(fullPath);
-      } else if (entry.name.endsWith('.PLAN.md') || entry.name === 'PLAN.md') {
-        plans.push(fullPath);
+  // Try phase number (e.g., "1" or "phase-1")
+  const phaseMatch = target.match(/^(?:phase-)?(\d+)$/);
+  if (phaseMatch) {
+    const phaseNum = phaseMatch[1];
+    // Find phase directory
+    const phaseDirs = fs.readdirSync(planningDir)
+      .filter(d => d.startsWith(`${phaseNum}-`));
+    
+    if (phaseDirs.length > 0) {
+      const phaseDir = path.join(planningDir, phaseDirs[0]);
+      // Return first PLAN.md found (for single-plan phases)
+      const plans = fs.readdirSync(phaseDir).filter(f => f.endsWith('.PLAN.md'));
+      if (plans.length > 0) {
+        return path.join(phaseDir, plans[0]);
       }
     }
   }
-  
-  walk(dir);
-  return plans;
+
+  // Try phase name (e.g., "design-and-specification")
+  const phaseDir = path.join(planningDir, target);
+  if (fs.existsSync(phaseDir)) {
+    const plans = fs.readdirSync(phaseDir).filter(f => f.endsWith('.PLAN.md'));
+    if (plans.length > 0) {
+      return path.join(phaseDir, plans[0]);
+    }
+  }
+
+  // Not found
+  return target; // Return as-is, will fail with clear error
 }
 
-// Helper: Load verification context
-function loadVerificationContext(planFiles, scope) {
-  const context = {
-    scope,
-    plans: [],
-    projectRoot: process.cwd(),
-    planningDir: path.join(process.cwd(), '.planning'),
-  };
-  
-  // Load each plan
-  for (const planFile of planFiles) {
-    const content = fs.readFileSync(planFile, 'utf8');
-    const planInfo = parsePlanFile(content, planFile);
-    context.plans.push(planInfo);
-  }
-  
-  // Load STATE.md if exists
-  const statePath = path.join(context.planningDir, 'STATE.md');
-  if (fs.existsSync(statePath)) {
-    context.stateContent = fs.readFileSync(statePath, 'utf8');
-  }
-  
-  // Load ROADMAP.md if exists
-  const roadmapPath = path.join(context.planningDir, 'ROADMAP.md');
-  if (fs.existsSync(roadmapPath)) {
-    context.roadmapContent = fs.readFileSync(roadmapPath, 'utf8');
-  }
-  
-  return context;
+/**
+ * Parse PLAN.md file
+ * @param {string} content - PLAN.md content
+ * @returns {object} Parsed plan data
+ */
+function parsePlan(content) {
+  // Extract objective
+  const objectiveMatch = content.match(/## Objective\n([^\n]+)/);
+  const objective = objectiveMatch ? objectiveMatch[1].trim() : 'Unknown';
+
+  // Extract tasks (count <task> tags)
+  const taskMatches = content.match(/<task type="[^"]+">[\s\S]*?<\/task>/g) || [];
+  const tasks = taskMatches.map((taskXml, index) => {
+    const nameMatch = taskXml.match(/<name>([^<]+)<\/name>/);
+    const filesMatch = taskXml.match(/<files>([^<]+)<\/files>/);
+    return {
+      index: index + 1,
+      name: nameMatch ? nameMatch[1].trim() : `Task ${index + 1}`,
+      files: filesMatch ? filesMatch[1].split(',').map(f => f.trim()) : []
+    };
+  });
+
+  // Extract success criteria
+  const criteriaMatch = content.match(/## Success Criteria\n([\s\S]*?)\n##/);
+  const criteriaText = criteriaMatch ? criteriaMatch[1] : '';
+  const successCriteria = criteriaText
+    .split('\n')
+    .filter(line => line.trim().startsWith('-') || line.trim().startsWith('✅'))
+    .map(line => line.replace(/^[-✅]\s*/, '').trim())
+    .filter(Boolean);
+
+  return { objective, tasks, successCriteria };
 }
 
-// Helper: Parse plan file for key information
-function parsePlanFile(content, filePath) {
-  const plan = {
-    path: filePath,
-    content,
-    successCriteria: [],
-    verification: '',
+/**
+ * Generate verification prompt for reis_verifier
+ * @param {string} planPath - Path to PLAN.md
+ * @param {object} planData - Parsed plan data
+ * @param {object} options - Command options
+ * @returns {string} Verification prompt
+ */
+function generateVerificationPrompt(planPath, planData, options) {
+  return `You are the reis_verifier subagent. Verify the execution results for this plan.
+
+**Plan File:** ${planPath}
+
+**Objective:** ${planData.objective}
+
+**Tasks to Verify (${planData.tasks.length}):**
+${planData.tasks.map(t => `${t.index}. ${t.name} (files: ${t.files.join(', ') || 'see plan'})`).join('\n')}
+
+**Success Criteria (${planData.successCriteria.length}):**
+${planData.successCriteria.map((c, i) => `${i + 1}. ${c}`).join('\n')}
+
+---
+
+**CRITICAL: Feature Completeness Validation (FR4.1)**
+
+You MUST verify that ALL ${planData.tasks.length} tasks were actually implemented:
+- Parse each task's expected deliverables
+- Check file existence, code patterns, tests
+- Report missing implementations with evidence
+- Calculate completion: ${planData.tasks.length}/${planData.tasks.length} (100%) = PASS, less = FAIL
+
+---
+
+**Verification Protocol:**
+
+1. Load PLAN.md and parse all tasks and deliverables
+2. Run test suite (npm test)
+3. Validate code quality (syntax, linting)
+4. **Validate Feature Completeness (FR4.1) - CRITICAL**
+   - For each task, verify all deliverables exist
+   - Check files, functions, tests, endpoints
+   - Calculate completion percentage
+   - Report missing features with evidence
+5. Verify documentation
+6. Generate VERIFICATION_REPORT.md in .planning/verification/
+7. Update STATE.md
+
+**Output:** Generate comprehensive verification report with clear PASS/FAIL status.
+
+${options.verbose ? '\n**Mode:** Verbose - Include detailed output' : ''}
+${options.strict ? '\n**Mode:** Strict - Fail on any warnings' : ''}
+`;
+}
+
+/**
+ * Invoke reis_verifier subagent via Rovo Dev
+ * @param {string} prompt - Verification prompt
+ * @param {object} options - Command options
+ * @returns {Promise<object>} Verification results
+ */
+async function invokeVerifier(prompt, options) {
+  // TODO: Integrate with Rovo Dev API or CLI
+  // For now, this is a placeholder that would invoke the subagent
+  
+  // In real implementation, this would:
+  // 1. Call Rovo Dev with reis_verifier subagent
+  // 2. Pass the verification prompt
+  // 3. Wait for completion
+  // 4. Parse and return results
+  
+  console.log(chalk.yellow('⚠️  Note: Subagent invocation pending Rovo Dev integration'));
+  console.log(chalk.gray('The verification prompt has been generated and would be sent to reis_verifier.'));
+  console.log();
+  
+  return {
+    passed: false,
+    message: 'Verification system pending integration',
     tasks: [],
+    tests: {},
+    criteria: {}
   };
-  
-  // Extract success criteria section
-  const criteriaMatch = content.match(/## Success Criteria\s+([\s\S]*?)(?=\n##|\n---|\z)/);
-  if (criteriaMatch) {
-    const criteriaText = criteriaMatch[1];
-    const criteria = criteriaText.match(/^[-*]\s+(.+)$/gm);
-    if (criteria) {
-      plan.successCriteria = criteria.map(c => c.replace(/^[-*]\s+/, '').trim());
-    }
-  }
-  
-  // Extract verification section
-  const verifyMatch = content.match(/## Verification\s+([\s\S]*?)(?=\n##|\n---|\z)/);
-  if (verifyMatch) {
-    plan.verification = verifyMatch[1].trim();
-  }
-  
-  // Extract tasks
-  const taskMatches = content.matchAll(/<task[^>]*>[\s\S]*?<\/task>/g);
-  for (const match of taskMatches) {
-    const taskContent = match[0];
-    const nameMatch = taskContent.match(/<name>([^<]+)<\/name>/);
-    const verifyMatch = taskContent.match(/<verify>([^<]+)<\/verify>/);
-    const doneMatch = taskContent.match(/<done>([^<]+)<\/done>/);
-    
-    plan.tasks.push({
-      name: nameMatch ? nameMatch[1].trim() : 'Unknown task',
-      verify: verifyMatch ? verifyMatch[1].trim() : '',
-      done: doneMatch ? doneMatch[1].trim() : '',
-    });
-  }
-  
-  return plan;
 }
 
-// Helper: Generate verification prompt for reis_verifier
-function generateVerificationPrompt(context) {
-  const { scope, plans } = context;
+/**
+ * Display verification results to user
+ * @param {object} result - Verification results
+ */
+function displayResults(result) {
+  console.log(chalk.bold('Verification Results:'));
+  console.log();
   
-  let prompt = `You are reis_verifier. Verify the following ${scope}.\n\n`;
-  
-  if (scope === 'phase') {
-    prompt += `**Verification Scope**: Entire phase (${plans.length} plans)\n\n`;
+  if (result.passed) {
+    console.log(chalk.green('✅ VERIFICATION PASSED'));
+    console.log();
+    console.log(chalk.gray('All checks passed:'));
+    console.log(chalk.gray('  ✅ Tests passing'));
+    console.log(chalk.gray('  ✅ Feature completeness: 100%'));
+    console.log(chalk.gray('  ✅ Success criteria met'));
+    console.log(chalk.gray('  ✅ Code quality acceptable'));
   } else {
-    prompt += `**Verification Scope**: Single plan\n\n`;
+    console.log(chalk.red('❌ VERIFICATION FAILED'));
+    console.log();
+    console.log(chalk.yellow('Issues found:'));
+    console.log(chalk.gray('  See verification report for details'));
   }
   
-  // Add plan details
-  prompt += `## Plans to Verify\n\n`;
-  for (let i = 0; i < plans.length; i++) {
-    const plan = plans[i];
-    prompt += `### Plan ${i + 1}: ${path.basename(plan.path)}\n\n`;
-    prompt += `**Path**: \`${plan.path}\`\n\n`;
-    
-    if (plan.successCriteria.length > 0) {
-      prompt += `**Success Criteria**:\n`;
-      plan.successCriteria.forEach(c => {
-        prompt += `- ${c}\n`;
-      });
-      prompt += `\n`;
-    }
-    
-    if (plan.verification) {
-      prompt += `**Verification Commands**:\n${plan.verification}\n\n`;
-    }
-  }
-  
-  // Add verification instructions
-  prompt += `## Verification Protocol\n\n`;
-  prompt += `Follow the 7-step verification protocol from subagents/reis_verifier.md:\n\n`;
-  prompt += `1. Load verification context (✓ already loaded above)\n`;
-  prompt += `2. Run test suite (npm test or detected framework)\n`;
-  prompt += `3. Validate success criteria (check each criterion with evidence)\n`;
-  prompt += `4. Check code quality (syntax, linting if available)\n`;
-  prompt += `5. Verify documentation (README, CHANGELOG, code comments)\n`;
-  prompt += `6. Generate verification report using templates/VERIFICATION_REPORT.md\n`;
-  prompt += `7. Update STATE.md with verification results\n\n`;
-  
-  prompt += `## Output Requirements\n\n`;
-  prompt += `- Generate comprehensive verification report\n`;
-  prompt += `- Save report to \`.planning/verification/[phase-name]/[timestamp].md\`\n`;
-  prompt += `- Update STATE.md with verification entry\n`;
-  prompt += `- Provide clear pass/fail status with evidence\n`;
-  prompt += `- Include actionable recommendations if verification fails\n\n`;
-  
-  prompt += `## Project Context\n\n`;
-  prompt += `**Project Root**: ${context.projectRoot}\n`;
-  prompt += `**Planning Directory**: ${context.planningDir}\n\n`;
-  
-  if (context.stateContent) {
-    prompt += `**Current STATE.md** (for context):\n\`\`\`markdown\n${context.stateContent.substring(0, 500)}...\n\`\`\`\n\n`;
-  }
-  
-  prompt += `Begin verification now.`;
-  
-  return prompt;
+  console.log();
+  console.log(chalk.gray('Report: .planning/verification/[phase]/VERIFICATION_REPORT.md'));
 }
+
+module.exports = verify;
 ```
 
-**Key Implementation Details:**
-- Supports both phase numbers and plan file paths
-- Recursively finds all PLAN.md files in a phase
-- Parses success criteria, verification commands, and tasks from PLAN.md
-- Loads STATE.md and ROADMAP.md for context
-- Generates comprehensive prompt for reis_verifier subagent
-- Uses existing command-helpers for validation
-- Follows existing command patterns (similar to plan.js, execute-plan.js)
+**Key Features:**
+- ✅ Flexible target resolution (phase number, name, or file path)
+- ✅ PLAN.md parsing (objective, tasks, success criteria)
+- ✅ Task extraction for FR4.1 validation
+- ✅ Verification prompt generation with FR4.1 instructions
+- ✅ Subagent invocation structure (ready for Rovo Dev integration)
+- ✅ Clear result display
 
-**What to Avoid:**
-- ❌ Don't hardcode paths - use path.join() for cross-platform support
-- ❌ Don't fail silently - provide clear error messages
-- ❌ Don't assume file structure - validate everything exists
-- ❌ Don't make the prompt too long - truncate STATE.md if needed
-
+**Notes:**
+- The `invokeVerifier` function is a placeholder pending Rovo Dev integration
+- When integrated, it will spawn Rovo Dev with the reis_verifier subagent
+- For now, it generates the correct prompt that would be sent
 </action>
 <verify>
 ```bash
 # Check file was updated
-test -f lib/commands/verify.js && echo "✅ File exists"
+test -f lib/commands/verify.js && echo "✅ verify.js exists"
 
-# Verify it's no longer a stub
-grep -q "loadVerificationContext\|generateVerificationPrompt" lib/commands/verify.js && echo "✅ Core functions implemented"
+# Check for key functions
+grep -q "function verify" lib/commands/verify.js && echo "✅ Main verify function present"
+grep -q "resolvePlanPath" lib/commands/verify.js && echo "✅ Plan resolution logic present"
+grep -q "parsePlan" lib/commands/verify.js && echo "✅ Plan parsing logic present"
+grep -q "generateVerificationPrompt" lib/commands/verify.js && echo "✅ Prompt generation present"
 
-# Check for proper error handling
-grep -q "showError" lib/commands/verify.js && echo "✅ Error handling present"
+# Check for FR4.1 integration
+grep -q "Feature Completeness\|FR4.1" lib/commands/verify.js && echo "✅ FR4.1 mentioned in prompts"
+grep -q "completion percentage\|tasks complete" lib/commands/verify.js && echo "✅ Completion tracking included"
 
-# Verify helper functions exist
-grep -q "function findPhaseDirectory" lib/commands/verify.js && echo "✅ Phase finder implemented"
-grep -q "function parsePlanFile" lib/commands/verify.js && echo "✅ Plan parser implemented"
+# Verify it exports the function
+grep -q "module.exports.*verify" lib/commands/verify.js && echo "✅ Exports verify function"
 
-# Check line count (should be ~200+ lines now)
+# Check line count (should be substantial rewrite)
 wc -l lib/commands/verify.js
-
-# Try to run it (will show usage)
-node lib/commands/verify.js 2>&1 | head -5 || echo "Command structure ready"
 ```
 </verify>
 <done>
-- lib/commands/verify.js updated with full implementation
-- Supports both phase number and plan file path arguments
-- Loads verification context (plans, success criteria, STATE.md)
-- Parses PLAN.md files to extract success criteria and verification commands
-- Generates comprehensive prompt for reis_verifier subagent
-- Includes helper functions: findPhaseDirectory, findPlanFiles, loadVerificationContext, parsePlanFile, generateVerificationPrompt
-- Proper error handling for missing files/phases
-- File is ~200-250 lines with clear structure
+- lib/commands/verify.js completely rewritten
+- Includes plan resolution logic (phase number/name/path)
+- Parses PLAN.md for objective, tasks, success criteria
+- Generates verification prompt with FR4.1 instructions
+- Structures subagent invocation (ready for Rovo Dev integration)
+- Displays clear results to user
+- Handles errors gracefully
+- ~250 lines of implementation code
 </done>
 </task>
 
 <task type="auto">
-<name>Add verify command tests</name>
-<files>tests/commands/verify.test.js</files>
+<name>Update CLI to expose verify command</name>
+<files>bin/reis.js</files>
 <action>
-Create initial test suite for the verify command to ensure context loading and argument parsing work correctly.
+Ensure the verify command is properly wired into the CLI.
 
-**Create directory if needed:**
-```bash
-mkdir -p tests/commands
-```
+**Check Current State:**
+Look for existing verify command registration in `bin/reis.js`.
 
-**Test Structure:**
+**If Already Present:**
+Verify it's correctly configured and uses the updated command.
+
+**If Missing:**
+Add command registration:
 
 ```javascript
-const verify = require('../../lib/commands/verify');
-const fs = require('fs');
-const path = require('path');
-
-describe('verify command', () => {
-  const mockPlanningDir = path.join(__dirname, '../fixtures/mock-planning');
-  
-  beforeAll(() => {
-    // Create mock planning directory structure
-    // This will be expanded in Phase 4, for now just basic structure
+program
+  .command('verify <target>')
+  .description('Verify execution results against success criteria (uses reis_verifier subagent)')
+  .option('-v, --verbose', 'Show detailed verification output')
+  .option('-s, --strict', 'Fail on warnings')
+  .action(async (target, options) => {
+    const verify = require('../lib/commands/verify');
+    await verify(target, options);
   });
-  
-  afterAll(() => {
-    // Cleanup mock directories
-  });
-  
-  describe('argument parsing', () => {
-    test('requires phase or plan argument', () => {
-      // Test that command shows error without arguments
-      // Spy on process.exit and showError
-    });
-    
-    test('accepts phase number', () => {
-      // Test that phase number is parsed correctly
-    });
-    
-    test('accepts plan file path', () => {
-      // Test that plan file path is accepted
-    });
-    
-    test('validates phase number is valid', () => {
-      // Test that invalid phase numbers are rejected
-    });
-  });
-  
-  describe('context loading', () => {
-    test('loads single plan file', () => {
-      // Test loading a specific plan file
-    });
-    
-    test('loads all plans in a phase', () => {
-      // Test loading multiple plans from phase directory
-    });
-    
-    test('extracts success criteria from plan', () => {
-      // Test that success criteria are parsed correctly
-    });
-    
-    test('extracts verification commands from plan', () => {
-      // Test that verification section is extracted
-    });
-    
-    test('loads STATE.md if exists', () => {
-      // Test STATE.md loading
-    });
-  });
-  
-  describe('prompt generation', () => {
-    test('generates prompt with plan context', () => {
-      // Test that prompt includes success criteria
-    });
-    
-    test('includes verification protocol steps', () => {
-      // Test that 7-step protocol is in prompt
-    });
-    
-    test('includes project paths', () => {
-      // Test that project root and planning dir are included
-    });
-  });
-});
 ```
 
-**Implementation Notes:**
-- Use Jest or Node test runner (match existing test framework)
-- Create minimal fixtures for testing (mock PLAN.md files)
-- Focus on unit testing the helper functions
-- Integration tests will come in Phase 4
-- Use mocks/spies for fs operations and process.exit
-- Keep tests simple and focused for now
+**Expected Location:** After `execute-plan` command, before `help` or other utility commands.
 
-**Test Fixtures Needed:**
-Create `tests/fixtures/mock-planning/` with:
-- Sample PLAN.md with success criteria
-- Mock STATE.md
-- Phase directory structure
+**Verify Help Text:**
+```bash
+reis verify --help
+```
 
-**Note:** These are basic structural tests. Comprehensive tests will be added in Wave 4.1.
+Should display:
+```
+Usage: reis verify <target> [options]
 
+Verify execution results against success criteria (uses reis_verifier subagent)
+
+Arguments:
+  target                 Phase number, phase name, or path to PLAN.md
+
+Options:
+  -v, --verbose         Show detailed verification output
+  -s, --strict          Fail on warnings
+  -h, --help            Display help for command
+```
 </action>
 <verify>
 ```bash
-# Check test file created
-test -f tests/commands/verify.test.js && echo "✅ Test file created"
+# Check CLI file exists
+test -f bin/reis.js && echo "✅ CLI file exists"
 
-# Verify test structure
-grep -q "describe('verify command'" tests/commands/verify.test.js && echo "✅ Test suite defined"
-grep -q "argument parsing\|context loading\|prompt generation" tests/commands/verify.test.js && echo "✅ Test categories present"
+# Check for verify command registration
+grep -q "\.command.*verify" bin/reis.js && echo "✅ verify command registered"
 
-# Check for test cases
-grep -c "test(" tests/commands/verify.test.js
+# Check for options
+grep -A5 "\.command.*verify" bin/reis.js | grep -q "verbose\|strict" && echo "✅ Command options present"
 
-# Try running tests (may skip if fixtures not ready)
-npm test -- tests/commands/verify.test.js 2>&1 | head -20 || echo "Tests defined (fixtures needed)"
+# Test help output (if CLI is functional)
+node bin/reis.js verify --help 2>/dev/null && echo "✅ Help text works" || echo "⚠️  CLI needs debugging"
 ```
 </verify>
 <done>
-- tests/commands/verify.test.js created with test structure
-- Test categories: argument parsing, context loading, prompt generation
-- At least 8 test cases defined
-- Uses appropriate test framework (Jest/Node)
-- Includes basic fixtures setup/teardown
-- Tests are ready to expand in Phase 4
+- bin/reis.js includes verify command
+- Command accepts target argument (phase/plan)
+- Options: --verbose, --strict
+- Help text describes FR4.1 feature completeness validation
+- Properly imports and invokes lib/commands/verify.js
 </done>
 </task>
 
 ## Success Criteria
-- ✅ lib/commands/verify.js updated from stub to full implementation
-- ✅ Command accepts both phase numbers and plan file paths
-- ✅ Loads verification context (plans, success criteria, STATE.md)
-- ✅ Parses PLAN.md files correctly (success criteria, verification commands)
-- ✅ Generates comprehensive prompt for reis_verifier subagent
-- ✅ Proper error handling for missing files/invalid arguments
-- ✅ Helper functions implemented (findPhaseDirectory, parsePlanFile, etc.)
-- ✅ Basic test suite created in tests/commands/verify.test.js
-- ✅ Command ready to invoke reis_verifier subagent
+- ✅ lib/commands/verify.js completely rewritten with subagent integration
+- ✅ Plan resolution works (phase number, name, or file path)
+- ✅ PLAN.md parsing extracts objective, tasks, success criteria
+- ✅ Task extraction supports FR4.1 feature completeness validation
+- ✅ Verification prompt generation includes FR4.1 instructions
+- ✅ Subagent invocation structure ready for Rovo Dev integration
+- ✅ CLI exposes verify command with proper options
+- ✅ Clear user feedback and error handling
+- ✅ Help text describes verification capabilities
 
 ## Verification
 
 ```bash
-# Verify implementation
-cat lib/commands/verify.js | grep "^function " | head -10
+# Check implementation
+cat lib/commands/verify.js | head -100
 
-# Check file size (should be ~200+ lines)
-wc -l lib/commands/verify.js
+# Verify key functions exist
+grep "^function" lib/commands/verify.js
 
-# Test command help
-node -e "const verify = require('./lib/commands/verify'); verify({});" 2>&1 | head -10
+# Check FR4.1 integration
+grep -n "FR4.1\|Feature Completeness\|completion percentage" lib/commands/verify.js
 
-# Verify test file
-ls -lh tests/commands/verify.test.js
+# Test CLI registration
+node bin/reis.js verify --help
 
-# Run tests (may skip some without fixtures)
-npm test -- tests/commands/verify.test.js || echo "Tests defined, fixtures needed"
-
-# Check for proper structure
-grep -c "function.*(" lib/commands/verify.js
+# Verify exports
+tail -5 lib/commands/verify.js
 ```
 
 ---

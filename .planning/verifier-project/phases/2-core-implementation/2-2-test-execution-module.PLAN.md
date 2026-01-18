@@ -1,362 +1,437 @@
 # Plan: 2-2 - Implement Test Execution Module
 
 ## Objective
-Add comprehensive test execution capabilities to reis_verifier specification, including test framework detection, execution, and result parsing.
+Add test execution capabilities to the reis_verifier subagent specification, including framework detection, test running, output parsing, and result collection.
 
 ## Context
-The verify command (Wave 2.1) can now load context and generate prompts. Now we need to define how reis_verifier actually runs tests and interprets results. This goes in the subagent specification as detailed instructions that Claude will follow.
+The verifier needs to automatically run project tests and parse results. This is Step 2 in the verification protocol. Tests validate functionality, while FR4.1 (Step 4) validates completeness.
 
 **Key Requirements:**
-- Auto-detect test framework (Jest, Vitest, Node test runner, generic npm test)
-- Execute tests and capture stdout/stderr
-- Parse test results for pass/fail/pending counts
-- Extract coverage information if available
-- Handle missing tests gracefully (warn, don't fail)
-- Support projects without test configurations
+- Detect test framework (Jest, Vitest, Node Test, npm test)
+- Run test suite with `npm test`
+- Capture and parse output
+- Extract pass/fail/pending counts
+- Handle test failures gracefully
+- Support projects without tests (warning, not failure)
 
-**Reference Files:**
-- `subagents/reis_verifier.md` - Add test execution details here
-- Common test frameworks: Jest, Vitest, Node --test, Mocha, Tape
-- Test output formats vary by framework
+**Integration with FR4.1:**
+- Tests passing ≠ features complete
+- Must also verify all tasks implemented (FR4.1)
+- Both test results AND feature completeness required for PASS
 
 ## Dependencies
-- Wave 2.1 (verify command) - Need command to invoke verifier
+- Wave 2.1 (verify command infrastructure)
 
 ## Tasks
 
 <task type="auto">
-<name>Add test execution protocol to reis_verifier specification</name>
+<name>Add test execution section to reis_verifier subagent</name>
 <files>subagents/reis_verifier.md</files>
 <action>
-Expand the "Step 2: Run Test Suite" section in the Seven-Step Verification Protocol with comprehensive test execution instructions.
+Enhance the reis_verifier.md specification with detailed test execution instructions in the verification protocol (Step 2).
 
-**Location:** Find "Step 2: Run Test Suite" in the protocol section (should already exist from Wave 1.1).
+**Locate:** Find the "Step 2: Run Test Suite" section in the verification protocol.
 
-**Replace/Expand with:**
+**Enhance with:**
 
 ```markdown
 ### Step 2: Run Test Suite
 
-Execute the project's test suite and capture results for verification.
+**Objective:** Execute all project tests and collect results.
 
-#### Test Framework Detection
+**Process:**
 
-**Priority order** (check package.json scripts):
-1. `npm test` - Standard Node.js test command
-2. `package.json` "test" script - Project-defined test command
-3. Detect by dependencies:
-   - `jest` → Use Jest
-   - `vitest` → Use Vitest  
-   - `mocha` → Use Mocha
-   - Node 18+ → Try `node --test`
+1. **Detect Test Framework**
+   ```bash
+   # Check package.json for test script
+   cat package.json | grep "\"test\":"
+   
+   # Common frameworks:
+   # - Jest: "jest" in test script or dependencies
+   # - Vitest: "vitest" in test script or dependencies
+   # - Node Test: "node --test" or "node:test"
+   # - Generic: "npm test"
+   ```
 
-**Detection Steps:**
-```bash
-# Check if package.json exists
-if [ -f package.json ]; then
-  # Read test script
-  TEST_SCRIPT=$(node -p "require('./package.json').scripts?.test || ''")
-  
-  if [ -n "$TEST_SCRIPT" ]; then
-    echo "✅ Test script found: $TEST_SCRIPT"
-  else
-    echo "⚠️ No test script in package.json"
-  fi
-fi
-```
+2. **Run Tests**
+   ```bash
+   # Always use npm test (respects package.json config)
+   npm test 2>&1 | tee test-output.txt
+   ```
 
-#### Test Execution
+3. **Parse Test Output**
+   
+   **Jest/Vitest Format:**
+   ```
+   Tests:       5 passed, 2 failed, 1 skipped, 8 total
+   Time:        2.5s
+   ```
+   
+   **Node Test Format:**
+   ```
+   ✓ test name (1.2ms)
+   ✗ test name (0.5ms)
+   tests 10 | passed 8 | failed 2
+   ```
 
-**Run tests with output capture:**
-```bash
-# Run npm test and capture output
-npm test 2>&1 | tee /tmp/test-output.txt
+   **Parse Logic:**
+   ```javascript
+   function parseTestOutput(output) {
+     // Jest/Vitest pattern
+     const jestMatch = output.match(/Tests:\s+(\d+) passed(?:,\s+(\d+) failed)?(?:,\s+(\d+) skipped)?/);
+     if (jestMatch) {
+       return {
+         passed: parseInt(jestMatch[1]),
+         failed: parseInt(jestMatch[2] || 0),
+         skipped: parseInt(jestMatch[3] || 0),
+         total: parseInt(jestMatch[1]) + parseInt(jestMatch[2] || 0) + parseInt(jestMatch[3] || 0)
+       };
+     }
+     
+     // Node test pattern
+     const nodeMatch = output.match(/tests (\d+).*passed (\d+).*failed (\d+)/);
+     if (nodeMatch) {
+       return {
+         passed: parseInt(nodeMatch[2]),
+         failed: parseInt(nodeMatch[3]),
+         total: parseInt(nodeMatch[1])
+       };
+     }
+     
+     // Fallback: count ✓ and ✗
+     const passed = (output.match(/✓|PASS/g) || []).length;
+     const failed = (output.match(/✗|FAIL/g) || []).length;
+     return { passed, failed, total: passed + failed };
+   }
+   ```
 
-# Capture exit code
-TEST_EXIT_CODE=$?
-```
+4. **Extract Failed Test Details**
+   ```javascript
+   function extractFailedTests(output) {
+     const failures = [];
+     
+     // Look for failure blocks
+     const failureBlocks = output.match(/●[^\n]+\n[\s\S]*?(?=●|\n\n|$)/g) || [];
+     
+     for (const block of failureBlocks) {
+       const nameMatch = block.match(/● (.+)/);
+       const fileMatch = block.match(/at .+\((.+):(\d+):(\d+)\)/);
+       const errorMatch = block.match(/Error: (.+)/);
+       
+       failures.push({
+         name: nameMatch ? nameMatch[1] : 'Unknown test',
+         file: fileMatch ? fileMatch[1] : 'Unknown',
+         line: fileMatch ? fileMatch[2] : '?',
+         error: errorMatch ? errorMatch[1] : 'See output'
+       });
+     }
+     
+     return failures;
+   }
+   ```
 
-**Timeout:** Set 5-minute timeout to prevent hanging:
-```bash
-timeout 300 npm test 2>&1 | tee /tmp/test-output.txt
-```
+5. **Handle No Tests Gracefully**
+   ```bash
+   # If no test script exists
+   if ! grep -q "\"test\":" package.json; then
+     echo "⚠️  No tests configured (not a failure, just a warning)"
+     return { passed: 0, failed: 0, total: 0, warning: "No tests found" }
+   fi
+   ```
 
-**Handle failures gracefully:**
-- Exit code 0 → All tests passed ✅
-- Exit code 1 → Tests failed ❌
-- Exit code 127 → Test command not found ⚠️
-- Timeout → Tests hung (mark as failure) ❌
+6. **Collect Results**
+   ```javascript
+   const testResults = {
+     framework: detectFramework(),
+     status: failed === 0 ? 'PASS' : 'FAIL',
+     metrics: {
+       total,
+       passed,
+       failed,
+       skipped: skipped || 0,
+       duration: parseDuration(output)
+     },
+     failures: extractFailedTests(output),
+     output: output // Keep full output for debugging
+   };
+   ```
 
-#### Result Parsing
+**Important Notes:**
 
-Parse test output to extract metrics. Format varies by framework:
+- **Tests passing ≠ verification passing**
+  - Tests validate functionality
+  - FR4.1 validates completeness
+  - Both required for overall PASS
 
-**Jest/Vitest Format:**
-```
-Tests:       23 passed, 2 failed, 25 total
-Snapshots:   0 total
-Time:        3.142s
-```
+- **No tests is a warning, not failure**
+  - Some projects legitimately have no tests yet
+  - Report as warning in verification report
+  - Don't block on this alone
 
-**Node Test Runner Format:**
-```
-✔ test 1 (1.234ms)
-✔ test 2 (0.567ms)
-✖ test 3 (0.891ms)
----
-tests 23
-pass 21
-fail 2
-```
+- **Timeout handling**
+  - Set reasonable timeout (5 minutes default)
+  - If tests hang, report timeout and continue
+  - Don't let hung tests block verification
 
-**Generic Parser:**
-```javascript
-// Parse test results from output
-function parseTestResults(output) {
-  const results = {
-    framework: 'unknown',
-    total: 0,
-    passed: 0,
-    failed: 0,
-    pending: 0,
-    skipped: 0,
-    duration: null,
-    coverage: null,
-  };
-  
-  // Jest/Vitest pattern
-  const jestMatch = output.match(/Tests:\s+(\d+)\s+passed.*?(\d+)\s+failed.*?(\d+)\s+total/);
-  if (jestMatch) {
-    results.framework = 'jest/vitest';
-    results.passed = parseInt(jestMatch[1]);
-    results.failed = parseInt(jestMatch[2]);
-    results.total = parseInt(jestMatch[3]);
-    return results;
-  }
-  
-  // Node test runner pattern
-  const nodeMatch = output.match(/tests\s+(\d+).*?pass\s+(\d+).*?fail\s+(\d+)/s);
-  if (nodeMatch) {
-    results.framework = 'node';
-    results.total = parseInt(nodeMatch[1]);
-    results.passed = parseInt(nodeMatch[2]);
-    results.failed = parseInt(nodeMatch[3]);
-    return results;
-  }
-  
-  // Mocha pattern
-  const mochaMatch = output.match(/(\d+)\s+passing.*?(\d+)\s+failing/);
-  if (mochaMatch) {
-    results.framework = 'mocha';
-    results.passed = parseInt(mochaMatch[1]);
-    results.failed = parseInt(mochaMatch[2]);
-    results.total = results.passed + results.failed;
-    return results;
-  }
-  
-  // Generic fallback - count ✓ and ✗
-  const passCount = (output.match(/✓|✔|PASS/g) || []).length;
-  const failCount = (output.match(/✗|✖|FAIL/g) || []).length;
-  if (passCount > 0 || failCount > 0) {
-    results.framework = 'generic';
-    results.passed = passCount;
-    results.failed = failCount;
-    results.total = passCount + failCount;
-  }
-  
-  return results;
-}
-```
+**Verification Report Section:**
+```markdown
+## Test Results
 
-#### Coverage Extraction
+**Status:** ${status}
+**Framework:** ${framework}
 
-**If coverage is available** (usually in output or coverage/ directory):
+**Metrics:**
+- Total: ${total}
+- Passed: ${passed} ✅
+- Failed: ${failed} ❌
+- Skipped: ${skipped} ⏸️
+- Duration: ${duration}ms
 
-```bash
-# Check for coverage output
-if [ -d coverage ]; then
-  # Jest/Vitest usually output coverage summary
-  COVERAGE=$(grep -oP 'Statements\s+:\s+\K[\d.]+(?=%)' /tmp/test-output.txt | head -1)
-  if [ -n "$COVERAGE" ]; then
-    echo "Code coverage: $COVERAGE%"
-  fi
-fi
-```
+${failures.length > 0 ? `
+### Failed Tests
 
-Extract coverage from common formats:
-- Jest: "Statements: 85.7%"
-- Vitest: Similar to Jest
-- Istanbul/NYC: Coverage summary in terminal or JSON
-
-#### Handling Missing Tests
-
-**If no tests found:**
-```javascript
-if (results.total === 0 && exitCode !== 0) {
-  // No tests configured
-  return {
-    status: 'warning',
-    message: '⚠️ No tests found or configured',
-    recommendation: 'Add tests to improve verification confidence',
-    details: 'Test suite is empty or test command not configured in package.json',
-  };
-}
-```
-
-**This is a WARNING, not a FAILURE** - Projects can be functional without tests (though not recommended).
-
-#### Test Result Object
-
-Return structured test results:
-```javascript
-{
-  "status": "passed" | "failed" | "warning" | "error",
-  "framework": "jest" | "vitest" | "node" | "mocha" | "generic" | "unknown",
-  "metrics": {
-    "total": 25,
-    "passed": 23,
-    "failed": 2,
-    "pending": 0,
-    "skipped": 0
-  },
-  "duration": "3.142s",
-  "coverage": "85.7%",
-  "exitCode": 1,
-  "output": "...", // Captured stdout/stderr
-  "timestamp": "2024-01-18T15:30:00Z"
-}
-```
-
-#### Error Handling
-
-**Common errors and responses:**
-
-| Error | Response |
-|-------|----------|
-| Test command not found | ⚠️ WARNING - No tests configured |
-| Tests timeout | ❌ FAILURE - Tests hung, investigate |
-| Tests crash | ❌ FAILURE - Test runner error |
-| Parse failure | ⚠️ WARNING - Could not parse output, manual review needed |
-| No package.json | ⚠️ WARNING - Not a Node project or no test config |
-
-**Always include raw output** in verification report for debugging.
-
-#### Best Practices
-
-1. **Always capture full output** - Needed for debugging failed tests
-2. **Set reasonable timeout** - 5 minutes max
-3. **Don't fail on missing tests** - Warn instead
-4. **Parse defensively** - Handle variations in test output format
-5. **Extract failed test names** - Help developers identify issues quickly
-6. **Include in report** - Full test results in verification report
-
-#### Example Execution Flow
-
-```bash
-# 1. Detect test framework
-echo "Detecting test framework..."
-TEST_CMD=$(node -p "require('./package.json').scripts?.test || 'not found'")
-
-# 2. Run tests with timeout
-echo "Running tests: $TEST_CMD"
-timeout 300 npm test 2>&1 | tee /tmp/test-output.txt
-EXIT_CODE=${PIPESTATUS[0]}
-
-# 3. Parse results
-echo "Parsing test results..."
-TEST_OUTPUT=$(cat /tmp/test-output.txt)
-# Parse with JavaScript function above
-
-# 4. Generate summary
-echo "Test Results:"
-echo "  Total: $TOTAL_TESTS"
-echo "  Passed: $PASSED_TESTS"
-echo "  Failed: $FAILED_TESTS"
-echo "  Status: $TEST_STATUS"
-
-# 5. Include in verification report
-# (Step 6 in protocol)
+${failures.map(f => `
+**Test:** ${f.name}
+**File:** ${f.file}:${f.line}
+**Error:** ${f.error}
+`).join('\n')}
+` : ''}
 ```
 ```
 
-**Key Points:**
-- Provide complete bash commands Claude can execute
-- Include JavaScript parsing functions Claude can use
-- Handle all common test frameworks
-- Graceful degradation for missing tests
-- Clear error handling with specific responses
-- Return structured data for report generation
+**Integration Points:**
+- This is Step 2 of 7 in verification protocol
+- Results feed into final report (Wave 2.4)
+- Test failures are critical issues
+- But tests passing + features missing (FR4.1) = still FAIL
 
-**Integration:**
-This section provides Claude with everything needed to execute tests autonomously. The output feeds into the verification report (Step 6).
-
+**Anti-Patterns:**
+- ❌ Don't assume tests exist
+- ❌ Don't fail verification if no tests (warn only)
+- ❌ Don't skip this step even if no tests
+- ❌ Don't assume passing tests = complete features
+- ✅ DO parse output reliably
+- ✅ DO handle timeouts gracefully
+- ✅ DO report test failures clearly
 </action>
 <verify>
 ```bash
-# Verify test execution section added
-grep -q "### Step 2: Run Test Suite" subagents/reis_verifier.md && echo "✅ Step 2 section present"
+# Check reis_verifier.md was updated
+test -f subagents/reis_verifier.md && echo "✅ Subagent spec exists"
 
-# Check for key components
-grep -q "Test Framework Detection" subagents/reis_verifier.md && echo "✅ Framework detection documented"
-grep -q "Test Execution" subagents/reis_verifier.md && echo "✅ Execution instructions present"
-grep -q "Result Parsing" subagents/reis_verifier.md && echo "✅ Parsing logic included"
-grep -q "Coverage Extraction" subagents/reis_verifier.md && echo "✅ Coverage handling documented"
-grep -q "Handling Missing Tests" subagents/reis_verifier.md && echo "✅ Missing test handling defined"
+# Verify Step 2 content
+grep -A20 "Step 2.*Test" subagents/reis_verifier.md | grep -q "npm test\|parseTestOutput" && echo "✅ Test execution section enhanced"
 
-# Verify code examples included
-grep -c "```bash" subagents/reis_verifier.md
-grep -c "```javascript" subagents/reis_verifier.md
+# Check for framework detection
+grep -q "Detect.*Framework\|Jest\|Vitest" subagents/reis_verifier.md && echo "✅ Framework detection included"
 
-# Check for error handling table
-grep -q "| Error | Response |" subagents/reis_verifier.md && echo "✅ Error handling table present"
+# Check for parsing logic
+grep -q "parseTestOutput\|Parse.*Output" subagents/reis_verifier.md && echo "✅ Parse logic included"
+
+# Verify graceful handling
+grep -q "No tests.*warning\|handle.*gracefully" subagents/reis_verifier.md && echo "✅ Graceful handling documented"
 ```
 </verify>
 <done>
-- subagents/reis_verifier.md updated with comprehensive test execution protocol
-- Test Framework Detection section with priority order and detection steps
-- Test Execution section with timeout and output capture
-- Result Parsing section with multi-framework support (Jest, Vitest, Node, Mocha, generic)
-- Coverage Extraction logic included
-- Handling Missing Tests with warning (not failure) approach
-- Test Result Object format defined
-- Error Handling table with common scenarios
-- Best Practices and Example Execution Flow included
-- Complete bash commands and JavaScript functions provided
-- Section is ~150-200 lines with executable instructions
+- subagents/reis_verifier.md Step 2 enhanced with test execution details
+- Framework detection logic (Jest, Vitest, Node Test, npm test)
+- Test output parsing with multiple format support
+- Failed test extraction with file/line/error details
+- Graceful handling for projects without tests
+- Timeout handling documented
+- Integration with verification report format
+- Clear distinction: tests ≠ feature completeness
+</done>
+</task>
+
+<task type="auto">
+<name>Add test execution examples to subagent spec</name>
+<files>subagents/reis_verifier.md</files>
+<action>
+Add practical examples of test execution to the Examples section of reis_verifier.md.
+
+**Add to Examples Section:**
+
+```markdown
+### Example 2: Test Execution Scenarios
+
+#### Scenario A: All Tests Passing
+
+**Command:**
+```bash
+npm test
+```
+
+**Output:**
+```
+PASS test/auth/login.test.js
+  ✓ authenticates valid user (45ms)
+  ✓ rejects invalid password (12ms)
+  ✓ handles missing fields (8ms)
+
+Tests: 3 passed, 3 total
+Time: 1.234s
+```
+
+**Parsed Results:**
+```javascript
+{
+  framework: 'jest',
+  status: 'PASS',
+  metrics: { total: 3, passed: 3, failed: 0, duration: 1234 },
+  failures: []
+}
+```
+
+**Report Section:**
+```markdown
+## Test Results ✅
+
+**Status:** All tests pass
+**Framework:** Jest
+
+**Metrics:**
+- Total: 3
+- Passed: 3 ✅
+- Failed: 0
+- Duration: 1234ms
+```
+
+#### Scenario B: Tests Failing
+
+**Output:**
+```
+FAIL test/auth/password-reset.test.js
+  ✗ sends reset email (156ms)
+  
+    Error: Function 'sendResetEmail' is not defined
+    at test/auth/password-reset.test.js:15:5
+
+Tests: 2 passed, 1 failed, 3 total
+```
+
+**Parsed Results:**
+```javascript
+{
+  framework: 'jest',
+  status: 'FAIL',
+  metrics: { total: 3, passed: 2, failed: 1 },
+  failures: [{
+    name: 'sends reset email',
+    file: 'test/auth/password-reset.test.js',
+    line: '15',
+    error: "Function 'sendResetEmail' is not defined"
+  }]
+}
+```
+
+**Report Section:**
+```markdown
+## Test Results ❌
+
+**Status:** 1 test failing
+**Framework:** Jest
+
+**Metrics:**
+- Total: 3
+- Passed: 2 ✅
+- Failed: 1 ❌
+- Duration: 2345ms
+
+### Failed Tests
+
+**Test:** sends reset email
+**File:** test/auth/password-reset.test.js:15
+**Error:** Function 'sendResetEmail' is not defined
+
+**Analysis:** This failure indicates Task 2 (Password Reset) may be incomplete.
+See Feature Completeness section for full analysis.
+```
+
+#### Scenario C: No Tests Configured
+
+**Check:**
+```bash
+$ cat package.json | grep "\"test\":"
+# No match
+```
+
+**Result:**
+```javascript
+{
+  status: 'WARNING',
+  message: 'No tests configured',
+  metrics: { total: 0, passed: 0, failed: 0 }
+}
+```
+
+**Report Section:**
+```markdown
+## Test Results ⚠️
+
+**Status:** No tests found
+**Framework:** None
+
+**Note:** This project has no test suite configured. This is not a verification 
+failure, but tests are recommended for production code.
+
+**Recommendation:** Add tests in future iterations.
+```
+```
+
+**Key Learning Points:**
+1. Parse output reliably across frameworks
+2. Extract failure details for debugging
+3. Handle missing tests gracefully (warning, not failure)
+4. Link test failures to feature completeness analysis
+</action>
+<verify>
+```bash
+# Check examples were added
+grep -q "Example.*Test Execution\|Scenario A.*Tests Passing" subagents/reis_verifier.md && echo "✅ Test execution examples added"
+
+# Verify multiple scenarios
+grep -c "Scenario [A-C]:" subagents/reis_verifier.md | grep -q "3" && echo "✅ All 3 scenarios present"
+
+# Check for warning handling example
+grep -q "No tests.*WARNING\|No tests configured" subagents/reis_verifier.md && echo "✅ No-tests scenario included"
+```
+</verify>
+<done>
+- Test execution examples added to reis_verifier.md
+- Scenario A: All tests passing (shows successful parse)
+- Scenario B: Tests failing (shows failure extraction)
+- Scenario C: No tests configured (shows graceful warning)
+- Examples show input, parsing, and report output
+- Demonstrates framework detection and error handling
 </done>
 </task>
 
 ## Success Criteria
-- ✅ Step 2 (Run Test Suite) in reis_verifier.md fully documented
-- ✅ Test framework detection supports Jest, Vitest, Node, Mocha, generic npm test
-- ✅ Test execution includes timeout, output capture, and exit code handling
-- ✅ Result parsing handles multiple test output formats
-- ✅ Coverage extraction logic included
-- ✅ Missing tests handled gracefully (warning, not failure)
-- ✅ Structured test result object format defined
-- ✅ Error handling covers common scenarios
-- ✅ Complete executable code provided (bash commands, JavaScript functions)
-- ✅ Integration with verification report generation clear
+- ✅ reis_verifier.md Step 2 enhanced with test execution details
+- ✅ Framework detection logic documented (Jest, Vitest, Node Test)
+- ✅ Test output parsing with multiple format support
+- ✅ Failed test extraction (name, file, line, error)
+- ✅ Graceful handling for projects without tests (warning, not failure)
+- ✅ Timeout handling documented
+- ✅ Integration with report format specified
+- ✅ Test execution examples added (passing, failing, no tests)
+- ✅ Clear distinction: test pass ≠ feature completeness
 
 ## Verification
 
 ```bash
-# Check Step 2 section
-grep -A100 "### Step 2: Run Test Suite" subagents/reis_verifier.md | head -50
+# Check Step 2 in protocol
+grep -A50 "Step 2.*Test" subagents/reis_verifier.md | head -60
 
-# Verify completeness
-echo "Checking for key components:"
-grep -q "parseTestResults" subagents/reis_verifier.md && echo "✅ Parser function included"
-grep -q "timeout 300" subagents/reis_verifier.md && echo "✅ Timeout handling present"
-grep -q "jest/vitest\|node\|mocha" subagents/reis_verifier.md && echo "✅ Multiple frameworks supported"
-grep -q "⚠️ WARNING - No tests" subagents/reis_verifier.md && echo "✅ Graceful missing test handling"
+# Verify parsing logic
+grep -n "parseTestOutput\|Parse.*Output" subagents/reis_verifier.md
 
-# Count code blocks (should have several)
-echo "Code blocks:"
-grep -c "^```" subagents/reis_verifier.md
+# Check examples
+grep -A30 "Example.*Test Execution" subagents/reis_verifier.md | head -40
 
-# Verify structure
-grep "^### Step" subagents/reis_verifier.md | head -5
+# Verify framework detection
+grep -n "Jest\|Vitest\|Node Test" subagents/reis_verifier.md | head -10
 ```
 
 ---

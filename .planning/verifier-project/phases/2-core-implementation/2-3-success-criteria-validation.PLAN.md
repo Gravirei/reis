@@ -1,548 +1,493 @@
-# Plan: 2-3 - Implement Success Criteria Validation
+# Plan: 2-3 - Implement Success Criteria & Feature Completeness Validation
 
 ## Objective
-Define comprehensive success criteria validation logic in reis_verifier specification, enabling automated checking of completion criteria with evidence collection.
+Implement Step 4 of the verification protocol: validate success criteria from PLAN.md AND implement FR4.1 Feature Completeness Validation to detect missing/incomplete tasks.
 
 ## Context
-Success criteria from PLAN.md files define "done" for each plan. The verifier must check each criterion systematically and provide evidence. This is Step 3 in the verification protocol and runs in parallel with test execution (Wave 2.2).
+This is the MOST CRITICAL wave for FR4.1 integration. The verifier must not only check success criteria but also verify that ALL planned tasks were actually implemented.
+
+**CRITICAL PROBLEM FR4.1 SOLVES:**
+Executors may skip tasks without errors. Tests might pass, but features are missing. FR4.1 catches this by:
+- Parsing all tasks from PLAN.md
+- Extracting expected deliverables per task
+- Verifying each deliverable exists in codebase
+- Reporting missing features with evidence
+- Calculating completion: 100% = PASS, <100% = FAIL
 
 **Key Requirements:**
-- Parse success criteria from PLAN.md (command already extracts these)
-- Validate each criterion independently
-- Collect evidence (file existence, command output, grep results)
-- Support multiple criterion formats (file existence, test results, functional checks)
-- Provide clear ✅/❌/⚠️ status per criterion
-- Handle ambiguous criteria gracefully
-
-**Success Criteria Formats to Support:**
-- File/directory existence: "✅ File X exists"
-- Content checks: "✅ File contains Y"
-- Command results: "✅ Command returns Z"
-- Test results: "✅ All tests passing"
-- Functional checks: "✅ Feature works as expected"
-- Documentation: "✅ README updated"
+- Parse PLAN.md for success criteria (existing)
+- **Parse PLAN.md for all tasks and deliverables (NEW - FR4.1)**
+- **Verify each task's deliverables exist (NEW - FR4.1)**
+- **Calculate task completion percentage (NEW - FR4.1)**
+- Validate success criteria with evidence
+- Report both criteria status AND task completeness
 
 ## Dependencies
-- Wave 2.1 (verify command) - Need PLAN.md parsing
+- Wave 2.1 (verify command infrastructure)
+- Wave 2.2 (test execution for comparison)
 
 ## Tasks
 
 <task type="auto">
-<name>Add success criteria validation protocol to reis_verifier</name>
+<name>Add FR4.1 Feature Completeness section to reis_verifier spec</name>
 <files>subagents/reis_verifier.md</files>
 <action>
-Expand the "Step 3: Validate Success Criteria" section in the Seven-Step Verification Protocol with comprehensive validation instructions.
+This is the CRITICAL FR4.1 implementation. Add comprehensive Feature Completeness validation to Step 4 of the verification protocol.
 
-**Location:** Find "Step 3: Validate Success Criteria" in the protocol section.
+**Locate:** Find "Step 4: Validate Success Criteria" in the verification protocol.
 
-**Replace/Expand with:**
+**Rename to:** "Step 4: Validate Success Criteria & Feature Completeness (FR4.1)"
 
-```markdown
-### Step 3: Validate Success Criteria
-
-Systematically check each success criterion from PLAN.md and collect evidence.
-
-#### Loading Success Criteria
-
-Success criteria are loaded by the verify command and passed in the prompt. They appear in this format:
+**Replace/Enhance with:**
 
 ```markdown
-## Success Criteria
-- ✅ File subagents/reis_verifier.md exists
-- ✅ All tests passing
-- ✅ Documentation updated in README.md
-- ✅ No syntax errors in code
-```
+### Step 4: Validate Success Criteria & Feature Completeness (FR4.1)
 
-**Parse criteria:**
+**Objective:** Verify PLAN.md success criteria are met AND all tasks are completely implemented.
+
+**CRITICAL:** This step has TWO parts:
+1. Success Criteria Validation (existing functionality)
+2. **Feature Completeness Validation (FR4.1 - NEW)**
+
+---
+
+#### Part A: Feature Completeness Validation (FR4.1) - CRITICAL
+
+**Purpose:** Detect when executor skipped tasks or left features incomplete.
+
+**Process:**
+
+**1. Parse All Tasks from PLAN.md**
+
 ```javascript
-function parseSuccessCriteria(planContent) {
-  const criteriaSection = planContent.match(/## Success Criteria\s+([\s\S]*?)(?=\n##|\n---|\z)/);
-  if (!criteriaSection) {
-    return [];
-  }
+function parseTasksFromPlan(planContent) {
+  const tasks = [];
+  const taskRegex = /<task type="[^"]+">[\s\S]*?<\/task>/g;
+  const matches = planContent.match(taskRegex) || [];
   
-  const criteriaText = criteriaSection[1];
-  const criteria = criteriaText.match(/^[-*]\s+(.+)$/gm);
-  
-  if (!criteria) {
-    return [];
-  }
-  
-  return criteria.map(c => {
-    // Remove bullet and checkbox markers
-    const text = c.replace(/^[-*]\s+/, '').replace(/^✅\s+/, '').trim();
-    return {
-      description: text,
-      status: 'pending',
+  for (const taskXml of matches) {
+    // Extract task metadata
+    const name = taskXml.match(/<name>([^<]+)<\/name>/)?.[1]?.trim();
+    const files = taskXml.match(/<files>([^<]+)<\/files>/)?.[1]
+      ?.split(',').map(f => f.trim()) || [];
+    const action = taskXml.match(/<action>([\s\S]*?)<\/action>/)?.[1]?.trim();
+    
+    tasks.push({
+      name: name || 'Unnamed task',
+      files: files,
+      action: action || '',
+      deliverables: extractDeliverables(name, files, action),
+      status: 'PENDING',
       evidence: [],
-      notes: '',
-    };
+      missing: []
+    });
+  }
+  
+  return tasks;
+}
+```
+
+**2. Extract Expected Deliverables**
+
+```javascript
+function extractDeliverables(taskName, files, action) {
+  const deliverables = [];
+  
+  // From <files> tag - explicit file list
+  for (const file of files) {
+    deliverables.push({
+      type: 'file',
+      path: file,
+      required: true
+    });
+    
+    // Auto-add test file if source file
+    if (file.includes('src/') && !file.includes('.test.')) {
+      const testPath = file
+        .replace('src/', 'test/')
+        .replace(/\.(js|ts)$/, '.test.$1');
+      deliverables.push({
+        type: 'test',
+        path: testPath,
+        required: false // Optional but recommended
+      });
+    }
+  }
+  
+  // From action text - parse for patterns
+  const patterns = [
+    // Functions: "Implement functionName()" or "Create functionName"
+    { regex: /(?:Implement|Create|Add|Build)\s+(\w+)\s*\(/gi, type: 'function' },
+    
+    // Classes: "Create ClassName class" or "Add ClassName"
+    { regex: /(?:Create|Add)\s+(\w+)\s+class/gi, type: 'class' },
+    
+    // Endpoints: "Build POST /api/path" or "Create GET /api/users"
+    { regex: /(?:Build|Create|Add)\s+(GET|POST|PUT|DELETE)\s+(\/[^\s]+)/gi, type: 'endpoint' },
+    
+    // Components: "Create ComponentName component"
+    { regex: /Create\s+(\w+)\s+component/gi, type: 'component' }
+  ];
+  
+  for (const pattern of patterns) {
+    let match;
+    while ((match = pattern.regex.exec(action)) !== null) {
+      deliverables.push({
+        type: pattern.type,
+        name: match[1],
+        path: match[2], // For endpoints
+        required: true
+      });
+    }
+  }
+  
+  return deliverables;
+}
+```
+
+**3. Verify Each Deliverable Exists**
+
+```javascript
+async function verifyDeliverables(task) {
+  for (const deliverable of task.deliverables) {
+    const exists = await checkDeliverable(deliverable);
+    
+    if (exists) {
+      task.evidence.push({
+        deliverable,
+        status: 'FOUND',
+        location: exists.location,
+        confidence: exists.confidence
+      });
+    } else {
+      task.missing.push({
+        deliverable,
+        searchAttempts: exists.searchAttempts
+      });
+    }
+  }
+  
+  // Calculate task status
+  const requiredDeliverables = task.deliverables.filter(d => d.required);
+  const foundRequired = task.evidence.filter(e => 
+    e.deliverable.required && e.confidence >= 0.7
+  ).length;
+  
+  task.status = foundRequired === requiredDeliverables.length 
+    ? 'COMPLETE' 
+    : 'INCOMPLETE';
+  
+  return task;
+}
+```
+
+**4. Check Individual Deliverable**
+
+```javascript
+async function checkDeliverable(deliverable) {
+  const searchResults = {
+    location: null,
+    confidence: 0,
+    searchAttempts: []
+  };
+  
+  switch (deliverable.type) {
+    case 'file':
+      return await checkFile(deliverable, searchResults);
+    
+    case 'function':
+      return await checkFunction(deliverable, searchResults);
+    
+    case 'class':
+      return await checkClass(deliverable, searchResults);
+    
+    case 'endpoint':
+      return await checkEndpoint(deliverable, searchResults);
+    
+    case 'test':
+      return await checkFile(deliverable, searchResults);
+    
+    default:
+      return searchResults;
+  }
+}
+
+async function checkFile(deliverable, results) {
+  // Method 1: Direct file existence
+  const exists = fs.existsSync(deliverable.path);
+  results.searchAttempts.push({
+    method: 'fs.existsSync',
+    path: deliverable.path,
+    result: exists
   });
-}
-```
-
-#### Criterion Classification
-
-Classify each criterion by type to determine validation approach:
-
-| Type | Pattern | Validation Method |
-|------|---------|-------------------|
-| File Existence | "File/Directory X exists" | Check with `test -f` or `test -d` |
-| Content Check | "File contains Y" | Use `grep` or file reading |
-| Command Success | "Command returns Z" | Execute and check output/exit code |
-| Test Results | "Tests passing/pass" | Use test results from Step 2 |
-| Count/Metric | "X items/files/tests" | Count and compare |
-| Documentation | "README/docs updated/includes" | Check file existence and content |
-| Generic | Everything else | Manual evidence gathering |
-
-**Classification Function:**
-```javascript
-function classifyCriterion(description) {
-  const lower = description.toLowerCase();
   
-  if (lower.match(/file.*exists?|directory.*exists?/)) {
-    return { type: 'file_existence', extractPath: extractPathFromCriterion(description) };
+  if (exists) {
+    results.location = deliverable.path;
+    results.confidence = 1.0;
+    return results;
   }
   
-  if (lower.match(/contains?|includes?/)) {
-    return { type: 'content_check', file: extractPathFromCriterion(description) };
+  // Method 2: Git ls-files (handles renames)
+  const gitFiles = execSync('git ls-files').toString();
+  const baseName = path.basename(deliverable.path);
+  const found = gitFiles.split('\n').find(f => f.includes(baseName));
+  
+  results.searchAttempts.push({
+    method: 'git ls-files',
+    pattern: baseName,
+    result: !!found
+  });
+  
+  if (found) {
+    results.location = found;
+    results.confidence = 0.8; // Good but not exact match
+    return results;
   }
   
-  if (lower.match(/tests?.*pass|pass.*tests?|all tests/)) {
-    return { type: 'test_result', dependency: 'step2' };
-  }
-  
-  if (lower.match(/\d+.*tests?|tests?.*\d+/)) {
-    return { type: 'test_count', dependency: 'step2' };
-  }
-  
-  if (lower.match(/readme|changelog|documentation|docs/)) {
-    return { type: 'documentation', file: extractPathFromCriterion(description) };
-  }
-  
-  if (lower.match(/command|returns?|outputs?|curl/)) {
-    return { type: 'command_result', command: extractCommandFromCriterion(description) };
-  }
-  
-  if (lower.match(/no.*errors?|syntax.*valid/)) {
-    return { type: 'quality_check', dependency: 'step4' };
-  }
-  
-  return { type: 'generic' };
+  return null;
 }
 
-function extractPathFromCriterion(text) {
-  // Extract file/directory paths from criterion text
-  const pathMatch = text.match(/[`']?([a-zA-Z0-9._/-]+\.[a-zA-Z0-9]+|[a-zA-Z0-9._/-]+\/)[`']?/);
-  return pathMatch ? pathMatch[1] : null;
-}
-
-function extractCommandFromCriterion(text) {
-  // Extract command from criterion text
-  const cmdMatch = text.match(/`([^`]+)`/);
-  return cmdMatch ? cmdMatch[1] : null;
-}
-```
-
-#### Validation Methods
-
-**File Existence Validation:**
-```bash
-# Check if file exists
-if [ -f "path/to/file.js" ]; then
-  echo "✅ File exists"
-  STATUS="pass"
-  EVIDENCE="File found at path/to/file.js ($(wc -l < path/to/file.js) lines)"
-else
-  echo "❌ File not found"
-  STATUS="fail"
-  EVIDENCE="File path/to/file.js does not exist"
-fi
-```
-
-**Content Check Validation:**
-```bash
-# Check if file contains specific text
-FILE="README.md"
-SEARCH="reis_verifier"
-
-if [ -f "$FILE" ]; then
-  if grep -q "$SEARCH" "$FILE"; then
-    echo "✅ Content found"
-    STATUS="pass"
-    LINE=$(grep -n "$SEARCH" "$FILE" | head -1)
-    EVIDENCE="Found '$SEARCH' in $FILE: $LINE"
-  else
-    echo "❌ Content not found"
-    STATUS="fail"
-    EVIDENCE="'$SEARCH' not found in $FILE"
-  fi
-else
-  echo "❌ File not found"
-  STATUS="fail"
-  EVIDENCE="File $FILE does not exist"
-fi
-```
-
-**Test Result Validation:**
-```javascript
-// Use test results from Step 2
-function validateTestCriterion(criterion, testResults) {
-  const lower = criterion.description.toLowerCase();
+async function checkFunction(deliverable, results) {
+  // Grep for function definition
+  const patterns = [
+    `function ${deliverable.name}`,
+    `const ${deliverable.name} =`,
+    `${deliverable.name}:`,
+    `${deliverable.name}(`
+  ];
   
-  if (lower.includes('all tests pass')) {
-    if (testResults.metrics.failed === 0 && testResults.metrics.passed > 0) {
-      return {
-        status: 'pass',
-        evidence: `All ${testResults.metrics.passed} tests passed`,
-        notes: `Test framework: ${testResults.framework}`,
-      };
-    } else {
-      return {
-        status: 'fail',
-        evidence: `${testResults.metrics.failed} tests failed out of ${testResults.metrics.total}`,
-        notes: 'Check test output for details',
-      };
+  for (const pattern of patterns) {
+    const grepCmd = `grep -r "${pattern}" src/ lib/ 2>/dev/null || true`;
+    const output = execSync(grepCmd).toString();
+    
+    results.searchAttempts.push({
+      method: 'grep',
+      pattern,
+      result: output.length > 0
+    });
+    
+    if (output.length > 0) {
+      const match = output.split('\n')[0];
+      const [file, line] = match.split(':');
+      results.location = `${file}:${line}`;
+      results.confidence = 0.9;
+      return results;
     }
   }
   
-  // Check for specific test count
-  const countMatch = lower.match(/(\d+).*tests?.*pass/);
-  if (countMatch) {
-    const expectedCount = parseInt(countMatch[1]);
-    if (testResults.metrics.passed >= expectedCount) {
-      return {
-        status: 'pass',
-        evidence: `${testResults.metrics.passed} tests passed (expected ${expectedCount})`,
-        notes: 'Met or exceeded expected test count',
-      };
-    } else {
-      return {
-        status: 'fail',
-        evidence: `Only ${testResults.metrics.passed} tests passed (expected ${expectedCount})`,
-        notes: 'Fewer tests passing than expected',
-      };
+  return null;
+}
+
+async function checkClass(deliverable, results) {
+  // Similar to checkFunction but for class patterns
+  const patterns = [
+    `class ${deliverable.name}`,
+    `export class ${deliverable.name}`
+  ];
+  
+  for (const pattern of patterns) {
+    const grepCmd = `grep -r "${pattern}" src/ lib/ 2>/dev/null || true`;
+    const output = execSync(grepCmd).toString();
+    
+    results.searchAttempts.push({
+      method: 'grep',
+      pattern,
+      result: output.length > 0
+    });
+    
+    if (output.length > 0) {
+      const match = output.split('\n')[0];
+      const [file, line] = match.split(':');
+      results.location = `${file}:${line}`;
+      results.confidence = 0.9;
+      return results;
     }
   }
   
-  // Generic test criterion
-  if (testResults.metrics.failed === 0) {
-    return { status: 'pass', evidence: 'Tests passing', notes: '' };
-  } else {
-    return { status: 'fail', evidence: 'Tests failing', notes: '' };
+  return null;
+}
+
+async function checkEndpoint(deliverable, results) {
+  // Check for route definitions
+  const method = deliverable.name; // GET, POST, etc.
+  const path = deliverable.path;
+  
+  const patterns = [
+    `${method.toLowerCase()}('${path}'`,
+    `${method.toLowerCase()}("${path}"`,
+    `.${method.toLowerCase()}('${path}'`,
+    `method: '${method}'.*path: '${path}'`
+  ];
+  
+  for (const pattern of patterns) {
+    const grepCmd = `grep -r "${pattern}" src/ lib/ routes/ 2>/dev/null || true`;
+    const output = execSync(grepCmd).toString();
+    
+    results.searchAttempts.push({
+      method: 'grep',
+      pattern,
+      result: output.length > 0
+    });
+    
+    if (output.length > 0) {
+      const match = output.split('\n')[0];
+      const [file, line] = match.split(':');
+      results.location = `${file}:${line}`;
+      results.confidence = 0.85;
+      return results;
+    }
   }
+  
+  return null;
 }
 ```
 
-**Documentation Validation:**
-```bash
-# Check documentation exists and is updated
-check_documentation() {
-  FILE=$1
-  REQUIRED_CONTENT=$2
-  
-  if [ ! -f "$FILE" ]; then
-    echo "❌ File not found: $FILE"
-    return 1
-  fi
-  
-  # Check if file was recently modified (within last week)
-  MTIME=$(stat -c %Y "$FILE" 2>/dev/null || stat -f %m "$FILE" 2>/dev/null)
-  NOW=$(date +%s)
-  AGE=$((NOW - MTIME))
-  WEEK=604800
-  
-  if [ $AGE -lt $WEEK ]; then
-    echo "✅ Recently updated (within 7 days)"
-  fi
-  
-  # Check for required content if specified
-  if [ -n "$REQUIRED_CONTENT" ]; then
-    if grep -q "$REQUIRED_CONTENT" "$FILE"; then
-      echo "✅ Contains required content"
-      return 0
-    else
-      echo "⚠️ File exists but missing expected content"
-      return 2
-    fi
-  fi
-  
-  return 0
-}
-```
+**5. Calculate Completion Percentage**
 
-**Command Result Validation:**
-```bash
-# Execute command and validate output
-validate_command() {
-  CMD=$1
-  EXPECTED=$2
-  
-  echo "Running: $CMD"
-  OUTPUT=$(eval "$CMD" 2>&1)
-  EXIT_CODE=$?
-  
-  if [ $EXIT_CODE -eq 0 ]; then
-    if [ -n "$EXPECTED" ]; then
-      if echo "$OUTPUT" | grep -q "$EXPECTED"; then
-        echo "✅ Command succeeded with expected output"
-        return 0
-      else
-        echo "⚠️ Command succeeded but output doesn't match"
-        return 2
-      fi
-    else
-      echo "✅ Command succeeded"
-      return 0
-    fi
-  else
-    echo "❌ Command failed with exit code $EXIT_CODE"
-    return 1
-  fi
-}
-```
-
-**Generic Criterion Validation:**
 ```javascript
-// For criteria that don't fit patterns, gather evidence manually
-function validateGenericCriterion(criterion) {
-  // Attempt to gather relevant evidence
-  const evidence = [];
-  
-  // Check for related files
-  const words = criterion.description.toLowerCase().split(/\s+/);
-  for (const word of words) {
-    if (word.length > 4 && word.match(/^[a-z]+$/)) {
-      // Try to find related files
-      try {
-        const result = execSync(`find . -name "*${word}*" -type f | head -5`, { encoding: 'utf8' });
-        if (result.trim()) {
-          evidence.push(`Related files: ${result.trim()}`);
-        }
-      } catch (e) {
-        // Ignore
-      }
-    }
-  }
+function calculateCompleteness(tasks) {
+  const totalTasks = tasks.length;
+  const completeTasks = tasks.filter(t => t.status === 'COMPLETE').length;
+  const completionRate = (completeTasks / totalTasks) * 100;
   
   return {
-    status: 'warning',
-    evidence: evidence.length > 0 ? evidence.join('; ') : 'Manual verification required',
-    notes: 'This criterion requires human judgment or more context',
+    total: totalTasks,
+    complete: completeTasks,
+    incomplete: totalTasks - completeTasks,
+    percentage: Math.round(completionRate),
+    status: completionRate === 100 ? 'PASS' : 'FAIL'
   };
 }
 ```
 
-#### Validation Execution Flow
+**6. Generate Feature Completeness Report Section**
 
-```javascript
-async function validateAllCriteria(criteria, testResults, projectRoot) {
-  const results = [];
-  
-  for (const criterion of criteria) {
-    const classification = classifyCriterion(criterion.description);
-    let validation;
-    
-    switch (classification.type) {
-      case 'file_existence':
-        validation = await validateFileExistence(classification.extractPath, projectRoot);
-        break;
-      case 'content_check':
-        validation = await validateContent(classification.file, criterion.description, projectRoot);
-        break;
-      case 'test_result':
-        validation = validateTestCriterion(criterion, testResults);
-        break;
-      case 'documentation':
-        validation = await validateDocumentation(classification.file, criterion.description, projectRoot);
-        break;
-      case 'command_result':
-        validation = await validateCommand(classification.command, criterion.description);
-        break;
-      case 'generic':
-      default:
-        validation = validateGenericCriterion(criterion);
-        break;
-    }
-    
-    results.push({
-      criterion: criterion.description,
-      type: classification.type,
-      status: validation.status,
-      evidence: validation.evidence,
-      notes: validation.notes,
-    });
-  }
-  
-  return results;
-}
-```
-
-#### Success Criteria Report Format
-
-Generate structured output for the verification report:
-
-```javascript
-{
-  "totalCriteria": 5,
-  "passed": 4,
-  "failed": 0,
-  "warnings": 1,
-  "criteria": [
-    {
-      "criterion": "File subagents/reis_verifier.md exists",
-      "type": "file_existence",
-      "status": "pass",
-      "evidence": "File found at subagents/reis_verifier.md (527 lines)",
-      "notes": ""
-    },
-    {
-      "criterion": "All tests passing",
-      "type": "test_result",
-      "status": "pass",
-      "evidence": "All 23 tests passed",
-      "notes": "Test framework: jest"
-    },
-    {
-      "criterion": "README mentions verifier",
-      "type": "content_check",
-      "status": "pass",
-      "evidence": "Found 'reis_verifier' in README.md: line 42",
-      "notes": ""
-    },
-    {
-      "criterion": "No syntax errors",
-      "type": "quality_check",
-      "status": "pass",
-      "evidence": "node --check passed for all JS files",
-      "notes": "Checked 15 files"
-    },
-    {
-      "criterion": "Feature works as expected",
-      "type": "generic",
-      "status": "warning",
-      "evidence": "Manual verification required",
-      "notes": "This criterion requires human judgment"
-    }
-  ],
-  "overallStatus": "pass" // pass if no failures, partial if warnings, fail if any failed
-}
-```
-
-#### Best Practices
-
-1. **Check dependencies** - Some criteria depend on previous steps (tests, quality checks)
-2. **Gather evidence** - Always provide specific evidence, not just "checked"
-3. **Be precise** - Use exact file paths, line numbers, counts
-4. **Handle ambiguity** - Use ⚠️ WARNING for criteria that need human judgment
-5. **Cross-reference** - Link criteria to test results, file changes, etc.
-6. **Fail gracefully** - If validation method fails, mark as warning with explanation
-7. **Include raw data** - Provide command output, grep results, file contents snippets
-
-#### Error Handling
-
-| Error | Response |
-|-------|----------|
-| Criterion too vague | ⚠️ WARNING - Manual verification needed |
-| File not found | ❌ FAIL - Provide exact path checked |
-| Command not available | ⚠️ WARNING - Cannot execute validation command |
-| Parsing error | ⚠️ WARNING - Could not parse criterion format |
-| Circular dependency | ❌ FAIL - Criterion depends on unchecked step |
-
-#### Example Output
-
-For verification report:
+See template in VERIFICATION_REPORT.md for full format. Key elements:
 
 ```markdown
-### Criterion 1: File subagents/reis_verifier.md exists
-**Status**: ✅ PASS
-**Evidence**: File found at subagents/reis_verifier.md (527 lines, modified 2024-01-18)
-**Notes**: File structure matches expected subagent format
+## Feature Completeness (FR4.1)
 
-### Criterion 2: All tests passing
-**Status**: ✅ PASS
-**Evidence**: All 23 tests passed (Jest framework, 3.2s)
-**Notes**: Test results from Step 2
+**Status:** ${status} (${percentage}%)
+**Tasks Completed:** ${complete}/${total}
 
-### Criterion 3: Feature works as expected
-**Status**: ⚠️ PARTIAL
-**Evidence**: Manual verification required
-**Notes**: This criterion requires functional testing or human judgment - recommend adding specific testable criteria
+### Task-by-Task Analysis
+
+${tasks.map(task => `
+#### ${task.status === 'COMPLETE' ? '✅' : '❌'} Task: ${task.name}
+
+**Status:** ${task.status}
+
+${task.status === 'COMPLETE' ? `
+**Evidence:**
+${task.evidence.map(e => `- ${e.deliverable.type}: \`${e.location}\` (confidence: ${e.confidence * 100}%)`).join('\n')}
+` : `
+**Missing Deliverables:**
+${task.missing.map(m => `- ${m.deliverable.type}: \`${m.deliverable.name || m.deliverable.path}\` NOT FOUND
+  Search attempts: ${m.searchAttempts.length}
+  Methods tried: ${m.searchAttempts.map(s => s.method).join(', ')}
+`).join('\n')}
+
+**Impact:** ${assessImpact(task)}
+**Recommendation:** ${getRecommendation(task)}
+`}
+`).join('\n')}
 ```
+
+---
+
+#### Part B: Success Criteria Validation
+
+(Keep existing success criteria validation logic here - parse criteria from PLAN.md, validate each one, provide evidence)
+
+**Integration:** Both Feature Completeness AND Success Criteria must pass for Step 4 to pass.
 ```
 
-**Key Points:**
-- Provide complete validation logic for all criterion types
-- Include classification, validation methods, and error handling
-- Return structured data for report generation
-- Handle ambiguous criteria gracefully
-- Cross-reference with test results from Step 2
+**Key Implementation Notes:**
 
+1. **Confidence Scoring:** Not all matches are 100% certain
+   - Exact file path match: 1.0
+   - Git found with different path: 0.8
+   - Function/class found: 0.9
+   - Endpoint pattern match: 0.85
+   - Accept >= 0.7 as "found"
+
+2. **False Positive Prevention:**
+   - Check multiple patterns per deliverable
+   - Record all search attempts
+   - Distinguish between renamed vs missing
+
+3. **Performance:**
+   - Cache git ls-files output
+   - Batch grep searches where possible
+   - Set reasonable timeouts
+
+4. **Error Handling:**
+   - If grep fails, try alternative methods
+   - If git unavailable, use fs only
+   - Never crash on search failure
+
+Save changes to subagents/reis_verifier.md
 </action>
 <verify>
 ```bash
-# Verify Step 3 section added
-grep -q "### Step 3: Validate Success Criteria" subagents/reis_verifier.md && echo "✅ Step 3 section present"
+# Check Step 4 was enhanced
+grep -q "Step 4.*Feature Completeness\|FR4.1" subagents/reis_verifier.md && echo "✅ Step 4 includes FR4.1"
 
-# Check for key components
-grep -q "Loading Success Criteria" subagents/reis_verifier.md && echo "✅ Loading logic documented"
-grep -q "Criterion Classification" subagents/reis_verifier.md && echo "✅ Classification system present"
-grep -q "Validation Methods" subagents/reis_verifier.md && echo "✅ Validation methods included"
-grep -q "file_existence\|content_check\|test_result" subagents/reis_verifier.md && echo "✅ Multiple criterion types supported"
+# Verify task parsing logic
+grep -q "parseTasksFromPlan\|extractDeliverables" subagents/reis_verifier.md && echo "✅ Task parsing logic present"
 
-# Verify code examples
-grep -c "```javascript" subagents/reis_verifier.md
-grep -c "```bash" subagents/reis_verifier.md
+# Check deliverable verification
+grep -q "verifyDeliverables\|checkDeliverable" subagents/reis_verifier.md && echo "✅ Deliverable verification present"
 
-# Check for classification table
-grep -q "| Type | Pattern | Validation Method |" subagents/reis_verifier.md && echo "✅ Classification table present"
+# Verify completion calculation
+grep -q "calculateCompleteness\|completion.*percentage" subagents/reis_verifier.md && echo "✅ Completion calculation present"
+
+# Check for file/function/class/endpoint checking
+grep -q "checkFile\|checkFunction\|checkClass\|checkEndpoint" subagents/reis_verifier.md && echo "✅ All deliverable types covered"
+
+wc -l subagents/reis_verifier.md
 ```
 </verify>
 <done>
-- subagents/reis_verifier.md updated with comprehensive success criteria validation
-- Loading Success Criteria section with parsing logic
-- Criterion Classification with type detection (7 types supported)
-- Validation Methods for each criterion type (file existence, content check, test result, documentation, command result, generic)
-- Validation Execution Flow with async processing
-- Success Criteria Report Format defined
-- Best Practices and Error Handling included
-- Example Output format for verification report
-- Complete JavaScript functions and bash commands provided
-- Section is ~200-250 lines with executable instructions
+- Step 4 enhanced with FR4.1 Feature Completeness Validation
+- Task parsing logic: extracts all tasks from PLAN.md
+- Deliverable extraction: files, functions, classes, endpoints from task metadata
+- Verification methods: file existence, grep patterns, git ls-files
+- Confidence scoring: 0.7-1.0 scale for match quality
+- Completion calculation: tasks complete / total tasks
+- Report generation: task-by-task status with evidence or missing items
+- Integration with existing success criteria validation
+- Performance optimizations and error handling documented
 </done>
 </task>
 
 ## Success Criteria
-- ✅ Step 3 (Validate Success Criteria) in reis_verifier.md fully documented
-- ✅ Criterion classification system supports 7+ types (file existence, content check, test result, documentation, command result, quality check, generic)
-- ✅ Validation methods provided for each criterion type
-- ✅ Evidence collection logic included
-- ✅ Cross-references test results from Step 2
-- ✅ Handles ambiguous criteria with warnings (not failures)
-- ✅ Structured output format defined for report generation
-- ✅ Error handling covers common scenarios
-- ✅ Complete executable code provided (JavaScript functions, bash commands)
-- ✅ Best practices and example output included
+- ✅ Step 4 of reis_verifier protocol enhanced with FR4.1
+- ✅ Task parsing extracts all tasks from PLAN.md waves
+- ✅ Deliverable extraction identifies files, functions, classes, endpoints
+- ✅ Verification methods check file existence, code patterns, git history
+- ✅ Confidence scoring prevents false positives
+- ✅ Completion percentage calculated accurately
+- ✅ Report format includes task-by-task breakdown
+- ✅ Evidence provided for complete tasks
+- ✅ Missing deliverables listed for incomplete tasks
+- ✅ Integration with success criteria validation
+- ✅ Clear PASS/FAIL determination: 100% = PASS, <100% = FAIL
 
 ## Verification
 
 ```bash
-# Check Step 3 section
-grep -A100 "### Step 3: Validate Success Criteria" subagents/reis_verifier.md | head -50
+# Check Step 4 content
+grep -A100 "Step 4.*Feature Completeness" subagents/reis_verifier.md | head -120
 
-# Verify completeness
-echo "Checking for key components:"
-grep -q "classifyCriterion" subagents/reis_verifier.md && echo "✅ Classification function included"
-grep -q "validateFileExistence\|validateContent\|validateTestCriterion" subagents/reis_verifier.md && echo "✅ Validation methods present"
-grep -q "file_existence.*content_check.*test_result" subagents/reis_verifier.md && echo "✅ Multiple types supported"
-grep -q "overallStatus" subagents/reis_verifier.md && echo "✅ Report format defined"
+# Verify task parsing
+grep -n "parseTasksFromPlan" subagents/reis_verifier.md
 
-# Count validation methods
-grep -c "Validation:" subagents/reis_verifier.md
+# Check deliverable types
+grep -n "checkFile\|checkFunction\|checkClass\|checkEndpoint" subagents/reis_verifier.md
 
-# Verify structure
-grep "^### Step" subagents/reis_verifier.md | head -5
+# Verify completion logic
+grep -n "calculateCompleteness" subagents/reis_verifier.md
 ```
 
 ---

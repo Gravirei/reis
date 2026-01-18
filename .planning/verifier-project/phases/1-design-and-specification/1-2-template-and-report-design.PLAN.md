@@ -1,490 +1,633 @@
-# Plan: 1-2 - Create Verification Report Template and Format
+# Plan: 1-2 - Create Verification Report Template
 
 ## Objective
-Design and create the VERIFICATION_REPORT.md template that structures verification outputs and define STATE.md integration format.
+Design and create the VERIFICATION_REPORT.md template that structures verification results, including the new FR4.1 Feature Completeness section.
 
 ## Context
-Now that the reis_verifier specification exists (Wave 1.1), we need to create the template that verifier will use to generate reports. This template must be comprehensive yet scannable, providing clear pass/fail status with supporting evidence.
+The verification report is the primary output of reis_verifier. It must clearly communicate pass/fail status, test results, success criteria validation, **feature completeness status (FR4.1)**, code quality, and actionable recommendations.
+
+**FR4.1 Enhancement:** Report must include a dedicated Feature Completeness section showing task-by-task completion status with evidence for completed tasks and missing deliverables for incomplete tasks.
 
 **Key Requirements:**
-- Report must be machine-readable and human-friendly
-- Clear executive summary at the top (pass/fail, key issues)
-- Detailed sections for tests, quality checks, success criteria, documentation
-- Actionable recommendations when verification fails
-- Consistent format for STATE.md integration
-
-**Reference Files:**
-- `templates/PLAN.md` - Existing template format
-- `templates/STATE.md` - State tracking format
-- `subagents/reis_verifier.md` - Verification protocol (just created)
+- Clear executive summary (pass/fail at a glance)
+- Test results with details
+- **Feature Completeness section (NEW - FR4.1)** - Critical addition
+- Success criteria validation
+- Code quality metrics
+- Documentation status
+- Actionable recommendations
+- Next steps
 
 ## Dependencies
-- Wave 1.1 (Subagent Specification) - Must be complete to understand report requirements
+- Wave 1.1 (Subagent specification must define report requirements)
 
 ## Tasks
 
 <task type="auto">
-<name>Create VERIFICATION_REPORT.md template</name>
+<name>Create VERIFICATION_REPORT.md template with FR4.1 section</name>
 <files>templates/VERIFICATION_REPORT.md</files>
 <action>
-Create a comprehensive verification report template that reis_verifier will populate after each verification run.
+Create a comprehensive verification report template that reis_verifier will populate.
 
 **Template Structure:**
 
 ```markdown
-# Verification Report: [Phase/Plan Name]
+# Verification Report: {Phase/Plan Name}
 
-**Date**: [ISO 8601 timestamp]  
-**Phase**: [Phase number and name]  
-**Plan**: [Plan file path]  
-**Status**: ✅ PASSED | ❌ FAILED | ⚠️ PARTIAL  
+**Date:** {ISO timestamp}  
+**Verified By:** reis_verifier  
+**Status:** {✅ PASSED | ❌ FAILED | ⚠️ PASSED WITH WARNINGS}
+
+---
 
 ## Executive Summary
 
-[2-3 sentence summary of verification results]
+{One-paragraph summary of verification results}
 
-**Overall Result**: [Pass/Fail/Partial with explanation]
+**Overall Status:** {PASS/FAIL}  
+**Tests:** {X/Y passed}  
+**Feature Completeness:** {X/Y tasks complete (Z%)}  
+**Success Criteria:** {X/Y met}  
+**Code Quality:** {PASS/WARNINGS/FAIL}  
+**Critical Issues:** {Count}
 
-**Key Findings**:
-- [Finding 1]
-- [Finding 2]
-- [Finding 3]
+---
+
+## Feature Completeness (FR4.1)
+
+**Status:** {✅ COMPLETE (100%) | ❌ INCOMPLETE (X%)}  
+**Tasks Completed:** {X}/{Y} ({Z%})
+
+### Task-by-Task Analysis
+
+#### ✅ Task 1: {Task Name}
+**Status:** Complete  
+**Evidence:**
+- File: `{file_path}` exists ({line_count} lines)
+- Function: `{function_name}()` found at line {line_number}
+- Test: `{test_file}` exists
+- Endpoint: `{method} {path}` defined in routes
+- Documentation: Mentioned in {doc_file}
+
+#### ❌ Task 2: {Task Name}
+**Status:** INCOMPLETE - FEATURE MISSING  
+**Missing Deliverables:**
+- File: `{expected_file}` NOT FOUND
+- Function: `{expected_function}()` NOT FOUND (grep returned 0 matches)
+- Test: `{expected_test_file}` NOT FOUND
+- Endpoint: `{method} {path}` NOT FOUND in routes
+
+**Search Evidence:**
+```bash
+$ git ls-files | grep "{pattern}"
+# No matches
+
+$ grep -r "{function_name}" src/
+# No matches
+```
+
+**Impact:** {HIGH | MEDIUM | LOW} - {Impact description}  
+**Recommendation:** {Specific action needed}
+
+#### ✅ Task 3: {Task Name}
+**Status:** Complete  
+**Evidence:**
+- {Evidence items}
 
 ---
 
 ## Test Results
 
-**Test Framework**: [Jest/Vitest/Node/npm test/None]  
-**Tests Run**: [Number]  
-**Tests Passed**: [Number]  
-**Tests Failed**: [Number]  
-**Tests Pending**: [Number]  
-**Coverage**: [Percentage if available]
+**Status:** {✅ All tests pass | ❌ {X} tests failing | ⚠️ No tests found}  
+**Framework:** {Jest | Vitest | Node Test | npm test}
 
-### Test Output
-
-```
-[Raw or formatted test output]
-```
+**Metrics:**
+- Total: {total}
+- Passed: {passed} ✅
+- Failed: {failed} ❌
+- Pending: {pending} ⏸️
+- Duration: {duration}ms
+- Coverage: {coverage}% (if available)
 
 ### Failed Tests
+{If any tests failed, list them here with error details}
 
-[If any tests failed, list them with details]
-
-- ❌ **[Test name]**: [Failure reason]
-- ❌ **[Test name]**: [Failure reason]
-
-**Status**: ✅ All tests pass | ❌ [N] tests failing | ⚠️ No tests found
+```
+Test: {test_name}
+File: {test_file}:{line}
+Error: {error_message}
+```
 
 ---
 
 ## Success Criteria Validation
 
-[For each success criterion from PLAN.md]
+**Status:** {✅ All criteria met | ❌ {X} criteria unmet}  
+**Criteria Met:** {X}/{Y}
 
-### Criterion 1: [Description]
-**Status**: ✅ PASS | ❌ FAIL | ⚠️ PARTIAL  
-**Evidence**: [What was checked and found]  
-**Notes**: [Any relevant context]
+### Individual Criteria
 
-### Criterion 2: [Description]
-**Status**: ✅ PASS | ❌ FAIL | ⚠️ PARTIAL  
-**Evidence**: [What was checked and found]  
-**Notes**: [Any relevant context]
+#### ✅ Criterion 1: {criterion_text}
+**Status:** Met  
+**Evidence:** {How this was verified}
 
-**Overall**: ✅ All criteria met | ❌ [N] criteria not met | ⚠️ [N] partially met
+#### ❌ Criterion 2: {criterion_text}
+**Status:** Unmet  
+**Evidence:** {Why this failed}  
+**Action Needed:** {What to fix}
 
 ---
 
 ## Code Quality
 
-### Syntax Check
-**Status**: ✅ PASS | ❌ FAIL  
-**Details**: [Results of syntax validation]
+**Status:** {✅ PASS | ⚠️ WARNINGS | ❌ FAIL}
 
-### Linting
-**Tool**: [ESLint/None detected]  
-**Status**: ✅ PASS | ❌ FAIL | ⚠️ Not configured  
-**Issues Found**: [Number]  
-**Details**: [Summary of linting issues]
+### Syntax Validation
+- {✅ | ❌} No syntax errors
+
+### Linting (if available)
+- {✅ | ❌} Lint checks passed
+- Warnings: {count}
+- Errors: {count}
 
 ### Common Issues
-- [Issue 1 if found]
-- [Issue 2 if found]
-
-**Overall**: ✅ No quality issues | ❌ [N] issues found | ⚠️ Limited checks
+- {List any detected issues}
 
 ---
 
 ## Documentation
 
-### Required Documents
-- ✅/❌ README.md exists and up-to-date
-- ✅/❌ CHANGELOG.md updated
-- ✅/❌ API documentation (if applicable)
-- ✅/❌ Code comments adequate
+**Status:** {✅ COMPLETE | ⚠️ INCOMPLETE | ❌ MISSING}
 
-### Documentation Issues
-[List any documentation gaps or problems]
+### Required Documentation
+- {✅ | ❌} README.md exists and up-to-date
+- {✅ | ❌} CHANGELOG.md updated
+- {✅ | ❌} API documentation (if applicable)
+- {✅ | ❌} Code comments adequate
 
-### TODO/FIXME Comments
-**Found**: [Number]  
-**Critical**: [Number]  
-[List critical TODOs if any]
+### Issues Found
+- {List documentation issues}
 
-**Overall**: ✅ Documentation complete | ❌ Missing required docs | ⚠️ Needs improvement
+---
+
+## Issues Summary
+
+### Critical Issues ({count})
+1. {Issue description with impact}
+
+### Major Issues ({count})
+1. {Issue description}
+
+### Minor Issues ({count})
+1. {Issue description}
 
 ---
 
 ## Recommendations
 
-[Only if verification failed or partial]
+{Based on verification results, provide actionable recommendations}
 
-### Critical Issues (Must Fix)
-1. [Issue and how to fix]
-2. [Issue and how to fix]
+**Immediate Actions Required:**
+1. {Action 1}
+2. {Action 2}
 
-### Warnings (Should Fix)
-1. [Issue and how to fix]
-2. [Issue and how to fix]
+**Before Proceeding to Next Phase:**
+- {Requirement 1}
+- {Requirement 2}
 
-### Suggestions (Nice to Have)
-1. [Improvement suggestion]
-2. [Improvement suggestion]
+**Optional Improvements:**
+- {Suggestion 1}
+- {Suggestion 2}
 
 ---
 
 ## Next Steps
 
-[If PASSED]:
-- ✅ Phase/Plan verified successfully
-- → Proceed to next phase/plan
-- → Update STATE.md with verification status
+{✅ PASSED} → Ready to proceed to {next_phase}  
+{❌ FAILED} → Fix issues above and re-verify
 
-[If FAILED]:
-- ❌ Verification failed
-- → Review and fix critical issues listed above
-- → Re-run verification after fixes
-- → Consider running `reis gap-analyze` if stuck
-
-[If PARTIAL]:
-- ⚠️ Verification partially passed
-- → Review warnings and suggestions
-- → Decide whether to proceed or fix issues
-- → Document decision in STATE.md
-
----
-
-## Verification Metadata
-
-**Verifier Version**: [REIS version]  
-**Generated By**: reis_verifier  
-**Verification Duration**: [Seconds]  
-**Report Location**: `.planning/verification/[phase-name]/[timestamp].md`
-
----
-
-*Generated by REIS Verifier - Autonomous verification for autonomous development*
+**Re-verification Command:**
+```bash
+reis verify {phase_or_plan}
 ```
 
-**Key Design Decisions:**
-- Use emoji status indicators (✅/❌/⚠️) for quick scanning
-- Executive summary first for busy developers
-- Detailed sections collapsible in mind (use headers appropriately)
-- Clear separation between must-fix and nice-to-have
-- Machine-parseable status fields (for future automation)
-- Include raw test output for debugging
-- Actionable recommendations, not just complaints
+---
 
-**Template Variables** (reis_verifier will replace):
-- `[Phase/Plan Name]` - From input
-- `[ISO 8601 timestamp]` - Current time
-- `[Status]` - Calculated overall status
-- `[Test Framework]` - Detected framework
-- All bracketed sections - Populated from verification results
+**Verification Complete**  
+*Report generated by reis_verifier v{version}*
+```
 
+**Key Features:**
+1. **Executive Summary** - Quick pass/fail determination
+2. **Feature Completeness Section (FR4.1)** - CRITICAL NEW SECTION
+   - Task-by-task breakdown
+   - Evidence for completed tasks
+   - Missing deliverables for incomplete tasks
+   - Impact assessment
+   - Completion percentage
+3. **Test Results** - Detailed test metrics
+4. **Success Criteria** - Individual criterion validation
+5. **Code Quality** - Syntax and linting results
+6. **Documentation** - Doc completeness check
+7. **Recommendations** - Actionable next steps
+
+**Template Variables** (to be replaced by verifier):
+- `{Phase/Plan Name}` - From PLAN.md
+- `{ISO timestamp}` - Current datetime
+- `{X/Y tasks complete}` - FR4.1 completion rate
+- `{Task Name}` - From PLAN.md tasks
+- `{Evidence items}` - From verification checks
+- `{test_name}`, `{test_file}` - From test output
+- `{criterion_text}` - From PLAN.md success criteria
+
+**Critical: FR4.1 Section Format**
+The Feature Completeness section MUST:
+- List ALL tasks from PLAN.md
+- Show ✅ or ❌ for each task
+- Provide evidence for completed tasks (file paths, line numbers, function names)
+- List missing deliverables for incomplete tasks
+- Include search evidence (show grep/git ls-files output)
+- Calculate and display completion percentage
+- Assess impact (HIGH/MEDIUM/LOW)
+- Provide specific recommendations
+
+Save to: `templates/VERIFICATION_REPORT.md`
 </action>
 <verify>
 ```bash
-# Check file exists
+# Check template exists
 test -f templates/VERIFICATION_REPORT.md && echo "✅ Template created"
 
-# Verify key sections present
+# Verify key sections exist
 grep -q "## Executive Summary" templates/VERIFICATION_REPORT.md && echo "✅ Executive Summary section"
+grep -q "## Feature Completeness" templates/VERIFICATION_REPORT.md && echo "✅ Feature Completeness section (FR4.1)"
 grep -q "## Test Results" templates/VERIFICATION_REPORT.md && echo "✅ Test Results section"
 grep -q "## Success Criteria" templates/VERIFICATION_REPORT.md && echo "✅ Success Criteria section"
-grep -q "## Code Quality" templates/VERIFICATION_REPORT.md && echo "✅ Code Quality section"
-grep -q "## Documentation" templates/VERIFICATION_REPORT.md && echo "✅ Documentation section"
 grep -q "## Recommendations" templates/VERIFICATION_REPORT.md && echo "✅ Recommendations section"
 
-# Check for status indicators
-grep -q "✅\|❌\|⚠️" templates/VERIFICATION_REPORT.md && echo "✅ Status indicators present"
+# Verify FR4.1 specific elements
+grep -q "Task-by-Task Analysis" templates/VERIFICATION_REPORT.md && echo "✅ Task analysis section"
+grep -q "Missing Deliverables" templates/VERIFICATION_REPORT.md && echo "✅ Missing deliverables tracking"
+grep -q "Tasks Completed.*%" templates/VERIFICATION_REPORT.md && echo "✅ Completion percentage"
 
-# Verify reasonable length (~150 lines)
+# Check template variables are present
+grep -q "{Task Name}\|{evidence}\|{X/Y}" templates/VERIFICATION_REPORT.md && echo "✅ Template variables present"
+
 wc -l templates/VERIFICATION_REPORT.md
 ```
 </verify>
 <done>
-- templates/VERIFICATION_REPORT.md exists with all required sections
-- Contains Executive Summary, Test Results, Success Criteria, Code Quality, Documentation, Recommendations, Next Steps sections
-- Uses clear status indicators (✅/❌/⚠️)
-- Template variables clearly marked with brackets
-- Actionable recommendations structure included
-- File is ~150-200 lines with clear formatting
+- templates/VERIFICATION_REPORT.md created with complete structure
+- Executive Summary section for quick status
+- Feature Completeness section (FR4.1) with task-by-task breakdown
+- Task completion percentage calculation
+- Evidence and missing deliverables sections
+- Test Results, Success Criteria, Code Quality, Documentation sections
+- Recommendations and Next Steps sections
+- All template variables defined
+- Format supports both passing and failing scenarios
 </done>
 </task>
 
 <task type="auto">
-<name>Document STATE.md verification format</name>
-<files>subagents/reis_verifier.md</files>
+<name>Create STATE.md verification entry template</name>
+<files>templates/STATE_VERIFICATION_ENTRY.md</files>
 <action>
-Add a section to the reis_verifier specification that defines how verification results integrate with STATE.md.
+Create a template for verification entries that will be added to STATE.md.
 
-**Location:** Add a new section after "## Integration Points" (or create if doesn't exist).
-
-**Section to Add:**
+**Template Content:**
 
 ```markdown
-## STATE.md Integration Format
+### Verification: {Phase/Plan Name}
+**Date:** {ISO timestamp}  
+**Status:** {PASSED | FAILED | PASSED_WITH_WARNINGS}  
+**Verifier:** reis_verifier v{version}
 
-When verification completes, reis_verifier updates STATE.md with verification status.
+**Results:**
+- Tests: {X/Y passed}
+- Feature Completeness: {X/Y tasks ({Z%})}
+- Success Criteria: {X/Y met}
+- Code Quality: {PASS | WARNINGS | FAIL}
 
-### Verification Entry Format
+**Issues:** {count} critical, {count} major, {count} minor
 
-Add entries under "## Recent Progress" section:
+**Report:** `.planning/verification/{phase_name}/VERIFICATION_REPORT.md`
+
+{If FAILED:}
+**Action Required:** Fix issues and re-verify before proceeding
+
+{If PASSED:}
+**Next Phase:** Ready for {next_phase}
+```
+
+**Integration Notes:**
+This template will be used by reis_verifier to add entries to STATE.md under a "Verification History" section. Each verification attempt creates a new entry.
+
+**Example Usage in STATE.md:**
 
 ```markdown
-### [Date] - Verification: Phase [N] - [Phase Name]
+## Verification History
 
-**Status**: ✅ PASSED | ❌ FAILED | ⚠️ PARTIAL
+### Verification: Phase 2 - Core Implementation
+**Date:** 2024-01-15T14:30:00Z  
+**Status:** FAILED  
+**Verifier:** reis_verifier v1.0
 
-**Verified**:
-- [Key verification 1]
-- [Key verification 2]
+**Results:**
+- Tests: 15/18 passed
+- Feature Completeness: 2/3 tasks (66%)
+- Success Criteria: 4/6 met
+- Code Quality: WARNINGS
 
-**Test Results**: [X/Y tests passing]
-**Success Criteria**: [X/Y criteria met]
-**Code Quality**: [Status summary]
+**Issues:** 1 critical, 2 major, 3 minor
 
-**Report**: `.planning/verification/[phase-name]/[timestamp].md`
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT.md`
 
-[If failed/partial]:
-**Issues Found**:
-- [Critical issue 1]
-- [Critical issue 2]
+**Action Required:** Fix issues and re-verify before proceeding
 
-**Next Action**: [Recommended next step]
+---
+
+### Verification: Phase 2 - Core Implementation (Re-verification)
+**Date:** 2024-01-15T16:45:00Z  
+**Status:** PASSED  
+**Verifier:** reis_verifier v1.0
+
+**Results:**
+- Tests: 18/18 passed
+- Feature Completeness: 3/3 tasks (100%)
+- Success Criteria: 6/6 met
+- Code Quality: PASS
+
+**Issues:** 0 critical, 0 major, 1 minor
+
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT_2.md`
+
+**Next Phase:** Ready for Phase 3
 ```
 
-### Phase Status Update
-
-When verification passes, update the phase status:
-
-**Before:**
-```markdown
-**Active Phase**: Phase 2 - Core Implementation
-```
-
-**After:**
-```markdown
-**Active Phase**: Phase 2 - Core Implementation
-**Last Verified**: Phase 1 - Design (✅ Passed on [Date])
-```
-
-### Blockers Section
-
-If verification fails, optionally add to blockers:
-
-```markdown
-## Active Blockers
-
-- [ ] **Phase [N] Verification Failed**: [Summary of critical issues] - See `.planning/verification/[phase-name]/[timestamp].md`
-```
-
-### Best Practices
-
-1. **Preserve existing content** - Don't overwrite other state data
-2. **Add, don't replace** - Append verification entries to Recent Progress
-3. **Clear status** - Use emoji indicators for quick scanning
-4. **Link to report** - Always include path to full verification report
-5. **Actionable** - Include next steps in verification entry
-6. **Timestamp** - Use consistent date format (YYYY-MM-DD)
-
-### Example STATE.md After Verification
-
-```markdown
-# Project State
-
-## Current Status
-
-**Active Phase**: Phase 2 - Core Implementation
-**Last Verified**: Phase 1 - Design (✅ Passed on 2024-01-18)
-**Last Updated**: 2024-01-18
-**Overall Progress**: 1/4 phases complete
-
-## Recent Progress
-
-### 2024-01-18 - Verification: Phase 1 - Design & Specification
-
-**Status**: ✅ PASSED
-
-**Verified**:
-- Subagent specification complete and follows format
-- Template created with all required sections
-- Documentation updated
-
-**Test Results**: 10/10 tests passing
-**Success Criteria**: 7/7 criteria met
-**Code Quality**: No issues found
-
-**Report**: `.planning/verification/phase-1-design/2024-01-18T15-30-00.md`
-
-**Next Action**: Proceed to Phase 2 - Core Implementation
-
-### 2024-01-18 - Completed Phase 1 Tasks
-
-Completed specification and template design for reis_verifier.
-
-**Completed**:
-- Created subagents/reis_verifier.md with 7-step protocol
-- Created templates/VERIFICATION_REPORT.md
-- Updated README.md with verifier reference
-
-...
-```
-```
-
-**Key Points:**
-- Show clear before/after examples
-- Explain how to preserve existing STATE.md content
-- Document the verification entry format precisely
-- Provide best practices for STATE.md updates
-- Make it clear this is automated (verifier does this, not human)
-
-**Integration with state-manager.js:**
-The verifier should use existing `lib/utils/state-manager.js` utilities for STATE.md manipulation. Note this in the specification.
-
+Save to: `templates/STATE_VERIFICATION_ENTRY.md`
 </action>
 <verify>
 ```bash
-# Check that STATE.md integration section was added
-grep -q "## STATE.md Integration" subagents/reis_verifier.md && echo "✅ STATE.md section added"
+# Check template exists
+test -f templates/STATE_VERIFICATION_ENTRY.md && echo "✅ STATE template created"
 
-# Verify format examples included
-grep -q "Verification Entry Format" subagents/reis_verifier.md && echo "✅ Entry format documented"
+# Verify key fields
+grep -q "Date:\|Status:\|Verifier:" templates/STATE_VERIFICATION_ENTRY.md && echo "✅ Metadata fields present"
+grep -q "Feature Completeness" templates/STATE_VERIFICATION_ENTRY.md && echo "✅ FR4.1 completeness field"
+grep -q "Tests:\|Success Criteria:\|Code Quality:" templates/STATE_VERIFICATION_ENTRY.md && echo "✅ Results fields present"
 
-# Check for before/after examples
-grep -q "Before:" subagents/reis_verifier.md && grep -q "After:" subagents/reis_verifier.md && echo "✅ Examples included"
-
-# Verify best practices listed
-grep -q "Best Practices" subagents/reis_verifier.md && echo "✅ Best practices documented"
+wc -l templates/STATE_VERIFICATION_ENTRY.md
 ```
 </verify>
 <done>
-- subagents/reis_verifier.md updated with STATE.md integration section
-- Verification entry format clearly defined
-- Phase status update format documented
-- Before/after examples included
-- Best practices for STATE.md updates listed
-- References state-manager.js for implementation
+- templates/STATE_VERIFICATION_ENTRY.md created
+- Includes verification metadata (date, status, verifier version)
+- Shows results summary (tests, feature completeness, criteria, quality)
+- Tracks issues by severity
+- Links to full report
+- Provides next steps based on status
+- Example usage documented
 </done>
 </task>
 
 <task type="auto">
-<name>Create example verification report</name>
-<files>.planning/verifier-project/examples/example-verification-report.md</files>
+<name>Document report design and usage</name>
+<files>.planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md</files>
 <action>
-Create a realistic example verification report to demonstrate the template in action. This serves as both documentation and a test fixture.
+Create documentation explaining the report design, FR4.1 integration, and how the templates will be used.
 
-**Create directory first:**
-```bash
-mkdir -p .planning/verifier-project/examples
+**Content:**
+
+```markdown
+# Verification Report Design
+
+## Overview
+This document explains the structure and usage of verification reports, including the critical FR4.1 Feature Completeness validation.
+
+## Report Structure
+
+### 1. Executive Summary
+**Purpose:** Quick pass/fail determination  
+**Audience:** Developers, CI/CD systems  
+**Key Metrics:** Overall status, completion %, critical issues
+
+### 2. Feature Completeness (FR4.1) - CRITICAL
+**Purpose:** Detect missing/incomplete tasks  
+**Method:** Parse PLAN.md, verify all deliverables exist  
+**Output:** Task-by-task status with evidence
+
+**Why This Matters:**
+Executors may skip tasks without errors. This section catches incomplete implementations before they cause downstream issues.
+
+**Detection:**
+- File existence checks
+- Code pattern matching (grep for functions/classes)
+- Git diff analysis
+- Test presence verification
+- Documentation mentions
+
+**Report Format:**
+```
+✅ Task 1: Complete (evidence: files, functions, tests found)
+❌ Task 2: INCOMPLETE (missing: X.js, functionY(), test Z)
+✅ Task 3: Complete
+Result: 66% complete → FAIL
 ```
 
-**Example Report Content:**
-Create a complete example showing a **PARTIAL** verification (more interesting than pure pass/fail). This shows all sections populated with realistic data.
+### 3. Test Results
+**Purpose:** Validate functionality  
+**Method:** Run npm test, parse output  
+**Output:** Pass/fail counts, failed test details
 
-**Scenario**: Phase 2 verification where tests pass but one success criterion is not fully met.
+### 4. Success Criteria Validation
+**Purpose:** Verify PLAN.md acceptance criteria  
+**Method:** Check each criterion individually  
+**Output:** Per-criterion pass/fail with evidence
 
-Use this structure:
-- Phase: Phase 2 - Core Implementation
-- Status: ⚠️ PARTIAL
-- Tests: 23/23 passing
-- Success Criteria: 3/4 met (one partially met)
-- Code Quality: ESLint found 2 warnings
-- Documentation: README needs update
+### 5. Code Quality
+**Purpose:** Catch syntax errors, linting issues  
+**Method:** node --check, eslint if configured  
+**Output:** Quality score, issue list
 
-Fill in ALL template sections with realistic content (test output, linting results, recommendations). Make it feel like a real verification run.
+### 6. Documentation
+**Purpose:** Ensure docs are complete  
+**Method:** Check required files, consistency  
+**Output:** Doc completeness status
 
-**Purpose:**
-- Demonstrates template usage
-- Serves as reference for developers
-- Can be used in tests later
-- Shows what partial success looks like
+### 7. Recommendations
+**Purpose:** Provide actionable next steps  
+**Method:** Analyze all results, prioritize issues  
+**Output:** Immediate actions, requirements, improvements
 
-Make it detailed enough to be useful but concise enough to scan quickly.
+## FR4.1 Implementation Details
 
+### Task Parsing
+```javascript
+// Extract tasks from PLAN.md
+const tasks = parsePlanTasks(planContent);
+// tasks = [
+//   { name: 'Task 1', files: ['a.js', 'b.js'], ... },
+//   { name: 'Task 2', files: ['c.js'], ... }
+// ]
+```
+
+### Deliverable Extraction
+```javascript
+// From task, extract expected deliverables
+const deliverables = extractDeliverables(task);
+// deliverables = [
+//   { type: 'file', path: 'src/auth/login.js' },
+//   { type: 'function', name: 'authenticateUser' },
+//   { type: 'test', path: 'test/auth/login.test.js' }
+// ]
+```
+
+### Verification
+```javascript
+// Check each deliverable
+for (const deliverable of deliverables) {
+  const exists = await verifyDeliverable(deliverable);
+  if (!exists) {
+    task.status = 'INCOMPLETE';
+    task.missing.push(deliverable);
+  }
+}
+```
+
+### Completion Calculation
+```javascript
+const completedTasks = tasks.filter(t => t.status === 'COMPLETE').length;
+const completionRate = (completedTasks / tasks.length) * 100;
+const overallStatus = completionRate === 100 ? 'PASS' : 'FAIL';
+```
+
+## Template Usage
+
+### During Verification
+1. Load `templates/VERIFICATION_REPORT.md`
+2. Replace template variables with actual values
+3. Populate each section with verification results
+4. Calculate FR4.1 completion percentage
+5. Generate recommendations based on issues found
+6. Save to `.planning/verification/{phase}/VERIFICATION_REPORT.md`
+
+### STATE.md Integration
+1. Load `templates/STATE_VERIFICATION_ENTRY.md`
+2. Replace variables with verification summary
+3. Append to STATE.md under "Verification History"
+4. Preserve existing STATE.md content
+5. Update phase status if verification passed
+
+## Example Workflow
+
+```bash
+# Run verification
+reis verify phase-2
+
+# Verifier:
+# 1. Load PLAN.md
+# 2. Run tests → 17/18 passed
+# 3. Check feature completeness → 2/3 tasks (66%)
+# 4. Validate criteria → 5/6 met
+# 5. Check quality → WARNINGS
+# 6. Generate report → FAILED
+# 7. Update STATE.md
+
+# Output:
+❌ Verification FAILED
+- Task 2 incomplete (missing password-reset.js)
+- 1 test failing
+- See: .planning/verification/phase-2/VERIFICATION_REPORT.md
+
+# Developer fixes issues, re-verifies
+reis verify phase-2
+
+# Output:
+✅ Verification PASSED
+- All 3 tasks complete (100%)
+- All tests passing (18/18)
+- Ready for Phase 3
+```
+
+## Critical Success Factors
+
+### FR4.1 Must:
+- ✅ Parse ALL tasks from PLAN.md
+- ✅ Verify ALL deliverables exist
+- ✅ Report missing items with evidence
+- ✅ Calculate accurate completion %
+- ✅ FAIL if any task incomplete (<100%)
+
+### Report Must:
+- ✅ Be clear and actionable
+- ✅ Provide evidence for all claims
+- ✅ Prioritize issues by severity
+- ✅ Give specific recommendations
+- ✅ Enable quick re-verification
+
+## Anti-Patterns
+
+❌ Don't report pass if any task incomplete  
+❌ Don't skip FR4.1 checks (critical)  
+❌ Don't generate vague recommendations  
+❌ Don't corrupt STATE.md on updates  
+✅ DO fail fast on missing features  
+✅ DO provide clear evidence  
+✅ DO make reports actionable  
+```
+
+Save to: `.planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md`
 </action>
 <verify>
 ```bash
-# Check file exists
-test -f .planning/verifier-project/examples/example-verification-report.md && echo "✅ Example report created"
+# Check documentation exists
+test -f .planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md && echo "✅ Design doc created"
 
-# Verify it follows template structure
-grep -q "# Verification Report:" .planning/verifier-project/examples/example-verification-report.md && echo "✅ Has title"
-grep -q "## Executive Summary" .planning/verifier-project/examples/example-verification-report.md && echo "✅ Has executive summary"
-grep -q "## Test Results" .planning/verifier-project/examples/example-verification-report.md && echo "✅ Has test results"
-grep -q "## Recommendations" .planning/verifier-project/examples/example-verification-report.md && echo "✅ Has recommendations"
+# Verify FR4.1 documentation
+grep -q "FR4.1\|Feature Completeness" .planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md && echo "✅ FR4.1 documented"
+grep -q "Task Parsing\|Deliverable Extraction" .planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md && echo "✅ Implementation details"
 
-# Verify status is PARTIAL
-grep -q "⚠️ PARTIAL" .planning/verifier-project/examples/example-verification-report.md && echo "✅ Shows PARTIAL status"
-
-# Check reasonable length
-wc -l .planning/verifier-project/examples/example-verification-report.md
+wc -l .planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md
 ```
 </verify>
 <done>
-- Example report created at .planning/verifier-project/examples/example-verification-report.md
-- Follows VERIFICATION_REPORT.md template exactly
-- All sections populated with realistic data
-- Shows PARTIAL verification scenario
-- Includes test output, linting results, recommendations
-- Demonstrates actionable recommendations format
-- Can serve as documentation and test fixture
+- REPORT_DESIGN.md created with comprehensive documentation
+- Explains report structure and purpose of each section
+- FR4.1 Feature Completeness implementation detailed
+- Task parsing, deliverable extraction, completion calculation explained
+- Template usage documented
+- Example workflow included
+- Critical success factors and anti-patterns listed
 </done>
 </task>
 
 ## Success Criteria
-- ✅ templates/VERIFICATION_REPORT.md created with comprehensive structure
-- ✅ All required sections included (Summary, Tests, Criteria, Quality, Docs, Recommendations)
-- ✅ Clear status indicators (✅/❌/⚠️) used throughout
-- ✅ Template variables marked for reis_verifier to populate
-- ✅ STATE.md integration format documented in subagents/reis_verifier.md
-- ✅ Before/after examples of STATE.md updates included
-- ✅ Example verification report created demonstrating template usage
-- ✅ Template is ~150-200 lines, scannable and actionable
+- ✅ templates/VERIFICATION_REPORT.md created with all required sections
+- ✅ **Feature Completeness section (FR4.1) prominently included**
+- ✅ Task-by-task analysis format defined
+- ✅ Evidence and missing deliverables sections specified
+- ✅ Completion percentage calculation documented
+- ✅ templates/STATE_VERIFICATION_ENTRY.md created
+- ✅ STATE.md entry format includes FR4.1 metrics
+- ✅ REPORT_DESIGN.md documents template usage and FR4.1 implementation
+- ✅ All template variables clearly marked
+- ✅ Examples demonstrate both passing and failing scenarios
 
 ## Verification
 
 ```bash
-# Verify all files created
-ls -lh templates/VERIFICATION_REPORT.md
-ls -lh .planning/verifier-project/examples/example-verification-report.md
+# Verify templates exist
+ls -lh templates/VERIFICATION_REPORT.md templates/STATE_VERIFICATION_ENTRY.md
 
-# Check template structure
-cat templates/VERIFICATION_REPORT.md | grep "^## " | head -10
+# Check FR4.1 integration in report template
+grep -n "Feature Completeness\|Task-by-Task" templates/VERIFICATION_REPORT.md | head -5
 
-# Verify STATE.md integration documented
-grep -A20 "STATE.md Integration" subagents/reis_verifier.md
+# Check STATE template
+cat templates/STATE_VERIFICATION_ENTRY.md
 
-# Check example report quality
-head -50 .planning/verifier-project/examples/example-verification-report.md
-
-# Line counts
-echo "Template lines:"
-wc -l templates/VERIFICATION_REPORT.md
-echo "Example report lines:"
-wc -l .planning/verifier-project/examples/example-verification-report.md
+# Verify design documentation
+cat .planning/verifier-project/phases/1-design-and-specification/REPORT_DESIGN.md | head -50
 ```
 
 ---

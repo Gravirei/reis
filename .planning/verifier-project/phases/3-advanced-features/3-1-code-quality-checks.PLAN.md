@@ -1,521 +1,220 @@
-# Plan: 3-1 - Add Code Quality Checks
+# Plan: 3-1 - Implement Code Quality Checks
 
 ## Objective
-Implement comprehensive code quality validation in reis_verifier specification, including syntax checking, linting, and common issue detection.
+Implement Step 3 of the verification protocol: validate code quality through syntax checks and linting.
 
 ## Context
-Phase 2 implemented test execution, success criteria validation, and report generation. Now we add code quality checks (Step 4 in the verification protocol) to catch syntax errors, linting issues, and common problems.
+Code quality validation (Step 3) runs BEFORE feature completeness validation (Step 4/FR4.1). This ensures basic code correctness before checking for completeness.
 
-**Key Requirements:**
-- Syntax validation for all code files (node --check)
-- Linting integration (ESLint if configured)
-- Detect common issues (unused variables, console.logs in production, etc.)
-- Generate quality score/summary
-- Include results in verification report
-- Handle projects without linters gracefully (warn, don't fail)
+**Quality checks are secondary to FR4.1:** A codebase with perfect quality but missing features still fails verification.
 
-**Reference Files:**
-- `subagents/reis_verifier.md` - Add Step 4 details
-- Common linters: ESLint, StandardJS, Prettier
-- Node.js syntax checking: `node --check`
+**Key Checks:**
+- Syntax validation (node --check)
+- Linting (ESLint if configured)
+- Common issues detection
+- Quality scoring
 
 ## Dependencies
-- Wave 2.4 (Report Generation) - Need report structure to populate quality section
+- Wave 2.1 (verify command infrastructure)
 
 ## Tasks
 
 <task type="auto">
-<name>Add code quality validation protocol to reis_verifier</name>
+<name>Add code quality validation section to reis_verifier spec</name>
 <files>subagents/reis_verifier.md</files>
 <action>
-Expand the "Step 4: Check Code Quality" section in the Seven-Step Verification Protocol with comprehensive quality checking instructions.
+Enhance Step 3 of the verification protocol with code quality checks.
 
-**Location:** Find "Step 4: Check Code Quality" in the protocol section (should be after Step 3).
+**Locate:** Find "Step 3: Validate Code Quality" (or "Check Code Quality") in the protocol.
 
-**Replace/Expand with:**
+**Enhance with:**
 
 ```markdown
-### Step 4: Check Code Quality
+### Step 3: Validate Code Quality
 
-Validate code quality through syntax checking, linting, and common issue detection.
+**Objective:** Check for syntax errors, linting issues, and common code problems.
 
-#### Syntax Validation
+**Important:** Quality checks don't replace FR4.1. Code can be high quality but incomplete.
 
-**Check all JavaScript/TypeScript files for syntax errors:**
+**Process:**
+
+**1. Syntax Validation**
 
 ```bash
-# Find all JS/TS files (excluding node_modules)
-find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) \
-  -not -path "*/node_modules/*" \
-  -not -path "*/dist/*" \
-  -not -path "*/build/*" \
-  -not -path "*/.next/*" > /tmp/code-files.txt
+# Check all JS/TS files for syntax errors
+find src lib -name "*.js" -o -name "*.ts" 2>/dev/null | while read file; do
+  node --check "$file" 2>&1
+done
+```
 
-# Check syntax of each file
-SYNTAX_ERRORS=0
-while IFS= read -r file; do
-  if [[ "$file" == *.ts* ]]; then
-    # TypeScript files - try tsc if available
-    if command -v tsc &> /dev/null; then
-      tsc --noEmit --skipLibCheck "$file" 2>&1 | grep -i error && SYNTAX_ERRORS=$((SYNTAX_ERRORS + 1))
-    else
-      echo "⚠️ TypeScript file but tsc not available: $file"
-    fi
-  else
-    # JavaScript files - use node --check
-    if ! node --check "$file" 2>/dev/null; then
-      echo "❌ Syntax error in $file"
-      SYNTAX_ERRORS=$((SYNTAX_ERRORS + 1))
-    fi
-  fi
-done < /tmp/code-files.txt
+**2. Detect Linter Configuration**
 
-if [ $SYNTAX_ERRORS -eq 0 ]; then
-  echo "✅ No syntax errors found"
-  SYNTAX_STATUS="pass"
+```bash
+# Check for ESLint config
+if [ -f .eslintrc.js ] || [ -f .eslintrc.json ] || grep -q "eslintConfig" package.json; then
+  LINTER="eslint"
+elif [ -f .eslintrc ]; then
+  LINTER="eslint"
 else
-  echo "❌ $SYNTAX_ERRORS syntax errors found"
-  SYNTAX_STATUS="fail"
+  LINTER="none"
 fi
 ```
 
-**Syntax Check Result:**
-```javascript
-{
-  "passed": true/false,
-  "filesChecked": 42,
-  "errors": [
-    { "file": "path/to/file.js", "line": 15, "error": "Unexpected token" }
-  ],
-  "details": "Checked 42 files, 0 errors found"
-}
-```
-
-#### Linter Detection and Execution
-
-**Detect available linters:**
+**3. Run Linter (if available)**
 
 ```bash
-# Check package.json for linter dependencies and scripts
-HAS_ESLINT=false
-HAS_LINT_SCRIPT=false
-
-if [ -f package.json ]; then
-  # Check for ESLint dependency
-  if grep -q '"eslint"' package.json; then
-    HAS_ESLINT=true
-  fi
-  
-  # Check for lint script
-  if grep -q '"lint"' package.json | head -1 | grep -q 'scripts'; then
-    HAS_LINT_SCRIPT=true
-  fi
-fi
-
-# Check for .eslintrc files
-if [ -f .eslintrc.js ] || [ -f .eslintrc.json ] || [ -f .eslintrc.yml ]; then
-  HAS_ESLINT=true
+# Run ESLint if configured
+if [ "$LINTER" = "eslint" ]; then
+  npx eslint src/ lib/ --format json > lint-results.json 2>&1 || true
 fi
 ```
 
-**Run linter if available:**
-
-```bash
-if [ "$HAS_ESLINT" = true ] || [ "$HAS_LINT_SCRIPT" = true ]; then
-  echo "Running linter..."
-  
-  # Try npm run lint first (respects project config)
-  if [ "$HAS_LINT_SCRIPT" = true ]; then
-    npm run lint 2>&1 | tee /tmp/lint-output.txt
-    LINT_EXIT_CODE=${PIPESTATUS[0]}
-  elif [ "$HAS_ESLINT" = true ]; then
-    # Run eslint directly
-    npx eslint . --ext .js,.jsx,.ts,.tsx 2>&1 | tee /tmp/lint-output.txt
-    LINT_EXIT_CODE=${PIPESTATUS[0]}
-  fi
-  
-  # Parse linting results
-  LINT_OUTPUT=$(cat /tmp/lint-output.txt)
-  
-  # Extract issue count (ESLint format)
-  PROBLEM_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\d+(?= problems?)' | head -1)
-  ERROR_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\d+(?= errors?)' | head -1)
-  WARNING_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\d+(?= warnings?)' | head -1)
-  
-  if [ -z "$PROBLEM_COUNT" ]; then
-    PROBLEM_COUNT=0
-  fi
-  
-  if [ $LINT_EXIT_CODE -eq 0 ]; then
-    echo "✅ Linting passed"
-    LINT_STATUS="pass"
-  else
-    echo "❌ Linting failed: $PROBLEM_COUNT issues"
-    LINT_STATUS="fail"
-  fi
-else
-  echo "⚠️ No linter configured"
-  LINT_STATUS="warning"
-  LINT_OUTPUT="No linter detected in project"
-fi
-```
-
-**Linting Result:**
-```javascript
-{
-  "tool": "eslint" | "none",
-  "status": "pass" | "fail" | "warning",
-  "issueCount": 12,
-  "errors": 3,
-  "warnings": 9,
-  "summary": "3 errors, 9 warnings found",
-  "output": "...", // Full linter output
-  "topIssues": [
-    { "file": "src/app.js", "line": 42, "rule": "no-unused-vars", "message": "..." },
-    // Top 5 most severe issues
-  ]
-}
-```
-
-#### Parse Linting Issues
-
-**Extract top issues from linter output:**
+**4. Parse Linter Output**
 
 ```javascript
-function parseLintingIssues(lintOutput) {
-  const issues = [];
-  
-  // ESLint format: "  15:10  error  'foo' is not defined  no-undef"
-  const eslintPattern = /^\s*(\d+):(\d+)\s+(error|warning)\s+(.+?)\s+([\w-]+)$/gm;
-  
-  let match;
-  while ((match = eslintPattern.exec(lintOutput)) !== null) {
-    const [, line, col, severity, message, rule] = match;
-    issues.push({
-      line: parseInt(line),
-      column: parseInt(col),
-      severity,
-      message: message.trim(),
-      rule,
-    });
-  }
-  
-  // Also extract file paths
-  const filePattern = /^([^\s]+\.(?:js|ts|jsx|tsx))$/gm;
-  let currentFile = null;
-  
-  const lines = lintOutput.split('\n');
-  const issuesWithFiles = [];
-  
-  for (const line of lines) {
-    const fileMatch = line.match(filePattern);
-    if (fileMatch) {
-      currentFile = fileMatch[1];
-    } else if (currentFile) {
-      const issueMatch = line.match(eslintPattern);
-      if (issueMatch) {
-        const [, lineNum, col, severity, message, rule] = issueMatch;
-        issuesWithFiles.push({
-          file: currentFile,
-          line: parseInt(lineNum),
-          column: parseInt(col),
-          severity,
-          message: message.trim(),
-          rule,
-        });
+function parseLintResults(output) {
+  try {
+    const results = JSON.parse(output);
+    const errors = [];
+    const warnings = [];
+    
+    for (const file of results) {
+      for (const message of file.messages) {
+        const issue = {
+          file: file.filePath,
+          line: message.line,
+          column: message.column,
+          rule: message.ruleId,
+          message: message.message,
+          severity: message.severity // 1=warning, 2=error
+        };
+        
+        if (message.severity === 2) {
+          errors.push(issue);
+        } else {
+          warnings.push(issue);
+        }
       }
     }
+    
+    return { errors, warnings };
+  } catch (e) {
+    return { errors: [], warnings: [], parseError: true };
   }
-  
-  // Sort by severity (errors first)
-  issuesWithFiles.sort((a, b) => {
-    if (a.severity === 'error' && b.severity !== 'error') return -1;
-    if (a.severity !== 'error' && b.severity === 'error') return 1;
-    return 0;
-  });
-  
-  return issuesWithFiles.slice(0, 10); // Top 10 issues
 }
 ```
 
-#### Common Issue Detection
-
-**Check for common code problems:**
-
-```bash
-# Check for console.log in production code
-echo "Checking for console.log statements..."
-CONSOLE_LOGS=$(grep -r "console\.log" --include="*.js" --include="*.ts" --include="*.jsx" --include="*.tsx" \
-  --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build --exclude-dir=test --exclude-dir=tests \
-  . | wc -l)
-
-if [ $CONSOLE_LOGS -gt 0 ]; then
-  echo "⚠️ Found $CONSOLE_LOGS console.log statements (consider removing for production)"
-fi
-
-# Check for debugger statements
-echo "Checking for debugger statements..."
-DEBUGGERS=$(grep -r "debugger" --include="*.js" --include="*.ts" --include="*.jsx" --include="*.tsx" \
-  --exclude-dir=node_modules --exclude-dir=dist . | wc -l)
-
-if [ $DEBUGGERS -gt 0 ]; then
-  echo "⚠️ Found $DEBUGGERS debugger statements"
-fi
-
-# Check for TODO comments
-echo "Checking for TODO comments..."
-TODOS=$(grep -ri "TODO\|FIXME\|HACK\|XXX" --include="*.js" --include="*.ts" --include="*.jsx" --include="*.tsx" \
-  --exclude-dir=node_modules --exclude-dir=dist . | wc -l)
-
-if [ $TODOS -gt 0 ]; then
-  echo "ℹ️ Found $TODOS TODO/FIXME comments"
-fi
-
-# Check for large files (>1000 lines - potential refactoring candidates)
-echo "Checking for large files..."
-LARGE_FILES=$(find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" \) \
-  -not -path "*/node_modules/*" -not -path "*/dist/*" \
-  -exec wc -l {} \; | awk '$1 > 1000 {print $2}' | wc -l)
-
-if [ $LARGE_FILES -gt 0 ]; then
-  echo "ℹ️ Found $LARGE_FILES files over 1000 lines (consider refactoring)"
-fi
-```
-
-**Common Issues Result:**
-```javascript
-{
-  "consoleLogs": 5,
-  "debuggers": 0,
-  "todos": 12,
-  "largeFiles": 2,
-  "summary": [
-    "5 console.log statements found",
-    "12 TODO/FIXME comments",
-    "2 large files (>1000 lines)"
-  ]
-}
-```
-
-#### Quality Score Calculation
-
-**Generate an overall quality score:**
+**5. Quality Scoring**
 
 ```javascript
-function calculateQualityScore(syntaxResults, lintingResults, commonIssues) {
-  let score = 100;
-  const deductions = [];
-  
-  // Syntax errors are critical (-20 per error, max -60)
-  if (!syntaxResults.passed) {
-    const deduction = Math.min(syntaxResults.errors.length * 20, 60);
-    score -= deduction;
-    deductions.push(`-${deduction} (syntax errors)`);
+function calculateQualityScore(syntaxErrors, lintErrors, lintWarnings) {
+  // Syntax errors = critical
+  if (syntaxErrors > 0) {
+    return { status: 'FAIL', score: 0, reason: 'Syntax errors present' };
   }
   
-  // Linting errors (-2 per error, max -20)
-  if (lintingResults.errors > 0) {
-    const deduction = Math.min(lintingResults.errors * 2, 20);
-    score -= deduction;
-    deductions.push(`-${deduction} (linting errors)`);
+  // Lint errors = fail
+  if (lintErrors > 0) {
+    return { status: 'FAIL', score: 30, reason: `${lintErrors} linting errors` };
   }
   
-  // Linting warnings (-1 per warning, max -10)
-  if (lintingResults.warnings > 0) {
-    const deduction = Math.min(lintingResults.warnings * 1, 10);
-    score -= deduction;
-    deductions.push(`-${deduction} (linting warnings)`);
+  // Warnings = pass with warnings
+  if (lintWarnings > 0) {
+    return { status: 'WARNINGS', score: 70, reason: `${lintWarnings} warnings` };
   }
   
-  // Console.logs in production (-1 per occurrence, max -5)
-  if (commonIssues.consoleLogs > 0) {
-    const deduction = Math.min(commonIssues.consoleLogs * 1, 5);
-    score -= deduction;
-    deductions.push(`-${deduction} (console.logs)`);
-  }
-  
-  // Debugger statements (-5 per occurrence)
-  if (commonIssues.debuggers > 0) {
-    const deduction = commonIssues.debuggers * 5;
-    score -= deduction;
-    deductions.push(`-${deduction} (debugger statements)`);
-  }
-  
-  score = Math.max(score, 0); // Don't go below 0
-  
-  return {
-    score,
-    grade: score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F',
-    deductions,
-  };
+  // All clean
+  return { status: 'PASS', score: 100, reason: 'No quality issues detected' };
 }
 ```
 
-#### Quality Check Result Object
+**6. Report Section**
 
-Return structured quality results for report:
+```markdown
+## Code Quality
 
-```javascript
-{
-  "status": "passed" | "failed" | "warning",
-  "issueCount": 15,
-  "syntax": {
-    "passed": true,
-    "filesChecked": 42,
-    "errors": [],
-    "details": "Checked 42 files, 0 errors found"
-  },
-  "linting": {
-    "tool": "eslint",
-    "status": "fail",
-    "issueCount": 12,
-    "errors": 3,
-    "warnings": 9,
-    "summary": "3 errors, 9 warnings found",
-    "topIssues": [...]
-  },
-  "commonIssues": {
-    "consoleLogs": 5,
-    "debuggers": 0,
-    "todos": 12,
-    "largeFiles": 2
-  },
-  "qualityScore": {
-    "score": 78,
-    "grade": "C",
-    "deductions": ["-6 (linting errors)", "-9 (linting warnings)", "-5 (console.logs)"]
-  },
-  "issues": [
-    "5 console.log statements in production code",
-    "12 TODO/FIXME comments need resolution"
-  ]
-}
+**Status:** ${status}
+**Score:** ${score}/100
+
+### Syntax Validation
+${syntaxErrors === 0 ? '✅' : '❌'} No syntax errors (${syntaxErrors} found)
+
+### Linting ${linter ? `(${linter})` : '(not configured)'}
+${lintErrors === 0 ? '✅' : '❌'} Lint checks passed
+- Errors: ${lintErrors}
+- Warnings: ${lintWarnings}
+
+${errors.length > 0 ? `
+### Linting Errors
+${errors.slice(0, 10).map(e => `
+**File:** ${e.file}:${e.line}:${e.column}  
+**Rule:** ${e.rule}  
+**Message:** ${e.message}
+`).join('\n')}
+${errors.length > 10 ? `\n... and ${errors.length - 10} more` : ''}
+` : ''}
 ```
 
-#### Error Handling
+**Integration with Overall Verification:**
+- Syntax errors → FAIL verification
+- Lint errors → FAIL verification (configurable with --lenient flag)
+- Lint warnings → PASS with warnings (don't block)
+- No linter configured → PASS (report as info)
 
-| Error | Response |
-|-------|----------|
-| No code files found | ⚠️ WARNING - No code to check |
-| Syntax checker unavailable | ⚠️ WARNING - Cannot validate syntax |
-| Linter not configured | ℹ️ INFO - Suggest adding linter |
-| Linter crashes | ⚠️ WARNING - Linter error, include output |
-| TypeScript without tsc | ⚠️ WARNING - Cannot check TS syntax |
-
-#### Best Practices
-
-1. **Don't fail on missing linter** - It's a suggestion, not requirement
-2. **Prioritize syntax errors** - These prevent code from running
-3. **Provide context** - Show file paths, line numbers for issues
-4. **Limit output** - Include top 10 issues, not all 500
-5. **Suggest fixes** - When possible, recommend how to address issues
-6. **Check production code only** - Exclude test files, node_modules, build dirs
-7. **Be defensive** - Handle missing tools gracefully
-
-#### Example Execution Flow
-
-```bash
-# 1. Syntax check
-echo "Step 4.1: Checking syntax..."
-./check_syntax.sh
-
-# 2. Linting
-echo "Step 4.2: Running linter..."
-./run_linter.sh
-
-# 3. Common issues
-echo "Step 4.3: Detecting common issues..."
-./detect_issues.sh
-
-# 4. Calculate score
-echo "Step 4.4: Calculating quality score..."
-# JavaScript function from above
-
-# 5. Generate summary
-echo "Code Quality: $QUALITY_SCORE ($QUALITY_GRADE)"
-echo "Issues: $TOTAL_ISSUES"
+**Quality vs Completeness:**
+- Perfect quality + missing features (FR4.1) = FAIL
+- Some warnings + all features complete = PASS (with warnings)
+- Syntax errors always fail regardless of FR4.1
 ```
 
-#### Integration with Report
-
-Quality results populate the "Code Quality" section of the verification report (see Step 6).
-```
-
-**Key Points:**
-- Complete syntax checking with node --check
-- Linter detection and execution (ESLint primarily)
-- Common issue detection (console.logs, debuggers, TODOs)
-- Quality score calculation with grading
-- Structured output for report generation
-- Graceful handling of missing tools
-
+Save changes to subagents/reis_verifier.md
 </action>
 <verify>
 ```bash
-# Verify Step 4 section added
-grep -q "### Step 4: Check Code Quality" subagents/reis_verifier.md && echo "✅ Step 4 section present"
+# Check Step 3 exists
+grep -q "Step 3.*Code Quality\|Validate Code Quality" subagents/reis_verifier.md && echo "✅ Step 3 quality checks present"
 
-# Check for key components
-grep -q "Syntax Validation" subagents/reis_verifier.md && echo "✅ Syntax checking documented"
-grep -q "Linter Detection" subagents/reis_verifier.md && echo "✅ Linter detection present"
-grep -q "Common Issue Detection" subagents/reis_verifier.md && echo "✅ Issue detection included"
-grep -q "Quality Score Calculation" subagents/reis_verifier.md && echo "✅ Scoring logic present"
+# Verify syntax validation
+grep -q "node --check\|Syntax Validation" subagents/reis_verifier.md && echo "✅ Syntax validation included"
 
-# Verify code examples
-grep -c "node --check" subagents/reis_verifier.md
-grep -c "eslint" subagents/reis_verifier.md
+# Check linter detection
+grep -q "eslint\|Detect Linter" subagents/reis_verifier.md && echo "✅ Linter detection present"
 
-# Check for quality result structure
-grep -q "calculateQualityScore" subagents/reis_verifier.md && echo "✅ Score calculation function present"
+# Verify quality scoring
+grep -q "calculateQualityScore\|Quality Scoring" subagents/reis_verifier.md && echo "✅ Quality scoring logic present"
 ```
 </verify>
 <done>
-- subagents/reis_verifier.md updated with comprehensive code quality validation
-- Syntax Validation section with node --check for JS/TS files
-- Linter Detection and Execution for ESLint and other tools
-- Parse Linting Issues with top issue extraction
-- Common Issue Detection (console.logs, debuggers, TODOs, large files)
-- Quality Score Calculation with grading system (A-F)
-- Quality Check Result Object format defined
-- Error Handling for missing tools
-- Best Practices for quality checking
-- Example Execution Flow included
-- Integration with report generation documented
-- Section is ~200-250 lines with executable code
+- Step 3 enhanced with code quality checks
+- Syntax validation (node --check) for all JS/TS files
+- Linter detection (ESLint)
+- Linter execution and output parsing
+- Quality scoring logic (PASS/WARNINGS/FAIL)
+- Report section format defined
+- Integration with overall verification status
+- Clear distinction: quality ≠ completeness
 </done>
 </task>
 
 ## Success Criteria
-- ✅ Step 4 (Check Code Quality) in reis_verifier.md fully documented
-- ✅ Syntax validation for JavaScript and TypeScript files
-- ✅ Linter detection and execution (ESLint primarily)
-- ✅ Linting issue parsing with top issues extracted
-- ✅ Common issue detection (console.logs, debuggers, TODOs, large files)
-- ✅ Quality score calculation with A-F grading
-- ✅ Structured quality result object for report generation
-- ✅ Graceful handling of missing linters (warning, not failure)
-- ✅ Error handling for various scenarios
-- ✅ Complete bash commands and JavaScript functions provided
+- ✅ Step 3 of reis_verifier protocol includes code quality checks
+- ✅ Syntax validation detects errors
+- ✅ Linter detection and execution (ESLint)
+- ✅ Parse linting output (errors vs warnings)
+- ✅ Quality scoring: PASS/WARNINGS/FAIL
+- ✅ Integration with verification report
+- ✅ Clear understanding: quality checks don't replace FR4.1
+- ✅ Syntax errors fail verification
+- ✅ Warnings don't block verification
 
 ## Verification
 
 ```bash
-# Check Step 4 section
-grep -A100 "### Step 4: Check Code Quality" subagents/reis_verifier.md | head -50
+# Check Step 3 content
+grep -A50 "Step 3.*Code Quality" subagents/reis_verifier.md | head -60
 
-# Verify completeness
-echo "Checking for key components:"
-grep -q "node --check" subagents/reis_verifier.md && echo "✅ Syntax checking command"
-grep -q "eslint" subagents/reis_verifier.md && echo "✅ ESLint integration"
-grep -q "calculateQualityScore" subagents/reis_verifier.md && echo "✅ Score calculation"
-grep -q "console\.log" subagents/reis_verifier.md && echo "✅ Common issue detection"
-
-# Count code blocks
-echo "Code blocks in Step 4:"
-grep -A200 "### Step 4:" subagents/reis_verifier.md | grep -c "^```"
-
-# Verify structure
-grep "^### Step" subagents/reis_verifier.md
+# Verify quality scoring
+grep -n "calculateQualityScore" subagents/reis_verifier.md
 ```
 
 ---
