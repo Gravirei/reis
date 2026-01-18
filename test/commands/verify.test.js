@@ -2,8 +2,7 @@
  * Tests for verify command with FR4.1 feature completeness validation
  */
 
-const { describe, it, before, after, beforeEach, afterEach } = require('node:test');
-const assert = require('node:assert');
+const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -12,12 +11,12 @@ const { execSync } = require('child_process');
 // Import functions from verify command
 const verify = require('../../lib/commands/verify');
 
-describe('verify command', () => {
+describe('verify command', function() {
   let testDir;
   let originalCwd;
   let fixtureDir;
 
-  before(() => {
+  before(function() {
     // Set up test fixtures directory
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-verify-test-'));
     originalCwd = process.cwd();
@@ -27,14 +26,14 @@ describe('verify command', () => {
     setupTestFixtures();
   });
 
-  after(() => {
+  after(function() {
     // Clean up test fixtures
     process.chdir(originalCwd);
     cleanupTestFixtures();
   });
 
-  describe('plan resolution', () => {
-    it('resolves phase number to PLAN.md', () => {
+  describe('plan resolution', function() {
+    it('resolves phase number to PLAN.md', function() {
       // Create test phase structure
       const planningDir = path.join(testDir, '.planning');
       const phaseDir = path.join(planningDir, '1-test-phase');
@@ -68,7 +67,7 @@ describe('verify command', () => {
       assert(planPath.includes('1-test-phase'), 'Should resolve phase number');
     });
 
-    it('resolves phase name to PLAN.md', () => {
+    it('resolves phase name to PLAN.md', function() {
       const planningDir = path.join(testDir, '.planning');
       const phaseDir = path.join(planningDir, 'design-and-specification');
       fs.mkdirSync(phaseDir, { recursive: true });
@@ -93,7 +92,7 @@ describe('verify command', () => {
       assert(planPath.endsWith('.PLAN.md'), 'Should resolve to PLAN.md file');
     });
 
-    it('accepts direct PLAN.md path', () => {
+    it('accepts direct PLAN.md path', function() {
       const testPlanPath = path.join(testDir, 'test.PLAN.md');
       fs.writeFileSync(testPlanPath, '## Objective\nDirect');
 
@@ -109,14 +108,14 @@ describe('verify command', () => {
     });
   });
 
-  describe('PLAN.md parsing', () => {
-    it('extracts objective', () => {
+  describe('PLAN.md parsing', function() {
+    it('extracts objective', function() {
       const content = '## Objective\nTest objective\n\n## Context\nSome context';
       const parsed = parsePlan(content);
       assert.strictEqual(parsed.objective, 'Test objective');
     });
 
-    it('extracts tasks with files', () => {
+    it('extracts tasks with files', function() {
       const content = `
 ## Tasks
 
@@ -132,7 +131,7 @@ describe('verify command', () => {
       assert(parsed.tasks[0].files.includes('src/feature-x.js'));
     });
 
-    it('extracts success criteria', () => {
+    it('extracts success criteria', function() {
       const content = `## Success Criteria
 - ✅ Feature X works
 - ✅ Tests pass
@@ -142,7 +141,7 @@ describe('verify command', () => {
       assert(parsed.successCriteria.some(c => c.includes('Feature X works')));
     });
 
-    it('handles multiple tasks', () => {
+    it('handles multiple tasks', function() {
       const content = `
 <task type="auto">
 <name>Task 1</name>
@@ -163,8 +162,8 @@ describe('verify command', () => {
     });
   });
 
-  describe('FR4.1: Feature Completeness Validation', () => {
-    it('detects all tasks complete (100%)', async () => {
+  describe('FR4.1: Feature Completeness Validation', function() {
+    it('detects all tasks complete (100%)', async function() {
       // Create test plan with all files present
       const plan = {
         objective: 'Test Plan',
@@ -190,7 +189,7 @@ describe('verify command', () => {
       assert.strictEqual(result.incomplete, 0);
     });
 
-    it('detects incomplete tasks (<100%)', async () => {
+    it('detects incomplete tasks (<100%)', async function() {
       // Create test plan with one file missing (FR4.1 critical test)
       const plan = {
         objective: 'Test Plan',
@@ -216,7 +215,7 @@ describe('verify command', () => {
       assert.strictEqual(result.incomplete, 1);
     });
 
-    it('reports missing deliverables with evidence', async () => {
+    it('reports missing deliverables with evidence', async function() {
       const plan = {
         objective: 'Test Plan',
         tasks: [
@@ -236,7 +235,7 @@ describe('verify command', () => {
       assert(task.missing.some(m => m.deliverable.path === 'src/auth/login.js'));
     });
 
-    it('extracts deliverables from task action text', () => {
+    it('extracts deliverables from task action text', function() {
       const task = {
         name: 'Build API',
         files: [],
@@ -259,7 +258,7 @@ describe('verify command', () => {
       assert(endpointDeliverable, 'Should extract /api/login endpoint');
     });
 
-    it('verifies function existence in codebase', () => {
+    it('verifies function existence in codebase', function() {
       // Create file with function
       fs.mkdirSync(path.join(testDir, 'src/auth'), { recursive: true });
       fs.writeFileSync(
@@ -273,7 +272,7 @@ describe('verify command', () => {
       assert(found, 'Should find authenticateUser function');
     });
 
-    it('verifies endpoint existence in routes', () => {
+    it('verifies endpoint existence in routes', function() {
       // Create route file
       fs.mkdirSync(path.join(testDir, 'src/routes'), { recursive: true });
       fs.writeFileSync(
@@ -288,8 +287,8 @@ describe('verify command', () => {
     });
   });
 
-  describe('verification scenarios', () => {
-    it('passes when all checks pass (100% complete, tests pass)', async () => {
+  describe('verification scenarios', function() {
+    it('passes when all checks pass (100% complete, tests pass)', async function() {
       const results = {
         tests: { status: 'PASS', metrics: { passed: 10, failed: 0, total: 10 } },
         featureCompleteness: { percentage: 100, status: 'PASS', complete: 3, total: 3 },
@@ -302,7 +301,7 @@ describe('verify command', () => {
       assert.strictEqual(status.status, 'PASS');
     });
 
-    it('fails when feature incomplete (<100%) even if tests pass', async () => {
+    it('fails when feature incomplete (<100%) even if tests pass', async function() {
       const results = {
         tests: { status: 'PASS', metrics: { passed: 10, failed: 0, total: 10 } }, // All tests pass
         featureCompleteness: { percentage: 66, status: 'FAIL', incomplete: 1, complete: 2, total: 3 }, // FR4.1: incomplete
@@ -317,7 +316,7 @@ describe('verify command', () => {
              'Should mention feature completeness or percentage');
     });
 
-    it('fails when tests fail', async () => {
+    it('fails when tests fail', async function() {
       const results = {
         tests: { status: 'FAIL', metrics: { passed: 9, failed: 1, total: 10 } },
         featureCompleteness: { percentage: 100, status: 'PASS', complete: 3, total: 3 },
@@ -331,7 +330,7 @@ describe('verify command', () => {
       assert(status.reason.includes('test'), 'Should mention test failures');
     });
 
-    it('passes with warnings when no tests but features complete', async () => {
+    it('passes with warnings when no tests but features complete', async function() {
       const results = {
         tests: { status: 'WARNING', metrics: { passed: 0, failed: 0, total: 0 } },
         featureCompleteness: { percentage: 100, status: 'PASS', complete: 3, total: 3 },
@@ -347,7 +346,7 @@ describe('verify command', () => {
       }
     });
 
-    it('fails when success criteria unmet', async () => {
+    it('fails when success criteria unmet', async function() {
       const results = {
         tests: { status: 'PASS', metrics: { passed: 10, failed: 0, total: 10 } },
         featureCompleteness: { percentage: 100, status: 'PASS', complete: 3, total: 3 },
@@ -361,8 +360,8 @@ describe('verify command', () => {
     });
   });
 
-  describe('report generation', () => {
-    it('generates report with FR4.1 section', () => {
+  describe('report generation', function() {
+    it('generates report with FR4.1 section', function() {
       const reportData = {
         featureCompleteness: {
           percentage: 66,
@@ -387,7 +386,7 @@ describe('verify command', () => {
       assert(report.includes('INCOMPLETE'), 'Should mark Task 2 as incomplete');
     });
 
-    it('generates complete report structure', () => {
+    it('generates complete report structure', function() {
       const reportData = {
         metadata: {
           phaseName: 'phase-1',
