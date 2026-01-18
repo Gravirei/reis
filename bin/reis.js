@@ -9,7 +9,7 @@ const chalk = require('chalk');
 
 // Show welcome banner (always, not just first run)
 function showBanner() {
-  console.log(chalk.white.bold(`
+  console.log(chalk.cyan.bold(`
   ██████  ███████ ██ ███████
   ██   ██ ██      ██ ██     
   ██████  █████   ██ ███████
