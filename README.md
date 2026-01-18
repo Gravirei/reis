@@ -6,7 +6,7 @@
 
 Systematic development with parallel subagent execution for Atlassian Rovo Dev
 
-[![npm version](https://img.shields.io/npm/v/@gravirei/reis.svg)](https://www.npmjs.com/package/@gravirei/reis)
+[![npm version](https://img.shields.io/badge/version-v2.0.0--beta.1-blue.svg)](https://www.npmjs.com/package/@gravirei/reis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 [What is REIS?](#what-is-reis) •
@@ -22,6 +22,17 @@ Systematic development with parallel subagent execution for Atlassian Rovo Dev
 ## What is REIS?
 
 **REIS (Roadmap Execution & Implementation System)** is a systematic development framework for building better software with AI. Designed for Atlassian Rovo Dev, REIS provides structured workflows, specialized subagents, and comprehensive documentation to take projects from idea to deployment.
+
+### ✨ What's New in v2.0
+
+REIS v2.0 introduces powerful wave-based execution with smart checkpoints, making development more predictable and resilient:
+
+- 🌊 **Wave Execution** - Sequential waves with automatic checkpoints between phases
+- 💾 **Smart Resume** - Resume from any checkpoint with deviation detection
+- ⚙️ **Config System** - Customize wave sizes, git behavior, and templates via `reis.config.js`
+- 📊 **Metrics Tracking** - Track success rates, durations, and deviations automatically
+- 📈 **Visualization** - ASCII charts for progress, roadmap, and metrics
+- ✅ **Plan Validation** - Catch issues before execution with comprehensive validation
 
 ### Why REIS?
 
@@ -63,6 +74,16 @@ This creates:
 - `ROADMAP.md` - Phase-based roadmap
 - `STATE.md` - Progress tracking
 
+### Configure your project (v2.0)
+
+```bash
+# Initialize configuration file
+reis config init
+
+# View current configuration
+reis config show
+```
+
 ### Map an existing codebase
 
 ```bash
@@ -74,15 +95,22 @@ Analyzes your project and generates REIS structure.
 ### Execute your roadmap
 
 ```bash
+# Traditional workflow
 reis plan          # Plan next phase
 reis execute       # Execute the plan
 reis verify        # Verify completion
 reis progress      # Track progress
+
+# v2.0 Wave-based workflow
+reis execute-plan  # Execute with automatic waves and checkpoints
+reis checkpoint "Feature complete"  # Create manual checkpoint
+reis resume        # Resume from last checkpoint
+reis visualize --type progress      # Visualize progress
 ```
 
 ## Commands
 
-REIS provides 29 commands organized into categories:
+REIS provides comprehensive commands organized into categories. See [COMPLETE_COMMANDS.md](package/docs/COMPLETE_COMMANDS.md) for full details.
 
 ### Getting Started
 ```bash
@@ -90,6 +118,13 @@ reis new [idea]         # Initialize new REIS project
 reis map                # Map existing codebase
 reis help               # Show all commands
 reis version            # Show current version
+```
+
+### Configuration (v2.0)
+```bash
+reis config init        # Create reis.config.js
+reis config show        # Show current config
+reis config validate    # Validate config file
 ```
 
 ### Requirements & Planning
@@ -105,15 +140,30 @@ reis plan               # Create phase plan
 reis discuss            # Discuss phase approach
 reis research           # Research requirements
 reis execute            # Execute current phase
-reis execute-plan [f]   # Execute specific plan
+reis execute-plan [f]   # Execute with wave-based flow (v2.0)
 reis verify             # Verify completion
+```
+
+### Checkpoints & Resume (v2.0)
+```bash
+reis checkpoint [msg]   # Create checkpoint
+reis checkpoint --list  # List all checkpoints
+reis resume             # Smart resume from last checkpoint
+reis resume --from [cp] # Resume from specific checkpoint
+```
+
+### Visualization (v2.0)
+```bash
+reis visualize --type progress  # Progress visualization
+reis visualize --type roadmap   # Roadmap timeline
+reis visualize --type metrics   # Metrics dashboard
+reis visualize --watch          # Auto-refresh mode
 ```
 
 ### Progress Management
 ```bash
 reis progress           # Show progress
 reis pause              # Pause work
-reis resume             # Resume work
 reis todo               # Add todo
 reis todos              # Show todos
 ```
@@ -156,13 +206,24 @@ Maps codebases with architecture analysis, dependency mapping, tech stack identi
 
 ## Documentation
 
-After installation, full documentation is available at:
+### Core Documentation
 
-- `~/.rovodev/reis/README.md` - Full guide
-- `~/.rovodev/reis/QUICK_REFERENCE.md` - Quick reference
-- `~/.rovodev/reis/COMPLETE_COMMANDS.md` - All commands
-- `~/.rovodev/reis/WORKFLOW_EXAMPLES.md` - Real examples
-- `~/.rovodev/reis/INTEGRATION_GUIDE.md` - Rovo Dev integration
+- [COMPLETE_COMMANDS.md](package/docs/COMPLETE_COMMANDS.md) - All commands with examples
+- [QUICK_REFERENCE.md](package/docs/QUICK_REFERENCE.md) - Quick reference for daily use
+- [WORKFLOW_EXAMPLES.md](package/docs/WORKFLOW_EXAMPLES.md) - Real-world workflows
+- [INTEGRATION_GUIDE.md](package/docs/INTEGRATION_GUIDE.md) - Rovo Dev integration
+
+### v2.0 Documentation
+
+- [V2_FEATURES.md](package/docs/V2_FEATURES.md) - Complete v2.0 features overview
+- [MIGRATION_GUIDE.md](package/docs/MIGRATION_GUIDE.md) - Migrating from v1.x to v2.0
+- [WAVE_EXECUTION.md](package/docs/WAVE_EXECUTION.md) - Wave-based execution guide
+- [CHECKPOINTS.md](package/docs/CHECKPOINTS.md) - Checkpoint system documentation
+- [CONFIG_GUIDE.md](package/docs/CONFIG_GUIDE.md) - Configuration reference
+
+### After Installation
+
+Full documentation is also available at `~/.rovodev/reis/`
 
 Access from CLI:
 ```bash
