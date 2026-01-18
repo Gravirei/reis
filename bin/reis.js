@@ -227,9 +227,14 @@ program
   .action((area) => todosCmd({area}));
 
 program
-  .command('debug <issue>')
-  .description('Debug a specific issue')
-  .action((issue) => debugCmd({issue}));
+  .command('debug [target]')
+  .description('Analyze failures and generate fix plans (uses reis_debugger subagent)')
+  .option('-i, --input <path>', 'Path to DEBUG_INPUT.md or plan file')
+  .option('-f, --focus <area>', 'Focus analysis on specific area')
+  .option('-v, --verbose', 'Show detailed debug output')
+  .action(async (target, options) => {
+    await debugCmd(target, options);
+  });
 
 program
   .command('config [subcommand]')
