@@ -542,3 +542,29 @@ _None_
 
 **Blockers/Issues:** None
 
+
+## 2026-01-18 - Phase 2 Plan 2-1 Complete
+
+**Completed:** 2-1-debug-command
+
+**Objective:** Implement the 'reis debug' CLI command with FR2.1 incomplete implementation support
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Implemented complete reis debug command (336 lines) with issue type detection
+- Added sophisticated detectIssueType() function that identifies incomplete-implementation vs bugs
+- Created loadProjectContext() to extract project metadata from .planning/ files
+- Built buildDebuggerPrompt() with FR2.1-specific instructions for targeted fixes
+- Implemented summary display functions that highlight incomplete implementations
+- Command saves generated prompt to .planning/debug/DEBUGGER_PROMPT.txt
+- Full error handling and user-friendly output with next steps
+
+**Decisions made:**
+- Used CommonJS pattern to match existing codebase (not ES6 modules)
+- Implemented placeholder subagent invocation similar to verify.js
+- Created inline loadProjectContext() instead of separate utility file
+- Followed existing command export pattern (module.exports = function)
+
+**Blockers/Issues:** None - command fully functional pending Rovo Dev integration
+
