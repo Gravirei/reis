@@ -1320,39 +1320,286 @@ function writeReport(reportContent, reportData) {
 
 ### Step 7: Update STATE.md
 
-**Purpose:** Record verification result in project state.
+**Objective:** Record verification results in STATE.md for project tracking and history.
 
-**Actions:**
-```bash
-# Read current STATE.md
-cat .planning/STATE.md
+**Process:**
 
-# Append verification entry
-cat >> .planning/STATE.md << 'EOF'
+**1. Read Current STATE.md**
 
-## {Date} - Verification: Phase {X} Plan {Y}
+```javascript
+function readStateFile() {
+  const statePath = '.planning/STATE.md';
+  
+  if (!fs.existsSync(statePath)) {
+    // Create new STATE.md
+    return {
+      exists: false,
+      content: generateNewState(),
+      verificationHistory: []
+    };
+  }
+  
+  const content = fs.readFileSync(statePath, 'utf8');
+  
+  return {
+    exists: true,
+    content: content,
+    verificationHistory: parseVerificationHistory(content)
+  };
+}
 
-**Plan:** {phase}/{plan-name}
+function generateNewState() {
+  return `# Project State
 
-**Status:** ✅ PASS / ❌ FAIL
+## Current Phase
+Phase: TBD
+Status: In Progress
 
-**Completion:** {X}% ({completed}/{total} tasks)
+## Verification History
 
-**Test Results:** {passed}/{total} tests passing
+(No verifications yet)
 
-**Issues Found:** {count} ({list if any, or "None"})
-
-**Report:** `.planning/verification/{phase-name}/{plan-name}.VERIFICATION_REPORT.md`
-
-**Next Action:** {recommendation}
-
-EOF
+---
+*STATE.md tracks project progress and verification results*
+`;
+}
 ```
 
-**State update rules:**
-- PASS → Mark plan as verified, ready for next work
-- FAIL → Mark plan as requires-rework, block subsequent plans
-- WARNING → Note issues but allow progress (e.g., missing tests in test-optional project)
+**2. Parse Existing Verification History**
+
+```javascript
+function parseVerificationHistory(content) {
+  const history = [];
+  const historySection = content.match(/## Verification History\n([\s\S]*?)(?=\n##|$)/);
+  
+  if (!historySection) {
+    return history;
+  }
+  
+  const entries = historySection[1].match(/### Verification:[\s\S]*?(?=\n###|\n---|\n##|$)/g) || [];
+  
+  for (const entry of entries) {
+    const dateMatch = entry.match(/\*\*Date:\*\* (.+)/);
+    const statusMatch = entry.match(/\*\*Status:\*\* (.+)/);
+    
+    history.push({
+      date: dateMatch ? dateMatch[1] : 'Unknown',
+      status: statusMatch ? statusMatch[1] : 'Unknown',
+      entry: entry
+    });
+  }
+  
+  return history;
+}
+```
+
+**3. Load Verification Entry Template**
+
+```javascript
+const entryTemplate = fs.readFileSync('templates/STATE_VERIFICATION_ENTRY.md', 'utf8');
+```
+
+**4. Populate Template with Results**
+
+```javascript
+function generateVerificationEntry(verificationResults) {
+  const { metadata, overallStatus, tests, featureCompleteness, successCriteria, codeQuality, issues } = verificationResults;
+  
+  let entry = `### Verification: ${metadata.phaseName}\n`;
+  entry += `**Date:** ${metadata.timestamp}\n`;
+  entry += `**Status:** ${overallStatus.status}\n`;
+  entry += `**Verifier:** reis_verifier v${metadata.verifierVersion}\n\n`;
+  
+  entry += `**Results:**\n`;
+  entry += `- Tests: ${tests.metrics.passed}/${tests.metrics.total} passed\n`;
+  entry += `- Feature Completeness: ${featureCompleteness.complete}/${featureCompleteness.total} tasks (${featureCompleteness.percentage}%)\n`;
+  entry += `- Success Criteria: ${successCriteria.met}/${successCriteria.total} met\n`;
+  entry += `- Code Quality: ${codeQuality.status}\n\n`;
+  
+  const criticalCount = issues.critical.length;
+  const majorCount = issues.major.length;
+  const minorCount = issues.minor.length;
+  entry += `**Issues:** ${criticalCount} critical, ${majorCount} major, ${minorCount} minor\n\n`;
+  
+  const reportPath = `.planning/verification/${metadata.phaseName}/VERIFICATION_REPORT.md`;
+  entry += `**Report:** \`${reportPath}\`\n\n`;
+  
+  if (overallStatus.status === 'FAIL') {
+    entry += `**Action Required:** Fix issues and re-verify before proceeding\n`;
+    
+    // Highlight FR4.1 issues if present
+    if (featureCompleteness.percentage < 100) {
+      entry += `- **Feature Completeness:** ${featureCompleteness.incomplete} tasks incomplete\n`;
+    }
+  } else if (overallStatus.status === 'PASS') {
+    entry += `**Next Phase:** Ready to proceed\n`;
+  } else if (overallStatus.status === 'PASS_WITH_WARNINGS') {
+    entry += `**Note:** Passed with warnings (see report)\n`;
+  }
+  
+  return entry;
+}
+```
+
+**5. Insert Entry into STATE.md**
+
+```javascript
+function insertVerificationEntry(stateContent, newEntry) {
+  // Find Verification History section
+  const historyMarker = '## Verification History';
+  
+  if (!stateContent.includes(historyMarker)) {
+    // Add section if missing
+    stateContent += `\n\n${historyMarker}\n\n`;
+  }
+  
+  // Find insertion point (after "## Verification History")
+  const sections = stateContent.split(/\n##\s+/);
+  let updated = '';
+  
+  for (let i = 0; i < sections.length; i++) {
+    if (i > 0) updated += '\n## ';
+    
+    if (sections[i].startsWith('Verification History')) {
+      // Insert new entry at top of this section
+      const existingContent = sections[i].replace(/^Verification History\n+/, '');
+      updated += 'Verification History\n\n';
+      updated += newEntry + '\n\n';
+      updated += (existingContent.trim() === '(No verifications yet)' ? '' : existingContent);
+    } else {
+      updated += sections[i];
+    }
+  }
+  
+  return updated;
+}
+```
+
+**6. Update Phase Status (if verification passed)**
+
+```javascript
+function updatePhaseStatus(stateContent, phaseName, verificationPassed) {
+  if (!verificationPassed) {
+    return stateContent; // Don't update if verification failed
+  }
+  
+  // Find Current Phase section
+  const phaseRegex = /## Current Phase\n([\s\S]*?)(?=\n##|$)/;
+  const match = stateContent.match(phaseRegex);
+  
+  if (!match) {
+    return stateContent; // No phase section to update
+  }
+  
+  let phaseSection = match[1];
+  
+  // Update status to "Verified"
+  phaseSection = phaseSection.replace(
+    /Status: .+/,
+    `Status: Verified ✅`
+  );
+  
+  // Add verified timestamp
+  if (!phaseSection.includes('Verified:')) {
+    phaseSection += `\nVerified: ${new Date().toISOString()}\n`;
+  }
+  
+  return stateContent.replace(phaseRegex, `## Current Phase\n${phaseSection}\n`);
+}
+```
+
+**7. Write Updated STATE.md**
+
+```javascript
+function updateStateFile(verificationResults) {
+  // Read current state
+  const state = readStateFile();
+  
+  // Generate verification entry
+  const entry = generateVerificationEntry(verificationResults);
+  
+  // Insert entry
+  let updatedContent = state.exists ? state.content : generateNewState();
+  updatedContent = insertVerificationEntry(updatedContent, entry);
+  
+  // Update phase status if passed
+  if (verificationResults.overallStatus.status === 'PASS') {
+    updatedContent = updatePhaseStatus(
+      updatedContent,
+      verificationResults.metadata.phaseName,
+      true
+    );
+  }
+  
+  // Write back
+  fs.writeFileSync('.planning/STATE.md', updatedContent, 'utf8');
+  
+  console.log('✅ STATE.md updated with verification results');
+}
+```
+
+**Integration Notes:**
+
+- Always preserve existing STATE.md content
+- Add new verification entries at TOP of history (most recent first)
+- Include FR4.1 task completion percentage in entry
+- Only update phase status to "Verified" if verification PASSED
+- Handle missing STATE.md by creating new one
+- Never corrupt or lose existing state data
+
+**FR4.1 in STATE.md:**
+
+Each verification entry MUST include feature completeness metrics:
+```
+**Results:**
+- Tests: 17/18 passed
+- Feature Completeness: 2/3 tasks (66%)  ← FR4.1 metric
+- Success Criteria: 5/6 met
+- Code Quality: PASS
+```
+
+This allows tracking completion progress across iterations.
+
+**Example STATE.md Entry:**
+
+```markdown
+### Verification: Phase 2 - Core Implementation
+**Date:** 2024-01-15T14:30:00Z  
+**Status:** FAIL  
+**Verifier:** reis_verifier v1.0
+
+**Results:**
+- Tests: 17/18 passed
+- Feature Completeness: 2/3 tasks (66%)
+- Success Criteria: 5/6 met
+- Code Quality: PASS
+
+**Issues:** 2 critical, 1 major, 3 minor
+
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT.md`
+
+**Action Required:** Fix issues and re-verify before proceeding
+- **Feature Completeness:** 1 tasks incomplete
+
+---
+
+### Verification: Phase 2 - Core Implementation (Re-verification)
+**Date:** 2024-01-15T16:45:00Z  
+**Status:** PASS  
+**Verifier:** reis_verifier v1.0
+
+**Results:**
+- Tests: 18/18 passed
+- Feature Completeness: 3/3 tasks (100%)
+- Success Criteria: 6/6 met
+- Code Quality: PASS
+
+**Issues:** 0 critical, 0 major, 1 minor
+
+**Report:** `.planning/verification/phase-2-core-implementation/VERIFICATION_REPORT_2.md`
+
+**Next Phase:** Ready to proceed
+```
 
 ## Feature Completeness Validation (FR4.1)
 
