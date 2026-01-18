@@ -193,13 +193,16 @@ reis uninstall          # Uninstall
 
 ## Subagents
 
-REIS includes 3 specialized subagents for Rovo Dev:
+REIS includes 4 specialized subagents for Rovo Dev:
 
 ### 🎯 reis_planner
 Creates executable phase plans with task breakdown, dependency analysis, resource requirements, and success criteria.
 
 ### ⚡ reis_executor
 Executes plans with atomic commits, deviation handling, checkpoints, state management, and auto-fix capabilities.
+
+### ✅ reis_verifier
+Verifies execution results against success criteria, runs test suites, validates code quality, detects missing features (FR4.1), and generates comprehensive verification reports.
 
 ### 🗺️ reis_project_mapper
 Maps codebases with architecture analysis, dependency mapping, tech stack identification, and REIS structure initialization.
