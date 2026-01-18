@@ -1,0 +1,20 @@
+{
+  "id": "incomplete-executor-skip",
+  "name": "Incomplete Implementation - Executor Skip",
+  "type": "incomplete-implementation",
+  "cause": "executor-skip",
+  "signatures": [
+    "no git commits for feature",
+    "task complexity high",
+    "adjacent tasks completed"
+  ],
+  "frequency": 0.7,
+  "solutions": [
+    "Targeted Re-execution"
+  ],
+  "prevention": [
+    "Break tasks into smaller sub-tasks",
+    "Add task-level verification checkpoints",
+    "Assess complexity before wave assignment"
+  ]
+}

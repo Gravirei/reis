@@ -1,0 +1,19 @@
+{
+  "id": "eslint-violations",
+  "name": "ESLint Violations",
+  "type": "quality-issue",
+  "signatures": [
+    "eslint",
+    "no-undef",
+    "missing semicolon"
+  ],
+  "frequency": 0.15,
+  "solutions": [
+    "Run eslint --fix",
+    "Manual corrections"
+  ],
+  "prevention": [
+    "Pre-commit hooks",
+    "IDE linting"
+  ]
+}

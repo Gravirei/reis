@@ -1,0 +1,21 @@
+{
+  "id": "incomplete-plan-ambiguity",
+  "name": "Incomplete Implementation - Plan Ambiguity",
+  "type": "incomplete-implementation",
+  "cause": "plan-ambiguity",
+  "signatures": [
+    "task description brief",
+    "no specific file paths",
+    "vague acceptance criteria"
+  ],
+  "frequency": 0.2,
+  "solutions": [
+    "Targeted Re-execution",
+    "Clarify task description"
+  ],
+  "prevention": [
+    "Add explicit file paths in <files>",
+    "Provide step-by-step instructions",
+    "Make <done> criteria measurable"
+  ]
+}

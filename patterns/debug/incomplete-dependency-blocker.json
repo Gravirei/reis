@@ -1,0 +1,22 @@
+{
+  "id": "incomplete-dependency-blocker",
+  "name": "Incomplete Implementation - Dependency Blocker",
+  "type": "incomplete-implementation",
+  "cause": "dependency-blocker",
+  "signatures": [
+    "MODULE_NOT_FOUND",
+    "network timeout",
+    "environment variable undefined"
+  ],
+  "frequency": 0.1,
+  "solutions": [
+    "Install dependencies",
+    "Fix environment",
+    "Targeted Re-execution"
+  ],
+  "prevention": [
+    "Pre-execution dependency checks",
+    "Environment validation",
+    "Provide dependency installation steps"
+  ]
+}

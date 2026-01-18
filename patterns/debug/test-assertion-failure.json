@@ -1,0 +1,19 @@
+{
+  "id": "test-assertion-failure",
+  "name": "Test Assertion Failure",
+  "type": "test-failure",
+  "signatures": [
+    "expected.*but got",
+    "assertion failed",
+    "test.*fail"
+  ],
+  "frequency": 0.3,
+  "solutions": [
+    "Fix implementation logic",
+    "Update test expectations"
+  ],
+  "prevention": [
+    "TDD approach",
+    "Better test coverage"
+  ]
+}
