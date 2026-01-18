@@ -190,6 +190,12 @@ describe('verify command', function() {
     });
 
     it('detects incomplete tasks (<100%)', async function() {
+      // Clean src directory from previous test
+      const srcDir = path.join(testDir, 'src');
+      if (fs.existsSync(srcDir)) {
+        fs.rmSync(srcDir, { recursive: true, force: true });
+      }
+
       // Create test plan with one file missing (FR4.1 critical test)
       const plan = {
         objective: 'Test Plan',
@@ -202,10 +208,10 @@ describe('verify command', function() {
       };
 
       // Create only Task 1 and Task 3 files
-      fs.mkdirSync(path.join(testDir, 'src'), { recursive: true });
-      fs.writeFileSync(path.join(testDir, 'src/a.js'), 'module.exports = {};');
+      fs.mkdirSync(srcDir, { recursive: true });
+      fs.writeFileSync(path.join(srcDir, 'a.js'), 'module.exports = {};');
       // src/b.js intentionally missing
-      fs.writeFileSync(path.join(testDir, 'src/c.js'), 'module.exports = {};');
+      fs.writeFileSync(path.join(srcDir, 'c.js'), 'module.exports = {};');
 
       const result = validateFeatureCompleteness(plan);
 
