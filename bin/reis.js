@@ -288,8 +288,9 @@ program
 
 program
   .command('tree [subcommand]')
-  .description('Manage decision trees (show, new, list, validate, export)')
+  .description('Manage decision trees (show, new, list, validate, export, diff, lint)')
   .argument('[file-or-template]', 'File path or template name')
+  .argument('[file2]', 'Second file path (for diff subcommand)')
   .option('--depth <n>', 'Maximum depth to display')
   .option('--no-metadata', 'Hide metadata badges')
   .option('--interactive', 'Interactive selection mode')
@@ -301,8 +302,11 @@ program
   .option('--output <path>', 'Output file path')
   .option('--verbose', 'Show detailed validation output')
   .option('--fix', 'Auto-fix issues (validate subcommand)')
-  .action(async (subcommand, fileOrTemplate, options) => {
-    const args = fileOrTemplate ? [fileOrTemplate] : [];
+  .option('--strict', 'Fail on warnings (lint subcommand)')
+  .action(async (subcommand, fileOrTemplate, file2, options) => {
+    const args = [];
+    if (fileOrTemplate) args.push(fileOrTemplate);
+    if (file2) args.push(file2);
     await treeCmd(subcommand, args, options);
   });
 
