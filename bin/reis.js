@@ -76,6 +76,8 @@ const todosCmd = require('../lib/commands/todos.js');
 const debugCmd = require('../lib/commands/debug.js');
 const configCmd = require('../lib/commands/config.js');
 const cycleCmd = require('../lib/commands/cycle.js');
+const decisionsCmd = require('../lib/commands/decisions.js');
+const treeCmd = require('../lib/commands/tree.js');
 
 // Check for --help or -h flag before Commander parses
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -265,6 +267,38 @@ program
   .option('-f, --force', 'Force overwrite (for init)')
   .option('--path <path>', 'Custom config path')
   .action((subcommand, options) => configCmd({ subcommand, ...options }));
+
+// Decision Tree Commands
+program
+  .command('decisions [subcommand] [id]')
+  .description('Manage decision tracking (list, show, revert, export, stats)')
+  .option('--tree <treeId>', 'Filter by tree ID')
+  .option('--phase <phase>', 'Filter by phase')
+  .option('--limit <n>', 'Limit number of results')
+  .option('--format <format>', 'Export format (json, csv)')
+  .option('--output <path>', 'Output file path')
+  .option('--reason <reason>', 'Reason for revert')
+  .action(async (subcommand, id, options) => {
+    const args = id ? [id] : [];
+    await decisionsCmd(subcommand, args, options);
+  });
+
+program
+  .command('tree [subcommand]')
+  .description('Manage decision trees (show, new, list, validate, export)')
+  .argument('[file-or-template]', 'File path or template name')
+  .option('--depth <n>', 'Maximum depth to display')
+  .option('--no-metadata', 'Hide metadata badges')
+  .option('--interactive', 'Interactive selection mode')
+  .option('--context <json>', 'Context for condition evaluation (JSON string)')
+  .option('--format <format>', 'Export format (html, svg, mermaid, json, all)')
+  .option('--output <path>', 'Output file path')
+  .option('--verbose', 'Show detailed validation output')
+  .option('--fix', 'Auto-fix issues (validate subcommand)')
+  .action(async (subcommand, fileOrTemplate, options) => {
+    const args = fileOrTemplate ? [fileOrTemplate] : [];
+    await treeCmd(subcommand, args, options);
+  });
 
 program
   .command('update')
