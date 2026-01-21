@@ -318,5 +318,787 @@
     "context": {},
     "timestamp": "2026-01-21T19:45:14.253Z",
     "reverted": false
+  },
+  {
+    "id": "c64a461a-382d-4d89-94f5-6b85da0544a6",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T19:51:43.661Z",
+    "reverted": false
+  },
+  {
+    "id": "dac840b5-2bd9-41f3-b821-5e504fbe4410",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:51:43.662Z",
+    "reverted": false
+  },
+  {
+    "id": "250b3a03-c3e4-43d0-826e-179e5f9c8c4e",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:51:43.671Z",
+    "reverted": false
+  },
+  {
+    "id": "d01bd3d1-c0c4-4f4d-b3fc-55b2d2019e97",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:51:43.671Z",
+    "reverted": false
+  },
+  {
+    "id": "9a2b28be-f8a8-4941-8f32-eb8a91d6928b",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T19:51:56.041Z",
+    "reverted": false
+  },
+  {
+    "id": "14788a6e-5a6c-47c6-9ca8-57b255c562f8",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:51:56.042Z",
+    "reverted": false
+  },
+  {
+    "id": "00f3a6a1-ff07-4536-bf7f-1a6cddeac062",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:51:56.051Z",
+    "reverted": false
+  },
+  {
+    "id": "c4dcb8b8-0006-4b8f-82b8-7a1788c22ec7",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:51:56.051Z",
+    "reverted": false
+  },
+  {
+    "id": "1961f2d7-5adf-4817-a3a0-edf930590971",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T19:52:00.503Z",
+    "reverted": false
+  },
+  {
+    "id": "ae6b90d7-6447-4c79-aa1d-f5b411b05095",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:52:00.505Z",
+    "reverted": false
+  },
+  {
+    "id": "321e423e-46b4-44aa-b2c2-83082235f1ef",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:52:00.505Z",
+    "reverted": false
+  },
+  {
+    "id": "e0285796-4e40-45a2-bac7-b8c45dc25275",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:52:00.505Z",
+    "reverted": false
+  },
+  {
+    "id": "6682ba24-0f40-49ab-a77e-8b0d26322eac",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T19:52:10.784Z",
+    "reverted": false
+  },
+  {
+    "id": "2d755503-db3d-4c5b-8dd1-0968ac6821db",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:52:10.786Z",
+    "reverted": false
+  },
+  {
+    "id": "97dd2211-5fa1-4489-aff2-ce14160ad50d",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:52:10.786Z",
+    "reverted": false
+  },
+  {
+    "id": "5e2be1ba-9508-44a5-baff-697fb3467507",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:52:10.787Z",
+    "reverted": false
+  },
+  {
+    "id": "b32482be-cecd-4f17-8195-61b3043cc5f6",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T19:59:27.912Z",
+    "reverted": false
+  },
+  {
+    "id": "282929d2-2808-48b1-b966-83be0af6d623",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:59:27.913Z",
+    "reverted": false
+  },
+  {
+    "id": "fca78627-cde1-488f-a76b-28e3259cc502",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:59:27.914Z",
+    "reverted": false
+  },
+  {
+    "id": "4e18c14e-15ff-420f-ba70-2a88ff428e41",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:59:27.915Z",
+    "reverted": false
+  },
+  {
+    "id": "31e6374d-6396-453a-a18b-5fb4b5438846",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T19:59:36.224Z",
+    "reverted": false
+  },
+  {
+    "id": "012f81af-8b46-4f3e-bc1f-a1e0e1bcffdf",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:59:36.225Z",
+    "reverted": false
+  },
+  {
+    "id": "df3527a7-8be2-4dbf-8ce9-840f1ab89dd3",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:59:36.234Z",
+    "reverted": false
+  },
+  {
+    "id": "ff994dc0-08b6-46e9-a10f-215ba5bedd0f",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T19:59:36.235Z",
+    "reverted": false
+  },
+  {
+    "id": "6d603b92-a974-41d7-bbf1-ffa17ef66a7a",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:00:07.090Z",
+    "reverted": false
+  },
+  {
+    "id": "d93ae0ec-d59e-44a6-b93e-3a047b2bc885",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:00:07.092Z",
+    "reverted": false
+  },
+  {
+    "id": "5342623d-c761-4cc5-80ba-6ee03f8ff354",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:00:07.100Z",
+    "reverted": false
+  },
+  {
+    "id": "a9f29e7e-acb2-41db-87f6-97fdc5aa2f83",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:00:07.101Z",
+    "reverted": false
+  },
+  {
+    "id": "a01fc985-6bd9-4a75-879a-1052dee73ef6",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:01:38.857Z",
+    "reverted": false
+  },
+  {
+    "id": "65185ac2-71f1-49cf-9877-f624d410ebde",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:01:38.858Z",
+    "reverted": false
+  },
+  {
+    "id": "650f3b43-55cd-4ef6-9874-70738a431660",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:01:38.867Z",
+    "reverted": false
+  },
+  {
+    "id": "65f0cbb4-9a99-4fa6-a10d-ed23cd4bdd58",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:01:38.867Z",
+    "reverted": false
+  },
+  {
+    "id": "6ef38c83-dea5-4bac-b2e7-067199374e58",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:01:46.588Z",
+    "reverted": false
+  },
+  {
+    "id": "94ddfdca-cc91-4a07-a427-140fcdcbe868",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:01:46.589Z",
+    "reverted": false
+  },
+  {
+    "id": "c9f3e31a-75e5-4c0a-8724-e5b4747a0ada",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:01:46.598Z",
+    "reverted": false
+  },
+  {
+    "id": "f62d5ecb-7332-474f-a529-b1acac4f6174",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:01:46.598Z",
+    "reverted": false
+  },
+  {
+    "id": "e4420712-176b-4b0a-aac3-f2b1d1b0e578",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:02:07.496Z",
+    "reverted": false
+  },
+  {
+    "id": "aee4218c-7e9f-47c1-a6e0-810335da3d32",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:02:07.497Z",
+    "reverted": false
+  },
+  {
+    "id": "5be725b3-f8cd-4f52-8e1a-bd156948564c",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:02:07.506Z",
+    "reverted": false
+  },
+  {
+    "id": "ba507337-75a0-4709-8e8a-22fdac3649a0",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:02:07.507Z",
+    "reverted": false
+  },
+  {
+    "id": "47ea7462-6e5b-4cbf-b647-1bfd87b0477d",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:02:13.989Z",
+    "reverted": false
+  },
+  {
+    "id": "8178c996-94b8-4e68-a2e5-9a46a89af063",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:02:13.990Z",
+    "reverted": false
+  },
+  {
+    "id": "66d48f55-d0fa-49ed-9454-43b281d06ad3",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:02:13.999Z",
+    "reverted": false
+  },
+  {
+    "id": "2df2f39a-4673-4f9b-9a35-f85ddd6defa5",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:02:14.000Z",
+    "reverted": false
+  },
+  {
+    "id": "590f7d1a-2565-45b6-a239-1749d852c924",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:03:24.363Z",
+    "reverted": false
+  },
+  {
+    "id": "af6ca518-fd18-459f-9602-6fab5043d80a",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:03:24.364Z",
+    "reverted": false
+  },
+  {
+    "id": "c6f3256e-3282-4ab3-a076-46fc62b2f3ad",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:03:24.372Z",
+    "reverted": false
+  },
+  {
+    "id": "3c7702ec-68a1-463b-8a95-cb9c1364c5d6",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:03:24.373Z",
+    "reverted": false
+  },
+  {
+    "id": "0fe76b33-ae62-4829-99a3-15533d31b7ec",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:04:09.093Z",
+    "reverted": false
+  },
+  {
+    "id": "4579c5d5-897f-41d6-bc37-41d863237954",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:04:09.094Z",
+    "reverted": false
+  },
+  {
+    "id": "8b9e9c87-338d-49a9-8905-af41792e3068",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:04:09.094Z",
+    "reverted": false
+  },
+  {
+    "id": "a627c33e-dbe8-40b6-bc16-a79972d9d1ca",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:04:09.095Z",
+    "reverted": false
+  },
+  {
+    "id": "07a03c76-6f6c-4817-aec5-b2e7f2688fbf",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:15:07.411Z",
+    "reverted": false
+  },
+  {
+    "id": "28509465-d3c3-42c4-bc61-d6760591905b",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:15:07.412Z",
+    "reverted": false
+  },
+  {
+    "id": "a4abfe47-4541-444e-a734-563d5653846a",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:15:07.421Z",
+    "reverted": false
+  },
+  {
+    "id": "f7e62425-4121-4370-be3f-ec58be1cfde8",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:15:07.422Z",
+    "reverted": false
+  },
+  {
+    "id": "87cbaa58-79bd-48d3-b518-395062e0b725",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:17:03.199Z",
+    "reverted": false
+  },
+  {
+    "id": "1b951f35-5f29-4951-9e81-e4b322a33bb2",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:17:03.200Z",
+    "reverted": false
+  },
+  {
+    "id": "62f07c65-288b-48a0-ab66-ea3c7a414831",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:17:03.200Z",
+    "reverted": false
+  },
+  {
+    "id": "5536a186-538f-4447-956b-e91ef6a87347",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:17:03.201Z",
+    "reverted": false
+  },
+  {
+    "id": "1d25b4b9-6df7-4dd2-8b41-37ed2c8c4045",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:17:34.834Z",
+    "reverted": false
+  },
+  {
+    "id": "9d296134-45f3-4f1d-bd27-645952df6323",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:17:34.835Z",
+    "reverted": false
+  },
+  {
+    "id": "fdacf019-eec2-46bb-b48c-ce4c3ac94b89",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:17:34.835Z",
+    "reverted": false
+  },
+  {
+    "id": "2abc77e4-29eb-4c90-aabd-d31fbe6caa63",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:17:34.836Z",
+    "reverted": false
+  },
+  {
+    "id": "b95ac7d8-7d0d-4218-8470-859fdf7a7a9e",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-21T20:18:23.540Z",
+    "reverted": false
+  },
+  {
+    "id": "9b28f809-5d93-4234-867f-bb211a0d8f11",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:18:23.542Z",
+    "reverted": false
+  },
+  {
+    "id": "f4c5f68e-17d4-4806-91d7-066c265005fb",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:18:23.542Z",
+    "reverted": false
+  },
+  {
+    "id": "4b9d623b-24bc-4b3f-8406-c267c0f50750",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-21T20:18:23.543Z",
+    "reverted": false
   }
 ]

@@ -183,7 +183,9 @@ Level 1?
       
       assert.strictEqual(trees.length, 1);
       let node = trees[0].branches[0];
-      for (let i = 0; i < 4; i++) {
+      // We have 4 branches after root (Level 2, 3, 4, 5) = 5 total levels
+      // Starting from branches[0] (Level 2), we can traverse 3 times to reach Level 5
+      for (let i = 0; i < 3; i++) {
         assert.strictEqual(node.children.length, 1);
         node = node.children[0];
       }
@@ -330,7 +332,8 @@ Setup?
       const result = validateTree(tree);
       
       assert.strictEqual(result.valid, false);
-      assert.ok(result.warnings.some(w => w.includes('orphan') || w.includes('level')));
+      // Orphaned branches are errors, not warnings, since they make the tree invalid
+      assert.ok(result.errors.some(e => e.includes('orphan') || e.includes('level')));
     });
 
     it('should detect circular references', () => {
