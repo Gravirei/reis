@@ -310,11 +310,13 @@ program
     await treeCmd(subcommand, args, options);
   });
 
+const updateCmd = require('../lib/commands/update.js');
+
 program
   .command('update')
   .description('Update REIS to latest version')
-  .action(() => {
-    console.log('Command coming soon in Phase 5-8');
+  .action(async () => {
+    await updateCmd({});
   });
 
 program
