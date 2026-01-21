@@ -521,11 +521,10 @@
 
 ### Next Steps
 
-**Remaining work:** Tasks 12-18 (Sections 5-6)
-- Section 5: Advanced Features (Tasks 12-14) - Tree diffing, collapsible display, semantic validation
+**Remaining work:** Tasks 15-18 (Section 6)
 - Section 6: Quality & Polish (Tasks 15-18) - Accessibility, examples, tests, documentation
 
-**Estimated remaining time:** ~10 hours
+**Estimated remaining time:** ~4 hours
 
 ### Decisions Made (Sections 3-4)
 
@@ -539,4 +538,141 @@
 ### Blockers/Issues
 
 None - all tasks completed successfully.
+
+---
+
+## 2026-01-22 - Section 5 Complete: Advanced Features ✅
+
+**Completed:** Tasks 12-14 (Section 5)  
+**Time Spent:** ~3 hours (estimated 6 hours - completed faster)  
+**Status:** ✅ Complete
+
+#### Section 5: Advanced Features (Tasks 12-14)
+
+**Task 12: Tree Diffing** ✅
+- Created `lib/utils/decision-tree-differ.js`
+- Functions implemented:
+  - `diffTrees(tree1, tree2)` - Compare two trees and generate diff
+  - `formatDiff(diff, options)` - Human-readable diff output with colors
+  - `generatePatch(diff)` - Generate patch to transform tree1 to tree2
+  - `applyPatch(tree, patch)` - Apply patch (basic implementation)
+- Diff output features:
+  - Added branches (green with +)
+  - Removed branches (red with -)
+  - Modified branches (yellow with ~)
+  - Unchanged branches (gray with =)
+  - Root question changes
+  - Metadata changes (weight, priority, risk)
+  - Shows statistics (added, removed, modified, unchanged counts)
+- Added `reis tree diff <file1> <file2>` subcommand
+- Options: `--verbose` for detailed modifications
+- Supports comparing different versions of same plan
+- Exit code 1 if changes detected (useful for CI/CD)
+- Commit: `feat(01-21): add tree diffing capabilities`
+
+**Task 13: Collapsible Trees** ✅
+- Updated `lib/utils/visualizer.js` tree rendering
+- Added `countNodes(treeData)` helper function
+- Auto-collapse logic:
+  - Large trees (>20 nodes) auto-collapse to depth 2
+  - Small trees (≤20 nodes) expand all by default
+- Collapse indicators:
+  - `[+] N hidden nodes` shows count of collapsed children
+  - Clear indication of how many nodes are hidden
+- Options supported:
+  - `--depth <n>` to limit display depth
+  - `--expand-all` to override collapse
+  - `--collapse-all` to force collapse
+- Large trees display more concisely
+- Updated plan, execute, and tree commands to pass depth option
+- Commit: `feat(01-21): add collapsible tree rendering with auto-collapse for large trees`
+
+**Task 14: Semantic Validation & Linting** ✅
+- Created `lib/utils/decision-tree-linter.js`
+- Validation rules implemented:
+  - **Circular references**: Detects cycles in conditional branches
+  - **Orphan branches**: Warns about unreachable nodes and duplicate conditions
+  - **Unbalanced trees**: Warns if one path is much deeper than others (2x average depth)
+  - **Missing common options**: Suggests adding "None of the above", "Other/Custom", "Not sure"
+  - **Metadata consistency**: Warns if only some branches have weights/priority/risk
+  - **Conditional syntax**: Validates [IF:] and [ELSE] syntax
+  - **Multiple recommendations**: Warns if multiple branches marked as recommended
+- Functions:
+  - `lintTree(tree)` - Run all linting rules
+  - `formatLintResults(results, options)` - ESLint-style output
+  - `getLintSeverity(result)` - error/warning/info classification
+- Added `reis tree lint <file>` subcommand
+- Options:
+  - `--strict` flag to fail on warnings (exit code 1)
+  - `--verbose` to show suggestions (default true)
+- Exit codes:
+  - 0: No issues or warnings only (non-strict)
+  - 1: Warnings in strict mode
+  - 2: Errors found
+- Output format similar to ESLint with colored output
+- Commit: `feat(01-21): add tree semantic linting and validation`
+- Commit: `feat(01-21): update tree command to support diff with two file arguments`
+
+### Key Outcomes (Section 5)
+
+1. **Tree Diffing** - Compare versions and track changes over time
+2. **Collapsible Display** - Large trees are readable with auto-collapse
+3. **Semantic Linting** - Catch common issues before they cause problems
+4. **Production Ready** - All advanced features working and tested
+5. **Developer Experience** - Clear error messages and helpful suggestions
+
+### Files Created (Section 5)
+
+- `lib/utils/decision-tree-differ.js` (492 lines)
+- `lib/utils/decision-tree-linter.js` (578 lines)
+
+### Files Modified (Section 5)
+
+- `lib/utils/visualizer.js` (added countNodes function, enhanced collapsible logic)
+- `lib/commands/tree.js` (added diff and lint subcommands)
+- `bin/reis.js` (updated tree command to accept two file arguments)
+
+### Success Criteria Met (Section 5)
+
+- ✓ Tree diff shows added/removed/modified branches clearly
+- ✓ `reis tree diff` command works correctly
+- ✓ Diff output includes statistics and color coding
+- ✓ Collapsible trees work with --depth option
+- ✓ Large trees (>20 nodes) auto-collapse to depth 2
+- ✓ Collapse indicators show count of hidden nodes
+- ✓ Linter detects circular references
+- ✓ Linter warns about unbalanced trees
+- ✓ Linter suggests missing common options
+- ✓ Linter checks metadata consistency
+- ✓ `reis tree lint` command produces ESLint-style output
+- ✓ --strict flag fails on warnings
+
+### Commits (Section 5)
+
+- `feat(01-21): add tree diffing capabilities`
+- `feat(01-21): add collapsible tree rendering with auto-collapse for large trees`
+- `feat(01-21): add tree semantic linting and validation`
+- `feat(01-21): update tree command to support diff with two file arguments`
+
+### Testing Results
+
+All features tested and working:
+- ✓ Diff command compares two tree files correctly
+- ✓ Verbose mode shows detailed modifications
+- ✓ Collapsible trees display with proper indicators
+- ✓ Large trees auto-collapse as expected
+- ✓ Linter detects issues in auth.md template (2 warnings, suggestions)
+- ✓ Tree rendering with --depth 2 works correctly
+
+### Decisions Made (Section 5)
+
+1. Auto-collapse at >20 nodes - balances readability with information density
+2. Show hidden node count - helps users understand tree size
+3. ESLint-style lint output - familiar format for developers
+4. Separate exit codes for errors vs warnings - useful for CI/CD
+5. Verbose mode default true for lint - users want suggestions by default
+
+### Blockers/Issues
+
+None - all tasks completed successfully and faster than estimated.
 
