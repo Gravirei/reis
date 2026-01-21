@@ -75,6 +75,7 @@ const todoCmd = require('../lib/commands/todo.js');
 const todosCmd = require('../lib/commands/todos.js');
 const debugCmd = require('../lib/commands/debug.js');
 const configCmd = require('../lib/commands/config.js');
+const cycleCmd = require('../lib/commands/cycle.js');
 
 // Check for --help or -h flag before Commander parses
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -243,6 +244,18 @@ program
   .option('-v, --verbose', 'Show detailed debug output')
   .action(async (target, options) => {
     await debugCmd(target, options);
+  });
+
+program
+  .command('cycle [phase-or-plan]')
+  .description('Complete PLAN → EXECUTE → VERIFY → DEBUG cycle')
+  .option('--max-attempts <n>', 'Maximum debug/fix attempts', '3')
+  .option('--auto-fix', 'Apply fixes without confirmation')
+  .option('--resume', 'Resume interrupted cycle')
+  .option('--continue-on-fail', 'Continue even if verification fails')
+  .option('-v, --verbose', 'Detailed output')
+  .action(async (phaseOrPlan, options) => {
+    await cycleCmd(phaseOrPlan, options);
   });
 
 program

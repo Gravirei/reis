@@ -43,3 +43,6 @@ VERIFICATION_REPORT.md
 .tmp/
 temp/
 tmp_rovodev_*
+
+# Cycle state (temporary runtime state)
+.reis/cycle-state.json
