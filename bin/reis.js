@@ -278,6 +278,9 @@ program
   .option('--format <format>', 'Export format (json, csv)')
   .option('--output <path>', 'Output file path')
   .option('--reason <reason>', 'Reason for revert')
+  .option('--no-color', 'Disable colors (screen reader friendly)')
+  .option('--high-contrast', 'High contrast color scheme')
+  .option('--ascii-only', 'Use ASCII characters only')
   .action(async (subcommand, id, options) => {
     const args = id ? [id] : [];
     await decisionsCmd(subcommand, args, options);
@@ -291,6 +294,9 @@ program
   .option('--no-metadata', 'Hide metadata badges')
   .option('--interactive', 'Interactive selection mode')
   .option('--context <json>', 'Context for condition evaluation (JSON string)')
+  .option('--no-color', 'Disable colors (screen reader friendly)')
+  .option('--high-contrast', 'High contrast color scheme')
+  .option('--ascii-only', 'Use ASCII characters only (├─└─ becomes |-- `--)')
   .option('--format <format>', 'Export format (html, svg, mermaid, json, all)')
   .option('--output <path>', 'Output file path')
   .option('--verbose', 'Show detailed validation output')
