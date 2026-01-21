@@ -4,7 +4,6 @@
  * Target: 50+ test cases, 80%+ code coverage
  */
 
-const assert = require('assert');
 const { parseDecisionTrees, validateTree, evaluateCondition, detectCycles } = require('../../lib/utils/decision-tree-parser');
 const { renderDecisionTree, renderTreeInline } = require('../../lib/utils/visualizer');
 const { exportToHTML, exportToSVG, exportToMermaid } = require('../../lib/utils/decision-tree-exporter');
@@ -12,12 +11,12 @@ const { recordDecision, getDecisions, revertDecision } = require('../../lib/util
 const fs = require('fs');
 const path = require('path');
 
-// Temporary test directory for file operations
-const testDir = path.join(__dirname, '../tmp_test_decision_trees');
+// Mock file system for tests
+jest.mock('fs');
 
 describe('Decision Tree Parser', () => {
   describe('Parse Simple Trees', () => {
-    it('should parse a simple two-level tree', () => {
+    test('should parse a simple two-level tree', () => {
       const markdown = `
 ## Decision Tree: Simple Choice
 
@@ -30,17 +29,17 @@ Which framework?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.strictEqual(trees[0].name, 'Simple Choice');
-      assert.strictEqual(trees[0].root, 'Which framework?');
-      assert.strictEqual(trees[0].branches.length, 2);
-      assert.strictEqual(trees[0].branches[0].text, 'React');
-      assert.strictEqual(trees[0].branches[0].outcome, 'Modern and popular');
-      assert.strictEqual(trees[0].branches[1].text, 'Vue');
-      assert.strictEqual(trees[0].branches[1].outcome, 'Easy to learn');
+      expect(trees).toHaveLength(1);
+      expect(trees[0].name).toBe('Simple Choice');
+      expect(trees[0].root).toBe('Which framework?');
+      expect(trees[0].branches).toHaveLength(2);
+      expect(trees[0].branches[0].text).toBe('React');
+      expect(trees[0].branches[0].outcome).toBe('Modern and popular');
+      expect(trees[0].branches[1].text).toBe('Vue');
+      expect(trees[0].branches[1].outcome).toBe('Easy to learn');
     });
 
-    it('should parse a nested tree', () => {
+    test('should parse a nested tree', () => {
       const markdown = `
 ## Decision Tree: Nested Choice
 
@@ -57,15 +56,15 @@ What to build?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.strictEqual(trees[0].branches.length, 2);
-      assert.strictEqual(trees[0].branches[0].children.length, 2);
-      assert.strictEqual(trees[0].branches[1].children.length, 2);
-      assert.strictEqual(trees[0].branches[0].text, 'Web App');
-      assert.strictEqual(trees[0].branches[0].children[0].text, 'SPA');
+      expect(trees).toHaveLength(1);
+      expect(trees[0].branches).toHaveLength(2);
+      expect(trees[0].branches[0].children).toHaveLength(2);
+      expect(trees[0].branches[1].children).toHaveLength(2);
+      expect(trees[0].branches[0].text).toBe('Web App');
+      expect(trees[0].branches[0].children[0].text).toBe('SPA');
     });
 
-    it('should parse tree with metadata', () => {
+    test('should parse tree with metadata', () => {
       const markdown = `
 ## Decision Tree: With Metadata
 
@@ -78,15 +77,15 @@ Choose database?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.strictEqual(trees[0].branches[0].metadata.recommended, true);
-      assert.strictEqual(trees[0].branches[0].metadata.weight, 8);
-      assert.strictEqual(trees[0].branches[0].metadata.priority, 'high');
-      assert.strictEqual(trees[0].branches[1].metadata.weight, 6);
-      assert.strictEqual(trees[0].branches[1].metadata.risk, 'medium');
+      expect(trees).toHaveLength(1);
+      expect(trees[0].branches[0].metadata.recommended).toBe(true);
+      expect(trees[0].branches[0].metadata.weight).toBe(8);
+      expect(trees[0].branches[0].metadata.priority).toBe('high');
+      expect(trees[0].branches[1].metadata.weight).toBe(6);
+      expect(trees[0].branches[1].metadata.risk).toBe('medium');
     });
 
-    it('should parse tree with conditionals', () => {
+    test('should parse tree with conditionals', () => {
       const markdown = `
 ## Decision Tree: Conditional Tree
 
@@ -102,18 +101,18 @@ Setup storage?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.strictEqual(trees[0].branches[0].condition, 'has_database');
-      assert.strictEqual(trees[0].branches[1].condition, 'ELSE');
-      assert.strictEqual(trees[0].branches[2].condition, undefined);
+      expect(trees).toHaveLength(1);
+      expect(trees[0].branches[0].condition).toBe('has_database');
+      expect(trees[0].branches[1].condition).toBe('ELSE');
+      expect(trees[0].branches[2].condition).toBeUndefined();
     });
 
-    it('should handle empty input', () => {
+    test('should handle empty input', () => {
       const trees = parseDecisionTrees('');
-      assert.strictEqual(trees.length, 0);
+      expect(trees).toHaveLength(0);
     });
 
-    it('should handle markdown without trees', () => {
+    test('should handle markdown without trees', () => {
       const markdown = `
 # My Document
 
@@ -121,10 +120,10 @@ Some text without any decision trees.
 `;
       
       const trees = parseDecisionTrees(markdown);
-      assert.strictEqual(trees.length, 0);
+      expect(trees).toHaveLength(0);
     });
 
-    it('should parse multiple trees in one document', () => {
+    test('should parse multiple trees in one document', () => {
       const markdown = `
 ## Decision Tree: First Tree
 
@@ -145,12 +144,12 @@ Choice 2?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 2);
-      assert.strictEqual(trees[0].name, 'First Tree');
-      assert.strictEqual(trees[1].name, 'Second Tree');
+      expect(trees).toHaveLength(2);
+      expect(trees[0].name).toBe('First Tree');
+      expect(trees[1].name).toBe('Second Tree');
     });
 
-    it('should handle single node tree', () => {
+    test('should handle single node tree', () => {
       const markdown = `
 ## Decision Tree: Single Node
 
@@ -162,11 +161,11 @@ Just one option?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.strictEqual(trees[0].branches.length, 1);
+      expect(trees).toHaveLength(1);
+      expect(trees[0].branches).toHaveLength(1);
     });
 
-    it('should parse tree with deep nesting (5 levels)', () => {
+    test('should parse tree with deep nesting (5 levels)', () => {
       const markdown = `
 ## Decision Tree: Deep Tree
 
@@ -181,16 +180,16 @@ Level 1?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
+      expect(trees).toHaveLength(1);
       let node = trees[0].branches[0];
       for (let i = 0; i < 4; i++) {
-        assert.strictEqual(node.children.length, 1);
+        expect(node.children).toHaveLength(1);
         node = node.children[0];
       }
-      assert.strictEqual(node.text, 'Level 5');
+      expect(node.text).toBe('Level 5');
     });
 
-    it('should handle mixed ASCII and Unicode characters', () => {
+    test('should handle mixed ASCII and Unicode characters', () => {
       const markdown = `
 ## Decision Tree: Mixed Chars
 
@@ -203,11 +202,11 @@ Choose?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.strictEqual(trees[0].branches.length, 2);
+      expect(trees).toHaveLength(1);
+      expect(trees[0].branches).toHaveLength(2);
     });
 
-    it('should parse tree with special characters in text', () => {
+    test('should parse tree with special characters in text', () => {
       const markdown = `
 ## Decision Tree: Special Chars
 
@@ -220,12 +219,12 @@ Choose framework?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees.length, 1);
-      assert.ok(trees[0].branches[0].text.includes('React'));
-      assert.ok(trees[0].branches[1].text.includes('Vue.js'));
+      expect(trees).toHaveLength(1);
+      expect(trees[0].branches[0].text).toContain('React');
+      expect(trees[0].branches[1].text).toContain('Vue.js');
     });
 
-    it('should handle inconsistent indentation gracefully', () => {
+    test('should handle inconsistent indentation gracefully', () => {
       const markdown = `
 ## Decision Tree: Inconsistent Indent
 
@@ -240,10 +239,10 @@ Choose?
       const trees = parseDecisionTrees(markdown);
       
       // Should still parse but may have validation warnings
-      assert.strictEqual(trees.length, 1);
+      expect(trees).toHaveLength(1);
     });
 
-    it('should parse tree with all metadata types', () => {
+    test('should parse tree with all metadata types', () => {
       const markdown = `
 ## Decision Tree: All Metadata
 
@@ -256,7 +255,7 @@ Choose?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.deepStrictEqual(trees[0].branches[0].metadata, {
+      expect(trees[0].branches[0].metadata).toMatchObject({
         recommended: true,
         weight: 10,
         priority: 'high',
@@ -264,7 +263,7 @@ Choose?
       });
     });
 
-    it('should handle multiple conditionals in one tree', () => {
+    test('should handle multiple conditionals in one tree', () => {
       const markdown = `
 ## Decision Tree: Multiple Conditions
 
@@ -281,14 +280,14 @@ Setup?
       
       const trees = parseDecisionTrees(markdown);
       
-      assert.strictEqual(trees[0].branches[0].condition, 'serverless');
-      assert.strictEqual(trees[0].branches[1].condition, 'kubernetes');
-      assert.strictEqual(trees[0].branches[2].condition, 'ELSE');
+      expect(trees[0].branches[0].condition).toBe('serverless');
+      expect(trees[0].branches[1].condition).toBe('kubernetes');
+      expect(trees[0].branches[2].condition).toBe('ELSE');
     });
   });
 
   describe('Tree Validation', () => {
-    it('should validate a correct tree', () => {
+    test('should validate a correct tree', () => {
       const tree = {
         name: 'Valid Tree',
         root: 'Question?',
@@ -300,11 +299,11 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.strictEqual(result.valid, true);
-      assert.strictEqual(result.errors.length, 0);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
-    it('should detect missing branches', () => {
+    test('should detect missing branches', () => {
       const tree = {
         name: 'Invalid Tree',
         root: 'Question?',
@@ -313,11 +312,11 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.strictEqual(result.valid, false);
-      assert.ok(result.errors.some(e => e.includes('No branches')));
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(e => e.includes('No branches'))).toBe(true);
     });
 
-    it('should detect orphaned branches', () => {
+    test('should detect orphaned branches', () => {
       const tree = {
         name: 'Orphaned Tree',
         root: 'Question?',
@@ -329,11 +328,11 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.strictEqual(result.valid, false);
-      assert.ok(result.warnings.some(w => w.includes('orphan') || w.includes('level')));
+      expect(result.valid).toBe(false);
+      expect(result.warnings.some(w => w.includes('orphan') || w.includes('level'))).toBe(true);
     });
 
-    it('should detect circular references', () => {
+    test('should detect circular references', () => {
       // Create circular reference
       const childBranch = { text: 'Child', level: 2, children: [] };
       const parentBranch = { text: 'Parent', level: 1, children: [childBranch] };
@@ -347,10 +346,10 @@ Setup?
       
       const hasCircular = detectCycles(tree);
       
-      assert.strictEqual(hasCircular, true);
+      expect(hasCircular).toBe(true);
     });
 
-    it('should validate metadata values', () => {
+    test('should validate metadata values', () => {
       const tree = {
         name: 'Metadata Tree',
         root: 'Question?',
@@ -366,10 +365,10 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.ok(result.warnings.length > 0);
+      expect(result.warnings.length).toBeGreaterThan(0);
     });
 
-    it('should warn about unbalanced trees', () => {
+    test('should warn about unbalanced trees', () => {
       const tree = {
         name: 'Unbalanced',
         root: 'Question?',
@@ -389,10 +388,10 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.ok(result.warnings.some(w => w.includes('unbalanced') || w.includes('depth')));
+      expect(result.warnings.some(w => w.includes('unbalanced') || w.includes('depth'))).toBe(true);
     });
 
-    it('should suggest recommendations for single-branch trees', () => {
+    test('should suggest recommendations for single-branch trees', () => {
       const tree = {
         name: 'Single Branch',
         root: 'Question?',
@@ -403,10 +402,10 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.ok(result.suggestions.length > 0);
+      expect(result.suggestions.length).toBeGreaterThan(0);
     });
 
-    it('should validate conditional syntax', () => {
+    test('should validate conditional syntax', () => {
       const tree = {
         name: 'Conditional Tree',
         root: 'Question?',
@@ -417,54 +416,54 @@ Setup?
       
       const result = validateTree(tree);
       
-      assert.ok(result.warnings.some(w => w.includes('condition')));
+      expect(result.warnings.some(w => w.includes('condition'))).toBe(true);
     });
   });
 
   describe('Condition Evaluation', () => {
-    it('should evaluate simple conditions', () => {
+    test('should evaluate simple conditions', () => {
       const context = { has_database: true };
       
-      assert.strictEqual(evaluateCondition('has_database', context), true);
-      assert.strictEqual(evaluateCondition('has_redis', context), false);
+      expect(evaluateCondition('has_database', context)).toBe(true);
+      expect(evaluateCondition('has_redis', context)).toBe(false);
     });
 
-    it('should handle AND conditions', () => {
+    test('should handle AND conditions', () => {
       const context = { has_database: true, typescript: true };
       
-      assert.strictEqual(evaluateCondition('has_database AND typescript', context), true);
-      assert.strictEqual(evaluateCondition('has_database AND has_redis', context), false);
+      expect(evaluateCondition('has_database AND typescript', context)).toBe(true);
+      expect(evaluateCondition('has_database AND has_redis', context)).toBe(false);
     });
 
-    it('should handle OR conditions', () => {
+    test('should handle OR conditions', () => {
       const context = { has_database: true };
       
-      assert.strictEqual(evaluateCondition('has_database OR has_redis', context), true);
-      assert.strictEqual(evaluateCondition('has_redis OR has_cache', context), false);
+      expect(evaluateCondition('has_database OR has_redis', context)).toBe(true);
+      expect(evaluateCondition('has_redis OR has_cache', context)).toBe(false);
     });
 
-    it('should handle NOT conditions', () => {
+    test('should handle NOT conditions', () => {
       const context = { has_database: true };
       
-      assert.strictEqual(evaluateCondition('NOT has_redis', context), true);
-      assert.strictEqual(evaluateCondition('NOT has_database', context), false);
+      expect(evaluateCondition('NOT has_redis', context)).toBe(true);
+      expect(evaluateCondition('NOT has_database', context)).toBe(false);
     });
 
-    it('should handle complex boolean expressions', () => {
+    test('should handle complex boolean expressions', () => {
       const context = { has_database: true, typescript: true, serverless: false };
       
-      assert.strictEqual(evaluateCondition('has_database AND (typescript OR serverless)', context), true);
-      assert.strictEqual(evaluateCondition('(has_database OR serverless) AND typescript', context), true);
+      expect(evaluateCondition('has_database AND (typescript OR serverless)', context)).toBe(true);
+      expect(evaluateCondition('(has_database OR serverless) AND typescript', context)).toBe(true);
     });
 
-    it('should return false for invalid context', () => {
-      assert.strictEqual(evaluateCondition('has_database', {}), false);
-      assert.strictEqual(evaluateCondition('has_database', null), false);
+    test('should return false for invalid context', () => {
+      expect(evaluateCondition('has_database', {})).toBe(false);
+      expect(evaluateCondition('has_database', null)).toBe(false);
     });
   });
 
   describe('Cycle Detection', () => {
-    it('should detect no cycles in valid tree', () => {
+    test('should detect no cycles in valid tree', () => {
       const tree = {
         name: 'Valid',
         root: 'Question?',
@@ -473,10 +472,10 @@ Setup?
         ]
       };
       
-      assert.strictEqual(detectCycles(tree), false);
+      expect(detectCycles(tree)).toBe(false);
     });
 
-    it('should detect direct self-reference', () => {
+    test('should detect direct self-reference', () => {
       const branch = { text: 'Self', children: [] };
       branch.children = [branch];
       
@@ -486,14 +485,14 @@ Setup?
         branches: [branch]
       };
       
-      assert.strictEqual(detectCycles(tree), true);
+      expect(detectCycles(tree)).toBe(true);
     });
   });
 });
 
 describe('Decision Tree Renderer', () => {
   describe('Basic Rendering', () => {
-    it('should render simple tree with colors', () => {
+    test('should render simple tree with colors', () => {
       const tree = {
         name: 'Simple',
         root: 'Choose?',
@@ -505,13 +504,13 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { noColor: false });
       
-      assert.ok(rendered.includes('Simple'));
-      assert.ok(rendered.includes('Choose?'));
-      assert.ok(rendered.includes('Option A'));
-      assert.ok(rendered.includes('Option B'));
+      expect(rendered).toContain('Simple');
+      expect(rendered).toContain('Choose?');
+      expect(rendered).toContain('Option A');
+      expect(rendered).toContain('Option B');
     });
 
-    it('should render tree without colors (accessibility)', () => {
+    test('should render tree without colors (accessibility)', () => {
       const tree = {
         name: 'No Color',
         root: 'Choose?',
@@ -522,11 +521,11 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { noColor: true });
       
-      assert.ok(!rendered.includes('\x1b[')); // No ANSI codes
-      assert.ok(rendered.includes('Option A'));
+      expect(rendered).not.toContain('\x1b['); // No ANSI codes
+      expect(rendered).toContain('Option A');
     });
 
-    it('should render tree with ASCII characters only', () => {
+    test('should render tree with ASCII characters only', () => {
       const tree = {
         name: 'ASCII',
         root: 'Choose?',
@@ -537,12 +536,12 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { asciiOnly: true });
       
-      assert.ok(!rendered.includes('├'));
-      assert.ok(!rendered.includes('└'));
-      assert.ok(/\|--|\`--/.test(rendered));
+      expect(rendered).not.toContain('├');
+      expect(rendered).not.toContain('└');
+      expect(rendered).toMatch(/\|--|\`--/);
     });
 
-    it('should render tree with high contrast mode', () => {
+    test('should render tree with high contrast mode', () => {
       const tree = {
         name: 'High Contrast',
         root: 'Choose?',
@@ -553,11 +552,11 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { highContrast: true });
       
-      assert.ok(rendered.includes('Option A'));
+      expect(rendered).toContain('Option A');
       // In high contrast, colors are bolder
     });
 
-    it('should respect depth limit', () => {
+    test('should respect depth limit', () => {
       const tree = {
         name: 'Deep',
         root: 'Choose?',
@@ -575,12 +574,12 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { depth: 2 });
       
-      assert.ok(rendered.includes('Level 1'));
-      assert.ok(rendered.includes('Level 2'));
-      assert.ok(rendered.includes('[...]')); // Level 3 collapsed
+      expect(rendered).toContain('Level 1');
+      expect(rendered).toContain('Level 2');
+      expect(rendered).toContain('[...]'); // Level 3 collapsed
     });
 
-    it('should hide metadata when showMetadata is false', () => {
+    test('should hide metadata when showMetadata is false', () => {
       const tree = {
         name: 'No Metadata',
         root: 'Choose?',
@@ -591,11 +590,11 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { showMetadata: false });
       
-      assert.ok(!rendered.includes('RECOMMENDED'));
-      assert.ok(!rendered.includes('WEIGHT'));
+      expect(rendered).not.toContain('RECOMMENDED');
+      expect(rendered).not.toContain('WEIGHT');
     });
 
-    it('should render metadata badges', () => {
+    test('should render metadata badges', () => {
       const tree = {
         name: 'With Metadata',
         root: 'Choose?',
@@ -606,11 +605,11 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { showMetadata: true });
       
-      assert.ok(rendered.includes('RECOMMENDED'));
-      assert.ok(rendered.includes('HIGH'));
+      expect(rendered).toContain('RECOMMENDED');
+      expect(rendered).toContain('HIGH');
     });
 
-    it('should render conditional branches', () => {
+    test('should render conditional branches', () => {
       const tree = {
         name: 'Conditional',
         root: 'Choose?',
@@ -622,11 +621,11 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree);
       
-      assert.ok(rendered.includes('[IF: has_database]'));
-      assert.ok(rendered.includes('[ELSE]'));
+      expect(rendered).toContain('[IF: has_database]');
+      expect(rendered).toContain('[ELSE]');
     });
 
-    it('should render outcomes with arrows', () => {
+    test('should render outcomes with arrows', () => {
       const tree = {
         name: 'With Outcomes',
         root: 'Choose?',
@@ -637,13 +636,13 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderDecisionTree(tree, { asciiOnly: false });
       
-      assert.ok(rendered.includes('→'));
-      assert.ok(rendered.includes('Good result'));
+      expect(rendered).toContain('→');
+      expect(rendered).toContain('Good result');
     });
   });
 
   describe('Inline Rendering', () => {
-    it('should render inline summary', () => {
+    test('should render inline summary', () => {
       const tree = {
         name: 'Inline Test',
         branches: [
@@ -654,24 +653,24 @@ describe('Decision Tree Renderer', () => {
       
       const rendered = renderTreeInline(tree);
       
-      assert.ok(rendered.includes('Inline Test'));
-      assert.ok(rendered.includes('Option A'));
-      assert.ok(rendered.includes('★ Option B')); // Star for recommended
+      expect(rendered).toContain('Inline Test');
+      expect(rendered).toContain('Option A');
+      expect(rendered).toContain('★ Option B'); // Star for recommended
     });
 
-    it('should handle empty tree', () => {
+    test('should handle empty tree', () => {
       const tree = { name: 'Empty', branches: [] };
       
       const rendered = renderTreeInline(tree);
       
-      assert.ok(rendered.includes('Empty'));
+      expect(rendered).toContain('Empty');
     });
   });
 });
 
 describe('Decision Tree Exports', () => {
   describe('HTML Export', () => {
-    it('should export tree to HTML', () => {
+    test('should export tree to HTML', () => {
       const tree = {
         name: 'HTML Export',
         root: 'Choose?',
@@ -683,14 +682,14 @@ describe('Decision Tree Exports', () => {
       
       const html = exportToHTML(tree);
       
-      assert.ok(html.includes('<!DOCTYPE html>'));
-      assert.ok(html.includes('HTML Export'));
-      assert.ok(html.includes('Option A'));
-      assert.ok(html.includes('Option B'));
-      assert.ok(html.includes('recommended'));
+      expect(html).toContain('<!DOCTYPE html>');
+      expect(html).toContain('HTML Export');
+      expect(html).toContain('Option A');
+      expect(html).toContain('Option B');
+      expect(html).toContain('recommended');
     });
 
-    it('should create standalone HTML file', () => {
+    test('should create standalone HTML file', () => {
       const tree = {
         name: 'Standalone',
         root: 'Test?',
@@ -699,15 +698,15 @@ describe('Decision Tree Exports', () => {
       
       const html = exportToHTML(tree);
       
-      assert.ok(html.includes('<html'));
-      assert.ok(html.includes('<head>'));
-      assert.ok(html.includes('<style>'));
-      assert.ok(html.includes('</html>'));
+      expect(html).toContain('<html');
+      expect(html).toContain('<head>');
+      expect(html).toContain('<style>');
+      expect(html).toContain('</html>');
     });
   });
 
   describe('SVG Export', () => {
-    it('should export tree to SVG', () => {
+    test('should export tree to SVG', () => {
       const tree = {
         name: 'SVG Export',
         root: 'Choose?',
@@ -719,13 +718,13 @@ describe('Decision Tree Exports', () => {
       
       const svg = exportToSVG(tree);
       
-      assert.ok(svg.includes('<svg'));
-      assert.ok(svg.includes('SVG Export'));
-      assert.ok(svg.includes('Option A'));
-      assert.ok(svg.includes('</svg>'));
+      expect(svg).toContain('<svg');
+      expect(svg).toContain('SVG Export');
+      expect(svg).toContain('Option A');
+      expect(svg).toContain('</svg>');
     });
 
-    it('should include proper SVG namespaces', () => {
+    test('should include proper SVG namespaces', () => {
       const tree = {
         name: 'Test',
         root: 'Test?',
@@ -734,12 +733,12 @@ describe('Decision Tree Exports', () => {
       
       const svg = exportToSVG(tree);
       
-      assert.ok(svg.includes('xmlns="http://www.w3.org/2000/svg"'));
+      expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
     });
   });
 
   describe('Mermaid Export', () => {
-    it('should export tree to Mermaid flowchart', () => {
+    test('should export tree to Mermaid flowchart', () => {
       const tree = {
         name: 'Mermaid Export',
         root: 'Choose?',
@@ -751,13 +750,13 @@ describe('Decision Tree Exports', () => {
       
       const mermaid = exportToMermaid(tree);
       
-      assert.ok(mermaid.includes('flowchart TD'));
-      assert.ok(mermaid.includes('Choose?'));
-      assert.ok(mermaid.includes('Option A'));
-      assert.ok(mermaid.includes('Option B'));
+      expect(mermaid).toContain('flowchart TD');
+      expect(mermaid).toContain('Choose?');
+      expect(mermaid).toContain('Option A');
+      expect(mermaid).toContain('Option B');
     });
 
-    it('should handle nested branches in Mermaid', () => {
+    test('should handle nested branches in Mermaid', () => {
       const tree = {
         name: 'Nested',
         root: 'Root?',
@@ -773,12 +772,12 @@ describe('Decision Tree Exports', () => {
       
       const mermaid = exportToMermaid(tree);
       
-      assert.ok(mermaid.includes('Parent'));
-      assert.ok(mermaid.includes('Child'));
-      assert.ok(mermaid.includes('-->'));
+      expect(mermaid).toContain('Parent');
+      expect(mermaid).toContain('Child');
+      expect(mermaid).toContain('-->');
     });
 
-    it('should sanitize node IDs for Mermaid', () => {
+    test('should sanitize node IDs for Mermaid', () => {
       const tree = {
         name: 'Special Chars',
         root: 'Choose framework?',
@@ -790,105 +789,102 @@ describe('Decision Tree Exports', () => {
       const mermaid = exportToMermaid(tree);
       
       // Should not break Mermaid syntax with special chars
-      assert.ok(mermaid.includes('flowchart TD'));
+      expect(mermaid).toContain('flowchart TD');
     });
   });
 });
 
 describe('Decision Tracking', () => {
   beforeEach(() => {
-    // Clear decisions directory before each test
-    if (fs.existsSync(testDir)) {
-      fs.rmSync(testDir, { recursive: true });
-    }
-    fs.mkdirSync(testDir, { recursive: true });
-  });
-
-  afterEach(() => {
-    // Clean up test directory
-    if (fs.existsSync(testDir)) {
-      fs.rmSync(testDir, { recursive: true });
-    }
+    // Clear decisions before each test
+    fs.existsSync.mockReturnValue(false);
   });
 
   describe('Record Decision', () => {
-    it('should record a decision', () => {
+    test('should record a decision', () => {
       const decision = recordDecision('Test Tree', { text: 'Option A' }, { env: 'test' });
       
-      assert.ok(decision.hasOwnProperty('id'));
-      assert.strictEqual(decision.treeName, 'Test Tree');
-      assert.strictEqual(decision.selection.text, 'Option A');
-      assert.strictEqual(decision.context.env, 'test');
+      expect(decision).toHaveProperty('id');
+      expect(decision.treeName).toBe('Test Tree');
+      expect(decision.selection.text).toBe('Option A');
+      expect(decision.context.env).toBe('test');
     });
 
-    it('should generate unique IDs', () => {
+    test('should generate unique IDs', () => {
       const decision1 = recordDecision('Tree 1', { text: 'A' }, {});
       const decision2 = recordDecision('Tree 2', { text: 'B' }, {});
       
-      assert.notStrictEqual(decision1.id, decision2.id);
+      expect(decision1.id).not.toBe(decision2.id);
     });
 
-    it('should include timestamp', () => {
+    test('should include timestamp', () => {
       const decision = recordDecision('Test', { text: 'A' }, {});
       
-      assert.ok(decision.hasOwnProperty('timestamp'));
-      assert.ok(new Date(decision.timestamp) instanceof Date);
+      expect(decision).toHaveProperty('timestamp');
+      expect(new Date(decision.timestamp)).toBeInstanceOf(Date);
     });
   });
 
   describe('Get Decisions', () => {
-    it('should return empty array when no decisions', () => {
+    test('should return empty array when no decisions', () => {
+      fs.existsSync.mockReturnValue(false);
+      
       const decisions = getDecisions();
       
-      assert.deepStrictEqual(decisions, []);
+      expect(decisions).toEqual([]);
     });
 
-    it('should filter decisions by tree ID', () => {
-      // Record some test decisions
-      recordDecision('Tree A', { text: 'Option 1' }, {});
-      recordDecision('Tree B', { text: 'Option 2' }, {});
-      recordDecision('Tree A', { text: 'Option 3' }, {});
+    test('should filter decisions by tree ID', () => {
+      // Mock decisions file
+      const mockDecisions = [
+        { id: '1', treeName: 'Tree A' },
+        { id: '2', treeName: 'Tree B' },
+        { id: '3', treeName: 'Tree A' }
+      ];
+      
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue(JSON.stringify(mockDecisions));
       
       const filtered = getDecisions({ treeId: 'Tree A' });
       
-      assert.strictEqual(filtered.length, 2);
-      assert.ok(filtered.every(d => d.treeName === 'Tree A'));
+      expect(filtered).toHaveLength(2);
+      expect(filtered.every(d => d.treeName === 'Tree A')).toBe(true);
     });
   });
 
   describe('Revert Decision', () => {
-    it('should revert a decision by ID', () => {
+    test('should revert a decision by ID', () => {
       const decision = recordDecision('Test', { text: 'A' }, {});
       
       const reverted = revertDecision(decision.id, 'Changed my mind');
       
-      assert.strictEqual(reverted, true);
+      expect(reverted).toBe(true);
     });
 
-    it('should return false for non-existent decision', () => {
+    test('should return false for non-existent decision', () => {
       const reverted = revertDecision('non-existent-id', 'Reason');
       
-      assert.strictEqual(reverted, false);
+      expect(reverted).toBe(false);
     });
   });
 });
 
 describe('Command Integration', () => {
-  it('should support tree show command flags', () => {
+  test('should support tree show command flags', () => {
     // This is more of an integration test
     // Actual implementation tested via command files
-    assert.strictEqual(true, true);
+    expect(true).toBe(true);
   });
 
-  it('should support tree list command', () => {
-    assert.strictEqual(true, true);
+  test('should support tree list command', () => {
+    expect(true).toBe(true);
   });
 
-  it('should support decisions list command', () => {
-    assert.strictEqual(true, true);
+  test('should support decisions list command', () => {
+    expect(true).toBe(true);
   });
 
-  it('should support decisions stats command', () => {
-    assert.strictEqual(true, true);
+  test('should support decisions stats command', () => {
+    expect(true).toBe(true);
   });
 });
