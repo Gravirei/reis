@@ -252,6 +252,81 @@ Ready to proceed to Phase 3
 
 **See also:** `docs/VERIFICATION.md` for detailed verification guide.
 
+### Complete Cycle Automation
+
+Run the entire workflow with a single command:
+
+```bash
+reis cycle 1
+```
+
+This automatically:
+1. **Plans** the phase (if needed)
+2. **Executes** the plan
+3. **Verifies** completion
+4. **Debugs** issues (if any)
+5. **Applies** fixes
+6. **Re-verifies** until passing
+
+**Features:**
+- 🔄 Automatic debug/fix loop
+- 💾 State persistence (survives interruptions)
+- ⏸️ Resume capability (`reis cycle --resume`)
+- 🎯 Smart attempt limiting (default: 3 attempts)
+- 📊 Visual progress indicators
+
+**Example:**
+
+```bash
+$ reis cycle 1
+
+╔═══════════════════════════════════════════════════════════╗
+║  🔄 REIS Complete Cycle - Phase 1                         ║
+╚═══════════════════════════════════════════════════════════╝
+
+⏳ Step 1/4: Planning
+   ✓ Plan validated
+
+⚙️  Step 2/4: Executing
+   ✓ Plan executed (5 tasks)
+
+✓ Step 3/4: Verifying
+   ❌ Verification failed (80% complete)
+   
+   Issues found:
+   - Missing: test/todo.test.js
+   - Feature completeness: 4/5
+
+🔍 Step 4/4: Debugging
+   ✓ Debug report generated
+   ✓ Fix plan generated
+   
+   Apply fix? (Y/n): y
+   ✓ Fix applied
+
+Re-verifying...
+   ✓ Verification passed (100% complete)
+
+╔═══════════════════════════════════════════════════════════╗
+║  ✅ Cycle Complete!                                       ║
+╚═══════════════════════════════════════════════════════════╝
+
+Duration: 12m 15s
+Attempts: 2
+Next: reis cycle 2
+```
+
+**Options:**
+```bash
+--max-attempts <n>    # Maximum debug/fix attempts (default: 3)
+--auto-fix            # Apply fixes without confirmation
+--resume              # Resume interrupted cycle
+--continue-on-fail    # Continue even if verification fails
+-v, --verbose         # Detailed output
+```
+
+**Learn more:** [Complete Cycle Guide](docs/CYCLE_COMMAND.md)
+
 ### Checkpoints & Resume (v2.0)
 ```bash
 reis checkpoint [msg]   # Create checkpoint
