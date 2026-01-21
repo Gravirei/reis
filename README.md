@@ -335,6 +335,56 @@ reis resume             # Smart resume from last checkpoint
 reis resume --from [cp] # Resume from specific checkpoint
 ```
 
+### Decision Trees (v2.3.0)
+
+Make structured decisions with interactive decision trees:
+
+```bash
+# View decision tree from file
+reis tree show examples/decision-trees/basic-tree.md
+
+# Interactive selection with arrow keys
+reis tree show examples/decision-trees/real-world-auth.md --interactive
+
+# Create from template
+reis tree new auth  # Creates decision tree from auth template
+
+# List available templates
+reis tree list
+
+# Export to different formats
+reis tree export my-decision.md --format html
+reis tree export my-decision.md --format svg
+reis tree export my-decision.md --format mermaid
+
+# Track decisions
+reis decisions list           # View all decisions
+reis decisions show abc123    # Show specific decision
+reis decisions stats          # Decision statistics
+```
+
+**Features:**
+- 📊 **Interactive Selection**: Navigate with arrow keys, see metadata
+- 🎯 **Decision Tracking**: Record and query all decisions with context
+- 📤 **Export Formats**: HTML, SVG, Mermaid, JSON
+- 📝 **Templates**: 7 built-in templates (auth, database, testing, etc.)
+- 🔀 **Conditional Branches**: Context-aware recommendations
+- ♿ **Accessibility**: --no-color, --high-contrast, --ascii-only modes
+
+**Quick Example:**
+```markdown
+## Decision Tree: Choose Database
+
+\`\`\`
+What database should we use?
+  ├─ PostgreSQL [recommended] → Feature-rich, ACID compliant
+  ├─ MongoDB → Flexible schema, document store
+  └─ SQLite → Embedded, zero-config
+\`\`\`
+```
+
+**Learn more:** [Decision Trees Guide](docs/DECISION_TREES.md) | [Examples](examples/decision-trees/)
+
 ### Visualization (v2.0)
 ```bash
 reis visualize --type progress  # Progress visualization
@@ -398,6 +448,8 @@ Maps codebases with architecture analysis, dependency mapping, tech stack identi
 - [QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) - Quick reference for daily use
 - [WORKFLOW_EXAMPLES.md](docs/WORKFLOW_EXAMPLES.md) - Real-world workflows
 - [INTEGRATION_GUIDE.md](docs/INTEGRATION_GUIDE.md) - Rovo Dev integration
+- [Decision Trees](docs/DECISION_TREES.md) - Decision tree guide and syntax
+- [Decision Trees API](docs/DECISION_TREES_API.md) - Programmatic usage
 
 ### v2.0 Documentation
 
