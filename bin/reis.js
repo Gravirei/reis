@@ -150,7 +150,14 @@ program
 program
   .command('execute [phase]')
   .description('Execute a phase')
-  .action((phase) => executeCmd({phase}));
+  .option('--dry-run', 'Show prompt without executing')
+  .option('-v, --verbose', 'Show detailed output')
+  .option('--no-commit', 'Skip auto-commit')
+  .option('--timeout <ms>', 'Execution timeout in milliseconds')
+  .action(async (phase, options) => {
+    const exitCode = await executeCmd({ phase }, options);
+    process.exit(exitCode);
+  });
 
 program
   .command('execute-plan <path>')
@@ -170,8 +177,10 @@ program
 program
   .command('verify <target>')
   .description('Verify execution results against success criteria (uses reis_verifier subagent)')
+  .option('--dry-run', 'Show prompt without executing')
   .option('-v, --verbose', 'Show detailed verification output')
   .option('-s, --strict', 'Fail on warnings')
+  .option('--timeout <ms>', 'Verification timeout in milliseconds')
   .action(async (target, options) => {
     await verifyCmd(target, options);
   });
@@ -241,9 +250,11 @@ program
 program
   .command('debug [target]')
   .description('Analyze failures and generate fix plans (uses reis_debugger subagent)')
+  .option('--dry-run', 'Show prompt without executing')
   .option('-i, --input <path>', 'Path to DEBUG_INPUT.md or plan file')
   .option('-f, --focus <area>', 'Focus analysis on specific area')
   .option('-v, --verbose', 'Show detailed debug output')
+  .option('--timeout <ms>', 'Debug timeout in milliseconds')
   .action(async (target, options) => {
     await debugCmd(target, options);
   });
