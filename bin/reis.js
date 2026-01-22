@@ -311,6 +311,8 @@ program
   });
 
 const updateCmd = require('../lib/commands/update.js');
+const whatsNewCmd = require('../lib/commands/whats-new.js');
+const docsCmd = require('../lib/commands/docs.js');
 
 program
   .command('update')
@@ -323,14 +325,14 @@ program
   .command('whats-new')
   .description('Show what\'s new in latest version')
   .action(() => {
-    console.log('Command coming soon in Phase 5-8');
+    whatsNewCmd({});
   });
 
 program
   .command('docs')
   .description('Open REIS documentation')
   .action(() => {
-    console.log('Command coming soon in Phase 5-8');
+    docsCmd({});
   });
 
 program
