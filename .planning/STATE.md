@@ -878,3 +878,27 @@ _None_
 **Blockers/Issues:** None
 
 **Test results:** 478 tests passing
+
+---
+
+## 2026-01-23 - Phase 3 Plan 3-1 Complete
+
+**Completed:** Phase-3-Plan-3-1-execution-engine
+
+**Objective:** Update command files (execute.js, verify.js, debug.js) to use real execution via the subagent invoker instead of just printing prompts
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Commands now invoke real subagents (reis_executor, reis_verifier, reis_debugger)
+- Added --dry-run flag to preserve old prompt-printing behavior
+- Added --verbose, --timeout, --no-commit options to CLI commands
+- Enhanced findPlanPath() to support priority-*/phase-N-* directory structure
+- Created 21 new integration tests for command functionality
+
+**Decisions made:**
+- Added support for priority folder structure in findPlanPath() (deviation from plan)
+
+**Blockers/Issues:** None
+
+**Test results:** 497 tests passing
