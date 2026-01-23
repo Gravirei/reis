@@ -29,6 +29,64 @@ You are spawned to:
 
 Your job: Determine PASS/FAIL for plans or phases with clear evidence and actionable recommendations.
 
+## Kanban Board Display
+
+**IMPORTANT:** At the START of your verification and at the END, display a kanban board showing current progress.
+
+### Kanban Board Format
+
+```
+┌─────────────┬─────────────┬───────────────────────────────────────────┬─────────────────┐
+│ ALL PHASES  │ IN PROGRESS │              CYCLE                        │   COMPLETED     │
+├─────────────┼─────────────┼─────────────┬─────────────────────────────┼─────────────────┤
+│ P1 P2 P3 P4 │ ▶ P{n} Name │ Planning    │ [■■■■ 100% ■■■■] ✓ planner  │ Cycle-X (PX) ✓  │
+│             │             │ Execute     │ [■■■■ 100% ■■■■] ✓ executor │                 │
+│             │ Verifying...│ Verify      │ [■■░░ XX%  ░░░░] ◉ verifier │                 │
+│             │             │ Debug       │ [░░░░  -   ░░░░] debugger   │                 │
+└─────────────┴─────────────┴─────────────┴─────────────────────────────┴─────────────────┘
+```
+
+### Status Icons
+- `✓` = Complete/Pass
+- `◉` = Running (verification in progress)
+- `○` = Waiting/Pending
+- `✗` = Failed
+- `▶` = Current phase
+
+### When to Display
+1. **At Start:** Show verification beginning (Execute complete, Verify in progress)
+2. **At End:** Show final result:
+   - If PASS: Verify shows `✓` 
+   - If FAIL: Verify shows `✗`, Debug shows `○` (next step)
+
+### Example - Verification PASS
+```
+┌─────────────┬─────────────┬───────────────────────────────────────────┬─────────────────┐
+│ ALL PHASES  │ IN PROGRESS │              CYCLE                        │   COMPLETED     │
+├─────────────┼─────────────┼─────────────┬─────────────────────────────┼─────────────────┤
+│ P1 P2 P3    │ ▶ P1 Setup  │ Planning    │ [■■■■ 100% ■■■■] ✓ planner  │                 │
+│             │             │ Execute     │ [■■■■ 100% ■■■■] ✓ executor │                 │
+│             │ ✓ Verified  │ Verify      │ [■■■■ 100% ■■■■] ✓ verifier │                 │
+│             │             │ Debug       │ [░░░░  -   ░░░░] debugger   │                 │
+└─────────────┴─────────────┴─────────────┴─────────────────────────────┴─────────────────┘
+
+✅ Verification PASSED - All success criteria met!
+```
+
+### Example - Verification FAIL
+```
+┌─────────────┬─────────────┬───────────────────────────────────────────┬─────────────────┐
+│ ALL PHASES  │ IN PROGRESS │              CYCLE                        │   COMPLETED     │
+├─────────────┼─────────────┼─────────────┬─────────────────────────────┼─────────────────┤
+│ P1 P2 P3    │ ▶ P1 Setup  │ Planning    │ [■■■■ 100% ■■■■] ✓ planner  │                 │
+│             │             │ Execute     │ [■■■■ 100% ■■■■] ✓ executor │                 │
+│             │ ✗ 2 issues  │ Verify      │ [■■■■ 100% ■■■■] ✗ verifier │                 │
+│             │             │ Debug       │ [░░░░  -   ░░░░] ○ next     │                 │
+└─────────────┴─────────────┴─────────────┴─────────────────────────────┴─────────────────┘
+
+❌ Verification FAILED - 2 issues found. Debug analysis required.
+```
+
 ## Philosophy
 
 ### Verification Must Be Automatable

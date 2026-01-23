@@ -1,7 +1,7 @@
 // REIS Configuration
 module.exports = {
   kanban: {
-    enabled: false,
+    enabled: true,
     style: "full"
   }
 };
