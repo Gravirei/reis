@@ -5,6 +5,81 @@ All notable changes to REIS will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-01-22
+
+### Added - Kanban Board & Real Execution 🚀
+
+**Major Feature: Persistent Kanban Board**
+
+A visual kanban board that displays automatically on workflow commands showing real-time cycle progress.
+
+#### Kanban Board Features
+
+- **Persistent Display** - Shows automatically on workflow commands (plan, execute, verify, debug, cycle, progress, resume, checkpoint)
+- **4-Column Layout**:
+  - ALL PHASES - Shows all project phases (P1 P2 P3 P4...)
+  - IN PROGRESS - Current phase with wave/task breakdown
+  - CYCLE - Planning → Execute → Verify → Debug stages with progress bars
+  - COMPLETED - List of completed cycles
+- **Wave Execution Visualization**:
+  - Wave list with tree structure (Wave 1/3 ✓, Wave 2/3 ◉, Wave 3/3 ○)
+  - Task status under current wave (├ 2.1 ✓, └ 2.4 ○)
+  - Parallel execution indicator (⫴2 of 4 tasks)
+  - Running/Waiting task breakdown
+- **Subagent Status** - Shows active subagent (planner, executor, verifier, debugger)
+- **Centered Progress Bars** - `[■■■■■45% ░░░░░]` format
+- **3 Display Styles**: full, compact, minimal
+- **Idle States**:
+  - "No active phase" + "Run: reis cycle" prompt
+  - "No cycles completed" for fresh projects
+  - "✓ All phases done!" when complete
+
+#### Kanban Command
+
+- `reis kanban` - Show current settings
+- `reis kanban enable/disable/toggle` - Control display
+- `reis kanban style <full|compact|minimal>` - Change display style
+- `--no-kanban` flag to hide for single command
+
+**Major Feature: Real Subagent Execution (Priority 1)**
+
+Transformed REIS from a "prompt printer" to an actual "execution system".
+
+#### Subagent Invocation API
+
+- **New Module** (`lib/utils/subagent-invoker.js`) - Core API for programmatic subagent invocation
+- Classes: `SubagentDefinition`, `ExecutionContext`, `InvocationResult`, `SubagentInvoker`
+- Functions: `loadSubagentDefinition()`, `listSubagents()`, `buildExecutionContext()`, `invoke()`, `invokeParallel()`
+- Event-based execution with progress tracking
+- Timeout and error handling
+
+#### Cycle Orchestrator Completion
+
+- Implemented 5 TODOs that were previously stubbed:
+  - Actually execute plans via `invokeSubagent('reis_executor', ...)`
+  - Actually run verification via `invokeSubagent('reis_verifier', ...)`
+  - Actually run debug analysis via `invokeSubagent('reis_debugger', ...)`
+  - Actually execute fix plans
+  - Append completion records to STATE.md
+
+#### Command Updates
+
+- `reis execute <phase>` - Now invokes reis_executor subagent (with `--dry-run` fallback)
+- `reis verify` - Now invokes reis_verifier subagent
+- `reis debug` - Now invokes reis_debugger subagent
+- New options: `--dry-run`, `--verbose`, `--timeout <ms>`
+
+### Fixed
+
+- `reis whats-new` - Was showing "Command coming soon", now properly wired to implementation
+- `reis docs` - Was showing "Command coming soon", now properly wired to implementation
+
+### Changed
+
+- Help modal updated with new command options and compact format
+- Added hidden commands to help: `reis add`, `reis insert`, `reis remove`
+- Updated column widths in kanban board for better readability
+
 ## [2.3.0] - 2026-01-22
 
 ### Added - Decision Trees Support 🌳
