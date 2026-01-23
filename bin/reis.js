@@ -96,6 +96,9 @@ program
   .description('REIS - Roadmap Execution & Implementation System')
   .usage('<command> [options]');
 
+// Global option for kanban
+program.option('--no-kanban', 'Hide kanban board for this command');
+
 // Getting Started Commands
 program
   .command('help')
@@ -131,7 +134,10 @@ program
 program
   .command('plan [phase]')
   .description('Create detailed plan for a phase')
-  .action((phase) => planCmd({phase}));
+  .action((phase, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    planCmd({ phase }, { noKanban: globalOpts.kanban === false });
+  });
 
 program
   .command('discuss [phase]')
@@ -155,8 +161,9 @@ program
   .option('-v, --verbose', 'Show detailed output')
   .option('--no-commit', 'Skip auto-commit')
   .option('--timeout <ms>', 'Execution timeout in milliseconds')
-  .action(async (phase, options) => {
-    const exitCode = await executeCmd({ phase }, options);
+  .action(async (phase, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    const exitCode = await executeCmd({ phase }, { ...options, noKanban: globalOpts.kanban === false });
     process.exit(exitCode);
   });
 
@@ -166,12 +173,14 @@ program
   .option('--wave', 'Enable wave-based execution (v2.0 feature)')
   .option('--dry-run', 'Show plan structure without executing')
   .option('--interactive', 'Step-by-step execution with prompts between waves')
-  .action(async (path, options) => {
+  .action(async (planPath, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
     await executePlanCmd({
-      path,
+      path: planPath,
       wave: options.wave,
       dryRun: options.dryRun,
-      interactive: options.interactive
+      interactive: options.interactive,
+      noKanban: globalOpts.kanban === false
     });
   });
 
@@ -182,15 +191,19 @@ program
   .option('-v, --verbose', 'Show detailed verification output')
   .option('-s, --strict', 'Fail on warnings')
   .option('--timeout <ms>', 'Verification timeout in milliseconds')
-  .action(async (target, options) => {
-    await verifyCmd(target, options);
+  .action(async (target, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await verifyCmd(target, { ...options, noKanban: globalOpts.kanban === false });
   });
 
 // Progress Commands
 program
   .command('progress')
   .description('Show current project progress')
-  .action(() => progressCmd({}));
+  .action((options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    progressCmd({}, { noKanban: globalOpts.kanban === false });
+  });
 
 program
   .command('pause')
@@ -200,7 +213,10 @@ program
 program
   .command('resume')
   .description('Resume paused work')
-  .action(() => resumeCmd({}));
+  .action((options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    resumeCmd({}, { noKanban: globalOpts.kanban === false });
+  });
 
 // Checkpoint Management Commands
 program
@@ -209,8 +225,9 @@ program
   .option('-c, --commit', 'Force git commit')
   .option('--no-commit', 'Skip git commit')
   .option('-m, --message <message>', 'Custom commit message')
-  .action((subcommand, name, options) => {
-    checkpointCmd({ subcommand, name, ...options });
+  .action((subcommand, name, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    checkpointCmd({ subcommand, name, ...options, noKanban: globalOpts.kanban === false });
   });
 
 // Roadmap Management Commands
@@ -256,8 +273,9 @@ program
   .option('-f, --focus <area>', 'Focus analysis on specific area')
   .option('-v, --verbose', 'Show detailed debug output')
   .option('--timeout <ms>', 'Debug timeout in milliseconds')
-  .action(async (target, options) => {
-    await debugCmd(target, options);
+  .action(async (target, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await debugCmd(target, { ...options, noKanban: globalOpts.kanban === false });
   });
 
 program
@@ -268,8 +286,9 @@ program
   .option('--resume', 'Resume interrupted cycle')
   .option('--continue-on-fail', 'Continue even if verification fails')
   .option('-v, --verbose', 'Detailed output')
-  .action(async (phaseOrPlan, options) => {
-    await cycleCmd(phaseOrPlan, options);
+  .action(async (phaseOrPlan, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await cycleCmd(phaseOrPlan, { ...options, noKanban: globalOpts.kanban === false });
   });
 
 program
