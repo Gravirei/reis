@@ -78,6 +78,7 @@ const configCmd = require('../lib/commands/config.js');
 const cycleCmd = require('../lib/commands/cycle.js');
 const decisionsCmd = require('../lib/commands/decisions.js');
 const treeCmd = require('../lib/commands/tree.js');
+const kanbanCmd = require('../lib/commands/kanban.js');
 
 // Check for --help or -h flag before Commander parses
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -319,6 +320,14 @@ program
     if (fileOrTemplate) args.push(fileOrTemplate);
     if (file2) args.push(file2);
     await treeCmd(subcommand, args, options);
+  });
+
+program
+  .command('kanban [subcommand] [value]')
+  .description('Manage kanban board settings')
+  .action((subcommand, value) => {
+    const args = [subcommand, value].filter(Boolean);
+    kanbanCmd(args, {});
   });
 
 const updateCmd = require('../lib/commands/update.js');
