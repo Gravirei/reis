@@ -952,3 +952,31 @@ _None_
 **Blockers/Issues:** None
 
 **Commit:** d7b7cbe - feat(kanban): add kanban command for enable/disable/toggle/style settings
+
+---
+
+## 2026-01-23 - Phase 3 Integration (Kanban Feature) Complete
+
+**Completed:** Phase-3-Integration-Kanban (Plan 3-1)
+
+**Objective:** Integrate kanban board display with workflow commands so it shows automatically
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Added global --no-kanban flag to commander in bin/reis.js
+- Integrated showKanbanBoard() into all 9 workflow commands:
+  - plan.js, execute.js, verify.js, debug.js
+  - cycle.js, progress.js, resume.js, checkpoint.js, execute-plan.js
+- All commands now show kanban by default
+- --no-kanban flag hides the board for any command
+- Config kanban.enabled=false also disables globally
+
+**Decisions made:**
+- None required - followed plan specifications exactly
+
+**Blockers/Issues:** None
+
+**Test results:** 497 tests passing
+
+**Commit:** 339c4ea - [REIS v2.0] Complete Wave 1: First Wave
