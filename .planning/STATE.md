@@ -1039,3 +1039,33 @@ _None_
 **Commits:**
 - 7a34a0e - feat(01-26): add WaveDependencyGraph class with DAG operations
 - e442c3f - feat(01-26): add DependencyParser for PLAN.md metadata extraction
+
+## 2026-01-26 - Phase 3 Conflict Detection (Parallel Wave Execution) Complete
+
+**Completed:** Phase-3-Conflict-Detection (Plans 3-1, 3-2)
+
+**Objective:** Create conflict detection and resolution for parallel wave execution
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Created WaveConflictDetector class for file pattern conflict detection
+- Created ConflictResolver class with four resolution strategies
+- Glob-like pattern matching (**, *, ?) for file patterns
+- Conflict severity classification (high/medium/low)
+- Safe group suggestions using graph coloring algorithm
+- Four resolution strategies: fail, queue, branch, merge
+- Config system integration with validation for parallel settings
+- Detailed report generation with formatted console output
+
+**Decisions made:**
+- Used graph coloring (greedy) for suggestGroups() to find non-conflicting wave sets
+- Default conflict resolution strategy is 'queue' (serializes conflicting waves)
+- Severity levels: high (same file), medium (same directory), low (same area)
+
+**Blockers/Issues:** None
+
+**Test results:** 497 tests passing (all existing tests)
+
+**Commits:**
+- a56534a - feat(01-26): add WaveConflictDetector and ConflictResolver for parallel execution
