@@ -980,3 +980,62 @@ _None_
 **Test results:** 497 tests passing
 
 **Commit:** 339c4ea - [REIS v2.0] Complete Wave 1: First Wave
+
+## 2025-01-23 - Phase 2 Scheduler (Parallel Wave Execution) Complete
+
+**Completed:** Phase-2-Scheduler (Plans 2-1, 2-2)
+
+**Objective:** Create scheduler infrastructure for parallel wave execution
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Created ParallelWaveScheduler class for batch wave scheduling
+- Created ExecutionCoordinator class for async wave orchestration
+- Full support for dependency-based batching
+- Retry mechanism with exponential backoff
+- Checkpoint creation and recovery
+- Timeline visualization and time estimation
+- Event-driven architecture with EventEmitter
+
+**Decisions made:**
+- Added stub import for WaveDependencyGraph to allow standalone testing before Phase 1 completes
+- Used three scheduling strategies: 'dependency', 'group', 'auto'
+
+**Blockers/Issues:** None
+
+**Test results:** 497 tests passing
+
+**Commits:**
+- 32e65bb - feat(01-23): add ParallelWaveScheduler for batch wave scheduling
+- 4213382 - feat(01-23): add ExecutionCoordinator for async wave orchestration
+
+## 2025-01-26 - Phase 1 Foundation (Parallel Wave Execution) Complete
+
+**Completed:** Phase-1-Foundation (Plans 1-1, 1-2)
+
+**Objective:** Create foundational data structures for parallel wave execution
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Created WaveDependencyGraph class for DAG-based dependency management
+- Created DependencyParser class for PLAN.md metadata extraction
+- Cycle detection using DFS with color marking (white/gray/black)
+- Topological sort using Kahn's algorithm
+- Executable wave calculation based on completion state
+- JSON serialization/deserialization for persistence
+- Mermaid diagram generation for visualization
+- Support for @dependencies and @parallel-group syntax in PLAN.md
+
+**Decisions made:**
+- Fixed _matchDependency to return null (not found) vs [] (none) for proper flow control
+- Restructured parseContent to handle dependencies after wave headers (common format)
+
+**Blockers/Issues:** None
+
+**Test results:** 25 tests passing for Phase 1 components
+
+**Commits:**
+- 7a34a0e - feat(01-26): add WaveDependencyGraph class with DAG operations
+- e442c3f - feat(01-26): add DependencyParser for PLAN.md metadata extraction
