@@ -1,0 +1,75 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4A90D9', 'primaryTextColor': '#fff'}}}%%
+
+flowchart TB
+    subgraph TITLE["🤖 REIS SUBAGENT ECOSYSTEM"]
+        direction TB
+    end
+
+    subgraph CYCLE_AGENTS["📦 CYCLE SUBAGENTS (Used in reis cycle)"]
+        direction TB
+        
+        subgraph RESEARCH_AGENTS["🔬 Research Agents (Optional)"]
+            ANALYST["🔍 reis_analyst<br/><b>Project Researcher</b><br/><i>Project-wide analysis</i><br/>Output: context.md"]
+            SCOUT["🔎 reis_scout<br/><b>Phase Researcher</b><br/><i>Phase-specific research</i><br/>Output: research.md"]
+            SYNTH["🔄 reis_synthesizer<br/><b>Research Synthesizer</b><br/><i>Combine research outputs</i><br/>Output: synthesis.md"]
+        end
+        
+        subgraph CORE_AGENTS["⚙️ Core Agents (Always)"]
+            PLANNER["📝 reis_planner<br/><b>Plan Creator</b><br/><i>Create execution plan</i><br/>Output: PLAN.md"]
+            REVIEWER["✅ reis_plan_reviewer<br/><b>Plan Validator</b><br/><i>Validate before execution</i><br/>Output: REVIEW_REPORT.md"]
+            EXECUTOR["🚀 reis_executor<br/><b>Code Implementer</b><br/><i>Execute plan tasks</i><br/>Output: Code + Commits"]
+            VERIFIER["🔍 reis_verifier<br/><b>Completion Checker</b><br/><i>Verify deliverables</i><br/>Output: VERIFICATION_REPORT.md"]
+            DEBUGGER["🐛 reis_debugger<br/><b>Failure Analyzer</b><br/><i>Debug and create fixes</i><br/>Output: FIX_PLAN.md"]
+        end
+    end
+    
+    subgraph STANDALONE_AGENTS["📦 STANDALONE SUBAGENTS (Not in cycle)"]
+        direction TB
+        
+        ARCHITECT["🏗️ reis_architect<br/><b>Roadmap Creator</b><br/><i>Create project roadmaps</i><br/>Output: ROADMAP.md<br/><br/>Used by: reis roadmap"]
+        
+        INTEGRATOR["🔗 reis_integrator<br/><b>Integration Checker</b><br/><i>Cross-phase wiring verification</i><br/>Output: AUDIT_REPORT.md<br/><br/>Used by: reis audit"]
+        
+        MAPPER["🗺️ reis_project_mapper<br/><b>Codebase Mapper</b><br/><i>Map existing projects</i><br/>Output: PROJECT.md<br/><br/>Used by: reis map"]
+    end
+    
+    subgraph COMMANDS["🖥️ COMMAND MAPPING"]
+        direction LR
+        
+        CMD_CYCLE["reis cycle"]
+        CMD_AUDIT["reis audit"]
+        CMD_MAP["reis map"]
+        CMD_ROADMAP["reis roadmap"]
+        CMD_QUICK["reis quick"]
+    end
+    
+    %% Connections
+    CMD_CYCLE --> RESEARCH_AGENTS
+    CMD_CYCLE --> CORE_AGENTS
+    CMD_AUDIT --> INTEGRATOR
+    CMD_MAP --> MAPPER
+    CMD_ROADMAP --> ARCHITECT
+    CMD_QUICK --> EXECUTOR
+    
+    %% Research flow
+    ANALYST --> SYNTH
+    SCOUT --> SYNTH
+    SYNTH --> PLANNER
+    
+    %% Core flow
+    PLANNER --> REVIEWER
+    REVIEWER --> EXECUTOR
+    EXECUTOR --> VERIFIER
+    VERIFIER -->|"on failure"| DEBUGGER
+    DEBUGGER --> EXECUTOR
+    
+    %% Styling
+    classDef research fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef core fill:#E8F5E9,stroke:#388E3C,stroke-width:2px
+    classDef standalone fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    classDef command fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+    
+    class ANALYST,SCOUT,SYNTH research
+    class PLANNER,REVIEWER,EXECUTOR,VERIFIER,DEBUGGER core
+    class ARCHITECT,INTEGRATOR,MAPPER standalone
+    class CMD_CYCLE,CMD_AUDIT,CMD_MAP,CMD_ROADMAP,CMD_QUICK command

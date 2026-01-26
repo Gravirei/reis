@@ -1,0 +1,179 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4A90D9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2E6CB5', 'lineColor': '#5C6BC0', 'secondaryColor': '#81C784', 'tertiaryColor': '#FFB74D'}}}%%
+
+flowchart TB
+    subgraph TITLE[" "]
+        direction LR
+        T1[" "]
+    end
+    
+    %% ==========================================
+    %% RESEARCH PHASE (Optional)
+    %% ==========================================
+    subgraph RESEARCH["🔬 RESEARCH PHASE (Optional)"]
+        direction TB
+        
+        R_START{{"--research or<br/>--full-research?"}}
+        
+        subgraph FULL_RESEARCH["--full-research"]
+            R_ANALYST["🔍 reis_analyst<br/><i>Project-level analysis</i>"]
+            R_CONTEXT[("📄 context.md")]
+            R_ANALYST --> R_CONTEXT
+        end
+        
+        subgraph PHASE_RESEARCH["--research"]
+            R_SCOUT["🔎 reis_scout<br/><i>Phase-level research</i>"]
+            R_RESEARCH[("📄 research.md")]
+            R_SCOUT --> R_RESEARCH
+        end
+        
+        R_SYNTH["🔄 reis_synthesizer<br/><i>Combine outputs</i>"]
+        R_SYNTHESIS[("📄 synthesis.md")]
+        
+        R_START -->|"--full-research"| FULL_RESEARCH
+        R_START -->|"--research"| PHASE_RESEARCH
+        R_CONTEXT --> R_SYNTH
+        R_RESEARCH --> R_SYNTH
+        R_SYNTH -->|"if multiple"| R_SYNTHESIS
+    end
+    
+    %% ==========================================
+    %% MAIN CYCLE
+    %% ==========================================
+    subgraph MAIN_CYCLE["🔄 REIS CYCLE (Main Workflow)"]
+        direction TB
+        
+        %% Planning
+        subgraph PLANNING["📋 STAGE 1: PLANNING"]
+            P_AGENT["📝 reis_planner<br/><i>Enhanced: reads research</i>"]
+            P_INPUT1[("ROADMAP.md")]
+            P_INPUT2[("PROJECT.md")]
+            P_INPUT3[("research/*.md")]
+            P_OUTPUT[("📄 PLAN.md")]
+            
+            P_INPUT1 --> P_AGENT
+            P_INPUT2 --> P_AGENT
+            P_INPUT3 -.->|"if exists"| P_AGENT
+            P_AGENT --> P_OUTPUT
+        end
+        
+        %% Review
+        subgraph REVIEW["🔎 STAGE 2: REVIEW"]
+            RV_AGENT["✅ reis_plan_reviewer<br/><i>Validate before execution</i>"]
+            RV_CHECKS["Checks:<br/>• Path validation<br/>• Already implemented<br/>• Dependencies<br/>• Naming conflicts"]
+            RV_OUTPUT[("📄 REVIEW_REPORT.md")]
+            RV_SKIP{{"--skip-review<br/>or --quick?"}}
+            
+            RV_AGENT --> RV_CHECKS
+            RV_CHECKS --> RV_OUTPUT
+        end
+        
+        %% Execute
+        subgraph EXECUTE["⚙️ STAGE 3: EXECUTE"]
+            E_AGENT["🚀 reis_executor<br/><i>Implement changes</i>"]
+            E_WAVES["Wave Execution:<br/>├─ Wave 1: [T1] [T2] [T3]<br/>├─ Wave 2: [T4] [T5]<br/>└─ Wave 3: [T6]"]
+            E_OUTPUT[("💻 Code Changes<br/>+ Git Commits")]
+            
+            E_AGENT --> E_WAVES
+            E_WAVES --> E_OUTPUT
+        end
+        
+        %% Verify
+        subgraph VERIFY["✓ STAGE 4: VERIFY"]
+            V_AGENT["🔍 reis_verifier<br/><i>Check completion</i>"]
+            V_CHECKS["Checks:<br/>• Deliverables exist<br/>• Tests pass<br/>• No syntax errors<br/>• Success criteria met<br/>• Feature complete (FR4.1)"]
+            V_OUTPUT[("📄 VERIFICATION_REPORT.md")]
+            
+            V_AGENT --> V_CHECKS
+            V_CHECKS --> V_OUTPUT
+        end
+        
+        %% Gate
+        subgraph GATE["🛡️ STAGE 5: QUALITY GATES"]
+            G_SEC["🔒 Security<br/><i>Secrets, vulns</i>"]
+            G_QUAL["📊 Quality<br/><i>Lint, coverage</i>"]
+            G_PERF["⚡ Performance<br/><i>Bundle, speed</i>"]
+            G_A11Y["♿ Accessibility<br/><i>ARIA, contrast</i>"]
+            G_OUTPUT[("📄 GATE_REPORT.md")]
+            G_SKIP{{"--skip-gates<br/>or --quick?"}}
+            
+            G_SEC --> G_OUTPUT
+            G_QUAL --> G_OUTPUT
+            G_PERF --> G_OUTPUT
+            G_A11Y --> G_OUTPUT
+        end
+        
+        %% Connections
+        PLANNING --> RV_SKIP
+        RV_SKIP -->|"No"| REVIEW
+        RV_SKIP -->|"Yes"| EXECUTE
+        REVIEW --> EXECUTE
+        EXECUTE --> VERIFY
+        VERIFY --> G_SKIP
+        G_SKIP -->|"No"| GATE
+        G_SKIP -->|"Yes"| RESULT
+    end
+    
+    %% ==========================================
+    %% DEBUG LOOP
+    %% ==========================================
+    subgraph DEBUG_LOOP["🔧 DEBUG LOOP (On Failure)"]
+        direction TB
+        
+        D_AGENT["🐛 reis_debugger<br/><i>Analyze failure</i>"]
+        D_PATTERN["Pattern Matching:<br/>• Known issues<br/>• Root cause analysis<br/>• Solution design"]
+        D_FIX[("📄 FIX_PLAN.md")]
+        D_EXECUTOR["🔨 reis_executor<br/><i>Apply fix</i>"]
+        D_COUNT{{"Attempt < 3?"}}
+        
+        D_AGENT --> D_PATTERN
+        D_PATTERN --> D_FIX
+        D_FIX --> D_EXECUTOR
+        D_EXECUTOR --> D_COUNT
+    end
+    
+    %% ==========================================
+    %% RESULT
+    %% ==========================================
+    RESULT{{"Pass?"}}
+    COMPLETE["✅ COMPLETE<br/><i>Phase finished!</i>"]
+    FAILED["❌ FAILED<br/><i>Max attempts reached</i>"]
+    
+    %% Main flow connections
+    R_START -->|"No flag"| PLANNING
+    R_SYNTHESIS --> PLANNING
+    R_RESEARCH -->|"no synth needed"| PLANNING
+    
+    GATE --> RESULT
+    RESULT -->|"✅ Yes"| COMPLETE
+    RESULT -->|"❌ No"| DEBUG_LOOP
+    D_COUNT -->|"Yes"| VERIFY
+    D_COUNT -->|"No (max reached)"| FAILED
+    
+    %% ==========================================
+    %% STYLING
+    %% ==========================================
+    classDef research fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef planning fill:#E8F5E9,stroke:#388E3C,stroke-width:2px
+    classDef review fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    classDef execute fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+    classDef verify fill:#E0F7FA,stroke:#0097A7,stroke-width:2px
+    classDef gate fill:#FCE4EC,stroke:#C2185B,stroke-width:2px
+    classDef debug fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px
+    classDef success fill:#C8E6C9,stroke:#2E7D32,stroke-width:3px
+    classDef failure fill:#FFCDD2,stroke:#C62828,stroke-width:3px
+    classDef agent fill:#BBDEFB,stroke:#1565C0,stroke-width:2px
+    classDef output fill:#FFF9C4,stroke:#F9A825,stroke-width:1px
+    classDef decision fill:#E1BEE7,stroke:#8E24AA,stroke-width:2px
+    
+    class RESEARCH research
+    class PLANNING planning
+    class REVIEW review
+    class EXECUTE execute
+    class VERIFY verify
+    class GATE gate
+    class DEBUG_LOOP debug
+    class COMPLETE success
+    class FAILED failure
+    class R_ANALYST,R_SCOUT,R_SYNTH,P_AGENT,RV_AGENT,E_AGENT,V_AGENT,D_AGENT,D_EXECUTOR agent
+    class P_OUTPUT,RV_OUTPUT,V_OUTPUT,G_OUTPUT,D_FIX,R_CONTEXT,R_RESEARCH,R_SYNTHESIS,E_OUTPUT output
+    class R_START,RV_SKIP,G_SKIP,RESULT,D_COUNT decision

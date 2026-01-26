@@ -1,0 +1,64 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4A90D9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2E6CB5', 'lineColor': '#5C6BC0'}}}%%
+
+flowchart LR
+    subgraph DEFAULT["🔄 DEFAULT MODE"]
+        direction LR
+        D1["📋 PLAN"] --> D2["🔎 REVIEW"] --> D3["⚙️ EXECUTE"] --> D4["✓ VERIFY"] --> D5["🛡️ GATE"] --> D6{{"Pass?"}}
+        D6 -->|"✅"| D7["✅ COMPLETE"]
+        D6 -->|"❌"| D8["🔧 DEBUG"] --> D3
+    end
+    
+    subgraph RESEARCH_MODE["🔬 RESEARCH MODE (--research)"]
+        direction LR
+        R1["🔎 RESEARCH"] --> R2["📋 PLAN"] --> R3["🔎 REVIEW"] --> R4["⚙️ EXECUTE"] --> R5["✓ VERIFY"] --> R6["🛡️ GATE"] --> R7{{"Pass?"}}
+        R7 -->|"✅"| R8["✅ COMPLETE"]
+        R7 -->|"❌"| R9["🔧 DEBUG"] --> R4
+    end
+    
+    subgraph FULL_RESEARCH["🔬 FULL RESEARCH MODE (--full-research)"]
+        direction LR
+        F0["🔍 ANALYST"] --> F1["🔎 SCOUT"] --> F2["📋 PLAN"] --> F3["🔎 REVIEW"] --> F4["⚙️ EXECUTE"] --> F5["✓ VERIFY"] --> F6["🛡️ GATE"] --> F7{{"Pass?"}}
+        F7 -->|"✅"| F8["✅ COMPLETE"]
+        F7 -->|"❌"| F9["🔧 DEBUG"] --> F4
+    end
+    
+    subgraph QUICK_MODE["⚡ QUICK MODE (--quick)"]
+        direction LR
+        Q1["📋 PLAN"] --> Q2["⚙️ EXECUTE"] --> Q3["✓ VERIFY"] --> Q4{{"Pass?"}}
+        Q4 -->|"✅"| Q5["✅ COMPLETE"]
+        Q4 -->|"❌"| Q6["🔧 DEBUG"] --> Q2
+    end
+    
+    subgraph RESUME_MODE["🔁 RESUME MODE (--resume)"]
+        direction LR
+        RS1[("📄 STATE.md")] --> RS2{{"Last Stage?"}}
+        RS2 -->|"PLANNING"| RS3["📋 PLAN"]
+        RS2 -->|"EXECUTING"| RS4["⚙️ EXECUTE"]
+        RS2 -->|"VERIFYING"| RS5["✓ VERIFY"]
+        RS2 -->|"DEBUGGING"| RS6["🔧 DEBUG"]
+        RS3 --> RS7["... continue"]
+        RS4 --> RS7
+        RS5 --> RS7
+        RS6 --> RS7
+    end
+
+    %% Styling
+    classDef research fill:#E3F2FD,stroke:#1976D2
+    classDef plan fill:#E8F5E9,stroke:#388E3C
+    classDef review fill:#FFF3E0,stroke:#F57C00
+    classDef execute fill:#F3E5F5,stroke:#7B1FA2
+    classDef verify fill:#E0F7FA,stroke:#0097A7
+    classDef gate fill:#FCE4EC,stroke:#C2185B
+    classDef debug fill:#FFEBEE,stroke:#D32F2F
+    classDef complete fill:#C8E6C9,stroke:#2E7D32,stroke-width:2px
+    classDef decision fill:#E1BEE7,stroke:#8E24AA
+
+    class R1,F0,F1 research
+    class D1,R2,F2,Q1,RS3 plan
+    class D2,R3,F3 review
+    class D3,R4,F4,Q2,RS4 execute
+    class D4,R5,F5,Q3,RS5 verify
+    class D5,R6,F6 gate
+    class D8,R9,F9,Q6,RS6 debug
+    class D7,R8,F8,Q5 complete
+    class D6,R7,F7,Q4,RS2 decision

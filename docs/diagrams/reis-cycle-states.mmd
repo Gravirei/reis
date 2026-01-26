@@ -1,0 +1,53 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#4A90D9'}}}%%
+
+stateDiagram-v2
+    [*] --> IDLE: reis cycle
+    
+    IDLE --> RESEARCHING: --research flag
+    IDLE --> PLANNING: no research
+    
+    RESEARCHING --> PLANNING: research complete
+    RESEARCHING --> PLANNING: research failed (non-blocking)
+    
+    PLANNING --> REVIEWING: plan created
+    PLANNING --> EXECUTING: --skip-review or --quick
+    
+    REVIEWING --> EXECUTING: review passed
+    REVIEWING --> PLANNING: critical issues (--auto-fix)
+    
+    EXECUTING --> VERIFYING: execution complete
+    EXECUTING --> FAILED: execution error (unrecoverable)
+    
+    VERIFYING --> GATING: verification passed
+    VERIFYING --> DEBUGGING: verification failed
+    VERIFYING --> COMPLETE: --skip-gates or --quick
+    
+    GATING --> COMPLETE: gates passed
+    GATING --> DEBUGGING: gates failed
+    
+    DEBUGGING --> FIXING: fix plan generated
+    
+    FIXING --> VERIFYING: fix applied (retry)
+    FIXING --> FAILED: max attempts reached
+    
+    COMPLETE --> [*]: ✅ Success
+    FAILED --> [*]: ❌ Failure
+    
+    note right of RESEARCHING
+        Optional stage
+        --research: reis_scout
+        --full-research: reis_analyst + reis_scout
+    end note
+    
+    note right of DEBUGGING
+        Max 3 attempts by default
+        Uses reis_debugger
+    end note
+    
+    note right of GATING
+        4 gate types:
+        • Security
+        • Quality
+        • Performance  
+        • Accessibility
+    end note
