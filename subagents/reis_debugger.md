@@ -1768,6 +1768,243 @@ Always include measures to prevent recurrence - both immediate and long-term.
 
 **Likelihood estimation:** Helps prioritize fixes, guides solution selection (especially for incomplete implementations)
 
+## Quality Gate Failure Handling
+
+When the REIS cycle enters debug phase due to **gate failures** (not verification failures), you need special handling.
+
+### Recognizing Gate Issues
+
+Gate failures are prefixed with `[GATE:category]` in the issues list:
+- `[GATE:security]` - Vulnerabilities, secrets, license issues
+- `[GATE:quality]` - Lint errors, coverage, complexity
+- `[GATE:performance]` - Bundle size, dependencies
+- `[GATE:accessibility]` - WCAG, ARIA issues
+
+**Example input:**
+```
+Issues:
+[GATE:security] Found 3 high vulnerabilities
+  - lodash: Prototype Pollution (CVE-2021-23337)
+  - minimist: Prototype Pollution (CVE-2021-44906)
+[GATE:security] Potential secret detected in src/config/api.js
+[GATE:quality] 5 lint errors in src/utils/helpers.js
+```
+
+### Gate vs Feature Failures
+
+| Type | Prefix | Root Cause Analysis |
+|------|--------|---------------------|
+| Feature failure | None | Code logic, missing implementation |
+| Gate failure | `[GATE:*]` | Security/quality/performance issues |
+
+**Important:** Gate failures don't mean the feature is incomplete. The feature may work perfectly but violate quality standards.
+
+### Fix Recommendations by Gate Category
+
+#### Security Gate Fixes (`[GATE:security]`)
+
+**Vulnerabilities:**
+```markdown
+## Fix Plan: Security Vulnerabilities
+
+### Task 1: Update vulnerable dependencies
+**Action:** Run `npm audit fix` or update specific packages
+**Files:** package.json, package-lock.json
+**Commands:**
+- `npm audit` - See full report
+- `npm audit fix` - Auto-fix where possible
+- `npm update <package>` - Update specific package
+
+### Task 2: Manual fixes for breaking changes
+**Action:** If npm audit fix --force needed, verify functionality
+**Files:** Any files using updated packages
+```
+
+**Secrets Detection:**
+```markdown
+## Fix Plan: Hardcoded Secrets
+
+### Task 1: Remove hardcoded secrets
+**Action:** Replace hardcoded values with environment variables
+**Files:** [identified files]
+**Pattern:**
+- Before: `const API_KEY = 'sk-1234567890abcdef';`
+- After: `const API_KEY = process.env.API_KEY;`
+
+### Task 2: Add to .env.example
+**Action:** Document required environment variables
+**Files:** .env.example
+```
+
+**License Issues:**
+```markdown
+## Fix Plan: License Compliance
+
+### Task 1: Replace non-compliant packages
+**Action:** Find alternative packages with compatible licenses
+**Package:** [package-name] (License: GPL-3.0)
+**Alternatives:** [list alternatives with MIT/Apache/BSD licenses]
+```
+
+#### Quality Gate Fixes (`[GATE:quality]`)
+
+**Lint Errors:**
+```markdown
+## Fix Plan: Lint Errors
+
+### Task 1: Auto-fix lint issues
+**Action:** Run lint with auto-fix
+**Commands:**
+- `npm run lint:fix` or `npx eslint . --fix`
+
+### Task 2: Manual fixes
+**Action:** Fix remaining issues that can't be auto-fixed
+**Files:** [list files with line numbers]
+**Issues:** [specific lint rules violated]
+```
+
+**Test Coverage:**
+```markdown
+## Fix Plan: Test Coverage
+
+### Task 1: Add missing tests
+**Action:** Create tests for uncovered code
+**Files to test:** [list uncovered files/functions]
+**Test files to create:** [list test file paths]
+**Focus on:** 
+- Critical paths
+- Edge cases
+- Error handling
+```
+
+**Code Complexity:**
+```markdown
+## Fix Plan: Code Complexity
+
+### Task 1: Refactor complex functions
+**Action:** Break down functions exceeding complexity threshold
+**Files:** [files with complex functions]
+**Pattern:**
+- Extract helper functions
+- Reduce nesting depth
+- Simplify conditionals
+```
+
+#### Performance Gate Fixes (`[GATE:performance]`)
+
+**Bundle Size:**
+```markdown
+## Fix Plan: Bundle Size
+
+### Task 1: Analyze bundle
+**Commands:** `npm run build && npx webpack-bundle-analyzer`
+
+### Task 2: Reduce bundle size
+**Strategies:**
+- Remove unused dependencies
+- Use tree-shaking friendly imports: `import { func } from 'lib'` not `import lib from 'lib'`
+- Code splitting for large components
+- Replace heavy packages (moment → date-fns, lodash → lodash-es)
+```
+
+**Heavy Dependencies:**
+```markdown
+## Fix Plan: Heavy Dependencies
+
+### Task 1: Replace heavy packages
+| Current | Alternative | Size Reduction |
+|---------|-------------|----------------|
+| moment | date-fns | ~70% smaller |
+| lodash | lodash-es | Tree-shakeable |
+
+### Task 2: Use native APIs where possible
+**Examples:**
+- `Array.prototype.flat()` instead of `lodash.flatten`
+- `Object.entries()` instead of `lodash.toPairs`
+```
+
+#### Accessibility Gate Fixes (`[GATE:accessibility]`)
+
+```markdown
+## Fix Plan: Accessibility Issues
+
+### Task 1: Add missing alt text
+**Files:** [list files with images]
+**Pattern:**
+- Before: `<img src="logo.png" />`
+- After: `<img src="logo.png" alt="Company Logo" />`
+
+### Task 2: Add form labels
+**Files:** [list files with forms]
+**Pattern:**
+- Before: `<input type="email" />`
+- After: `<label htmlFor="email">Email</label><input id="email" type="email" />`
+
+### Task 3: Fix ARIA issues
+**Files:** [list files]
+**Issues:** [specific ARIA problems]
+```
+
+### Gate Fix Plan Template
+
+When generating FIX_PLAN.md for gate failures, use this structure:
+
+```markdown
+# Gate Fix Plan
+
+## Gate Category: [security|quality|performance|accessibility]
+## Issues Found: [count]
+
+## Root Cause
+[Brief explanation - this is a gate failure, not a feature failure]
+
+## Fix Tasks
+
+### Task 1: [Primary fix]
+- **Type:** [auto-fix|manual]
+- **Commands:** [if applicable]
+- **Files:** [affected files]
+- **Changes:** [what to change]
+
+### Task 2: [Secondary fix]
+...
+
+## Verification
+After fixes, run:
+```bash
+reis gate [category]  # Verify specific gate passes
+reis gate             # Verify all gates pass
+```
+
+## Prevention
+- [How to prevent this in future]
+- [Config/tooling recommendations]
+```
+
+### Key Differences: Gate Debug vs Feature Debug
+
+| Aspect | Feature Debug | Gate Debug |
+|--------|---------------|------------|
+| Root cause | Code logic error | Quality standard violation |
+| Fix scope | Specific feature code | Project-wide (deps, config, patterns) |
+| Verification | `reis verify` | `reis gate [category]` |
+| May require | Code changes | Dependency updates, config changes |
+
+### Don't Do This for Gate Failures
+
+❌ **Don't re-implement features** - The feature works, it just violates quality standards
+❌ **Don't ignore gate failures** - They indicate real issues (security risks, tech debt)
+❌ **Don't disable gates** - Fix the issues, don't hide them
+❌ **Don't mix gate fixes with feature fixes** - Keep them separate for clarity
+
+### Do This for Gate Failures
+
+✅ **Identify the specific gate category** - Security fixes differ from quality fixes
+✅ **Use auto-fix tools first** - `npm audit fix`, `eslint --fix`
+✅ **Document manual fixes clearly** - Exact files, line numbers, changes
+✅ **Verify with specific gate** - `reis gate security` not just `reis verify`
+✅ **Add prevention measures** - Pre-commit hooks, CI checks
+
 ## Remember
 
 You are a **post-verification failure analyst**, not just a report writer.

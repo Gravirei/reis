@@ -424,6 +424,226 @@ If something goes wrong:
 
 **Never leave things half-done.** Either complete the task or clearly document the blocker.
 
+## Executing Gate Fix Plans
+
+Sometimes you'll receive a FIX_PLAN.md generated from **gate failures** rather than feature failures. Gate fix plans are different from feature implementation plans.
+
+### Recognizing Gate Fix Plans
+
+Gate fix plans have these characteristics:
+- Title includes "Gate Fix Plan" or references gate category
+- Issues prefixed with `[GATE:category]`
+- Focus on quality standards, not feature implementation
+- May require dependency updates, config changes, or project-wide fixes
+
+**Example Gate Fix Plan header:**
+```markdown
+# Gate Fix Plan
+
+## Gate Category: security
+## Issues Found: 3
+
+## Root Cause
+Security gate failed due to vulnerable dependencies and hardcoded secret.
+```
+
+### Gate Fix Execution Patterns
+
+#### Security Gate Fixes
+
+**Vulnerabilities:**
+```bash
+# Task: Update vulnerable dependencies
+npm audit                    # View vulnerabilities
+npm audit fix               # Auto-fix where possible
+npm audit fix --force       # Force fix (may have breaking changes)
+npm update <package>        # Update specific package
+```
+
+**Secrets:**
+```javascript
+// Task: Remove hardcoded secrets
+// Before:
+const API_KEY = 'sk-1234567890abcdef';
+
+// After:
+const API_KEY = process.env.API_KEY;
+
+// Also update .env.example:
+// API_KEY=your-api-key-here
+```
+
+**Licenses:**
+```bash
+# Task: Replace non-compliant package
+npm uninstall <gpl-package>
+npm install <mit-alternative>
+# Then update imports in affected files
+```
+
+#### Quality Gate Fixes
+
+**Lint Errors:**
+```bash
+# Task: Fix lint errors
+npm run lint:fix            # If script exists
+npx eslint . --fix          # Direct ESLint fix
+npx prettier --write .      # Prettier fix
+```
+
+**Test Coverage:**
+```javascript
+// Task: Add missing tests
+// Create test file for uncovered module
+// test/utils/uncovered-module.test.js
+
+describe('UncoveredModule', () => {
+  it('should handle normal case', () => {
+    // Test implementation
+  });
+  
+  it('should handle edge case', () => {
+    // Edge case test
+  });
+});
+```
+
+**Code Complexity:**
+```javascript
+// Task: Refactor complex function
+// Before: Single function with 50+ lines and deep nesting
+
+// After: Extract helper functions
+function mainFunction(data) {
+  const validated = validateInput(data);
+  const processed = processData(validated);
+  return formatOutput(processed);
+}
+
+function validateInput(data) { /* ... */ }
+function processData(data) { /* ... */ }
+function formatOutput(data) { /* ... */ }
+```
+
+#### Performance Gate Fixes
+
+**Bundle Size:**
+```javascript
+// Task: Reduce bundle size
+
+// Before: Import entire library
+import _ from 'lodash';
+_.map(arr, fn);
+
+// After: Import only what you need
+import map from 'lodash/map';
+map(arr, fn);
+
+// Or use native:
+arr.map(fn);
+```
+
+**Heavy Dependencies:**
+```bash
+# Task: Replace heavy package
+npm uninstall moment        # 300kb+
+npm install date-fns        # ~30kb tree-shaken
+
+# Update imports:
+# Before: import moment from 'moment';
+# After: import { format } from 'date-fns';
+```
+
+#### Accessibility Gate Fixes
+
+```javascript
+// Task: Fix accessibility issues
+
+// Add alt text to images
+<img src="logo.png" alt="Company Logo" />
+
+// Add labels to form inputs
+<label htmlFor="email">Email Address</label>
+<input id="email" type="email" aria-describedby="email-hint" />
+<span id="email-hint">We'll never share your email</span>
+
+// Add ARIA attributes for interactive elements
+<button 
+  aria-expanded={isOpen}
+  aria-controls="menu"
+  onClick={toggleMenu}
+>
+  Menu
+</button>
+```
+
+### Gate Fix Verification
+
+After completing gate fixes, verify with:
+
+```bash
+# Verify specific gate category
+reis gate security          # For security fixes
+reis gate quality           # For quality fixes
+reis gate performance       # For performance fixes
+reis gate accessibility     # For accessibility fixes
+
+# Verify all gates pass
+reis gate
+
+# Full verification (features + gates)
+reis verify --with-gates
+```
+
+### Gate Fix Commits
+
+Use descriptive commit messages for gate fixes:
+
+```bash
+# Security fixes
+git commit -m "fix(security): update lodash to patch CVE-2021-23337"
+git commit -m "fix(security): move API key to environment variable"
+git commit -m "fix(security): replace GPL dependency with MIT alternative"
+
+# Quality fixes
+git commit -m "fix(quality): resolve eslint errors in utils module"
+git commit -m "fix(quality): add tests for auth service (coverage 65% → 82%)"
+git commit -m "fix(quality): refactor complex parseData function"
+
+# Performance fixes
+git commit -m "perf: replace moment with date-fns for smaller bundle"
+git commit -m "perf: use lodash-es for tree-shaking support"
+
+# Accessibility fixes
+git commit -m "fix(a11y): add alt text to all product images"
+git commit -m "fix(a11y): add form labels and ARIA attributes"
+```
+
+### Key Differences: Gate Fixes vs Feature Implementation
+
+| Aspect | Feature Implementation | Gate Fixes |
+|--------|----------------------|------------|
+| Scope | New functionality | Existing code quality |
+| Changes | Add new code | Modify/refactor existing |
+| Dependencies | Add as needed | Update/replace existing |
+| Verification | `reis verify` | `reis gate [category]` |
+| Commits | `feat:` prefix | `fix:`, `perf:`, `fix(a11y):` |
+
+### Don't Do This for Gate Fixes
+
+❌ **Don't add new features** - Focus only on fixing the gate issues
+❌ **Don't skip verification** - Always run `reis gate` after fixes
+❌ **Don't force-update blindly** - `npm audit fix --force` can break things
+❌ **Don't disable linting rules** - Fix the code, not the rules
+
+### Do This for Gate Fixes
+
+✅ **Fix one category at a time** - Security, then quality, etc.
+✅ **Use auto-fix tools first** - They handle most issues
+✅ **Test after dependency updates** - Ensure nothing broke
+✅ **Commit frequently** - One commit per fix type
+✅ **Run specific gate** - Verify each category as you fix it
+
 ## Remember
 
 You are executing a **prompt**, not interpreting a document.
