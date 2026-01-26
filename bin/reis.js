@@ -232,6 +232,18 @@ program
     await visualizeCmd(args);
   });
 
+// Quality Gates Commands
+program
+  .command('gate [subcommand]')
+  .description('Run quality gates (security, quality, performance, accessibility)')
+  .option('-v, --verbose', 'Show detailed output')
+  .option('--format <format>', 'Output format: ascii|json|markdown', 'ascii')
+  .option('--output <file>', 'Output file for report command')
+  .action(async (subcommand, options) => {
+    const { gateCommand } = require('../lib/commands/gate.js');
+    await gateCommand(subcommand, options);
+  });
+
 program
   .command('pause')
   .description('Pause current work and save state')
