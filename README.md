@@ -23,9 +23,16 @@ Systematic development with parallel subagent execution for Atlassian Rovo Dev
 
 **REIS (Roadmap Execution & Implementation System)** is a systematic development framework for building better software with AI. Designed for Atlassian Rovo Dev, REIS provides structured workflows, specialized subagents, and comprehensive documentation to take projects from idea to deployment.
 
-### ✨ What's New in v2.0
+### ✨ What's New in v2.5
 
-REIS v2.0 introduces powerful wave-based execution with smart checkpoints, making development more predictable and resilient:
+REIS v2.5 introduces **parallel wave execution** for significantly faster phase completion:
+
+- 🚀 **Parallel Waves** - Execute independent waves concurrently (up to 4x speedup)
+- 🔗 **Dependency Graphs** - Define and visualize wave dependencies
+- 🔍 **Conflict Detection** - Automatic file conflict detection and resolution
+- 📊 **Enhanced Kanban** - Real-time parallel execution progress tracking
+
+### Previous in v2.0
 
 - 🌊 **Wave Execution** - Sequential waves with automatic checkpoints between phases
 - 💾 **Smart Resume** - Resume from any checkpoint with deviation detection
@@ -392,6 +399,67 @@ reis visualize --type roadmap   # Roadmap timeline
 reis visualize --type metrics   # Metrics dashboard
 reis visualize --watch          # Auto-refresh mode
 ```
+
+### Parallel Wave Execution (New in v2.5)
+
+Execute independent waves concurrently for faster phase completion:
+
+```bash
+# Enable parallel execution
+reis execute 3 --parallel
+
+# Limit concurrent waves
+reis execute 3 --parallel --max-concurrent 2
+
+# Preview execution plan
+reis execute 3 --parallel --dry-run --show-graph
+
+# Visualize dependencies
+reis visualize --dependencies
+```
+
+Define wave dependencies in PLAN.md:
+
+```markdown
+## Wave 1: Setup
+<!-- @dependencies: none -->
+- Initialize project
+
+## Wave 2: Backend
+<!-- @dependencies: Wave 1 -->
+- Create API endpoints
+
+## Wave 3: Frontend
+<!-- @dependencies: none -->
+- Build UI components
+
+## Wave 4: Integration
+<!-- @dependencies: Wave 2, Wave 3 -->
+- Connect frontend to backend
+```
+
+**Features:**
+- 🚀 **Dependency-based scheduling** - Waves run as soon as dependencies complete
+- ⚡ **Configurable concurrency** - Control max parallel waves (1-10)
+- 🔍 **Conflict detection** - Detect file conflicts before execution
+- 🛡️ **Resolution strategies** - fail, queue, branch, or merge conflicts
+- 📊 **Visual progress** - Kanban board shows parallel execution
+- 💾 **State persistence** - Resume interrupted parallel execution
+
+**Configuration (reis.config.js):**
+```javascript
+module.exports = {
+  waves: {
+    parallel: {
+      enabled: true,
+      maxConcurrent: 4,
+      conflictStrategy: 'fail'  // 'fail' | 'queue' | 'branch' | 'merge'
+    }
+  }
+};
+```
+
+**Learn more:** [Parallel Execution Guide](docs/PARALLEL_EXECUTION.md)
 
 ### Progress Management
 ```bash
