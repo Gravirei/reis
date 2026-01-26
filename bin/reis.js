@@ -332,6 +332,63 @@ program
     await debugCmd(target, { ...options, noKanban: globalOpts.kanban === false });
   });
 
+// Quick task execution (no full cycle)
+const quickCmd = require('../lib/commands/quick.js');
+program
+  .command('quick <task>')
+  .description('Execute a quick task without full research/verification cycle')
+  .option('--no-commit', 'Skip git commit after execution')
+  .option('--verify', 'Run quick verification after execution')
+  .option('-v, --verbose', 'Detailed output')
+  .action(async (task, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await quickCmd(task, { ...options, noKanban: globalOpts.kanban === false });
+  });
+
+// Audit command (milestone verification)
+const auditCmd = require('../lib/commands/audit.js');
+program
+  .command('audit [milestone]')
+  .description('Audit milestone completion and cross-phase integration (uses reis_integrator)')
+  .option('--phase <n>', 'Audit single phase instead of milestone')
+  .option('--strict', 'Fail on any incomplete item or integration issue')
+  .option('-o, --output <file>', 'Custom output location for report')
+  .option('-v, --verbose', 'Detailed verification output')
+  .action(async (milestone, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await auditCmd({ milestone, ...options, noKanban: globalOpts.kanban === false });
+  });
+
+// Complete milestone command
+const completeMilestoneCmd = require('../lib/commands/complete-milestone.js');
+program
+  .command('complete-milestone <milestone>')
+  .description('Archive completed milestone (runs audit first)')
+  .option('--tag', 'Create git tag for milestone (default: true)')
+  .option('--no-tag', 'Skip git tag creation')
+  .option('--no-archive', 'Skip archiving phase plans')
+  .option('--skip-audit', 'Skip audit verification (dangerous)')
+  .option('--force', 'Complete even with audit warnings')
+  .action(async (milestone, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await completeMilestoneCmd({ milestone, ...options, noKanban: globalOpts.kanban === false });
+  });
+
+// Plan gaps command
+const planGapsCmd = require('../lib/commands/plan-gaps.js');
+program
+  .command('plan-gaps [milestone]')
+  .description('Identify and plan for tech debt and gaps before milestone completion')
+  .option('--priority <level>', 'Filter by priority (high|medium|low|all)', 'all')
+  .option('--from-audit <file>', 'Use specific audit file as input')
+  .option('--dry-run', 'Preview gaps without generating plans')
+  .option('--max-plans <n>', 'Maximum number of plans to generate')
+  .option('-v, --verbose', 'Detailed output')
+  .action(async (milestone, options, command) => {
+    const globalOpts = command.parent?.opts() || {};
+    await planGapsCmd({ milestone, ...options, noKanban: globalOpts.kanban === false });
+  });
+
 program
   .command('cycle [phase-or-plan]')
   .description('Complete PLAN → EXECUTE → VERIFY → GATE → DEBUG cycle')
