@@ -337,6 +337,11 @@ cat .planning/PROJECT.md
 cat .planning/REQUIREMENTS.md
 cat .planning/ROADMAP.md
 cat .planning/STATE.md
+
+# Also check for research (see Research Integration section above)
+ls .planning/research/ 2>/dev/null
+cat .planning/research/context.md 2>/dev/null
+cat .planning/research/phase-{N}-research.md 2>/dev/null  # Replace {N} with phase number
 ```
 
 ### Step 2: Understand Phase Goal
