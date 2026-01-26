@@ -1,576 +1,893 @@
-# Complete Cycle Command Guide
+# REIS Cycle Command - Complete Documentation
 
-## Overview
+> **Version:** 2.7.0  
+> **Last Updated:** 2026-01-26
 
-The `reis cycle` command automates the entire REIS workflow: PLAN → EXECUTE → VERIFY → DEBUG → FIX. It's a "power user" feature that handles 90% of development scenarios automatically.
+The `reis cycle` command is the heart of REIS - it orchestrates the complete automated workflow for implementing features phase by phase with quality assurance at every step.
+
+---
 
 ## Table of Contents
 
-- [Quick Start](#quick-start)
-- [How It Works](#how-it-works)
-- [Command Reference](#command-reference)
-- [Options](#options)
-- [State Management](#state-management)
-- [Examples](#examples)
-- [Best Practices](#best-practices)
-- [Troubleshooting](#troubleshooting)
-- [FAQ](#faq)
+1. [Overview](#overview)
+2. [Basic Usage](#basic-usage)
+3. [Workflow Stages](#workflow-stages)
+4. [Command Options](#command-options)
+5. [Cycle Modes](#cycle-modes)
+6. [Subagent Integration](#subagent-integration)
+7. [State Management](#state-management)
+8. [Error Handling & Recovery](#error-handling--recovery)
+9. [Quality Gates](#quality-gates)
+10. [Best Practices](#best-practices)
+11. [Examples](#examples)
+12. [Troubleshooting](#troubleshooting)
 
-## Quick Start
+---
 
-### Basic Usage
+## Overview
 
-```bash
-# Run complete cycle for phase 1
-reis cycle 1
+The REIS cycle automates the complete development workflow:
 
-# Run with auto-fix enabled
-reis cycle 1 --auto-fix
-
-# Run with increased retry attempts
-reis cycle 1 --max-attempts 5
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    REIS CYCLE WORKFLOW                          │
+│                                                                 │
+│   [RESEARCH] → PLAN → REVIEW → EXECUTE → VERIFY → GATE → DEBUG │
+│      (opt)                                                      │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Resume Interrupted Cycle
+### Key Features
+
+- **Automated Orchestration**: Runs all stages in sequence automatically
+- **Quality Assurance**: Built-in verification and quality gates
+- **Error Recovery**: Automatic debugging and fix attempts on failure
+- **State Persistence**: Can resume interrupted cycles
+- **Flexible Modes**: Research, quick, and custom configurations
+- **Parallel Execution**: Subagents run with fresh context for optimal performance
+
+---
+
+## Basic Usage
 
 ```bash
-# Resume from where you left off
+# Run cycle for a specific phase
+reis cycle 1
+
+# Run cycle for a plan file
+reis cycle .planning/phases/feature/PLAN.md
+
+# Resume an interrupted cycle
 reis cycle --resume
 
-# Or just run cycle again (it will prompt to resume)
-reis cycle 1
+# Quick check of cycle status
+reis progress
 ```
 
-## How It Works
+---
 
-The cycle command follows this workflow:
+## Workflow Stages
+
+### Stage 1: RESEARCH (Optional)
+
+**Triggered by:** `--research` or `--full-research` flags
+
+Research prepares context before planning by analyzing the codebase and gathering information.
 
 ```
-┌─────────────┐
-│  PLANNING   │ ─→ Validate plan exists and is correct
-└──────┬──────┘
-       ↓
-┌─────────────┐
-│  EXECUTING  │ ─→ Run all tasks in the plan
-└──────┬──────┘
-       ↓
-┌─────────────┐
-│  VERIFYING  │ ─→ Check completeness and success criteria
-└──────┬──────┘
-       ↓
-    Success? ─→ YES ─→ ✅ COMPLETE
-       ↓
-      NO
-       ↓
-┌─────────────┐
-│  DEBUGGING  │ ─→ Analyze what's missing/broken
-└──────┬──────┘
-       ↓
-┌─────────────┐
-│   FIXING    │ ─→ Apply fix plan
-└──────┬──────┘
-       ↓
-    Loop back to VERIFYING (until success or max attempts)
+┌─────────────────────────────────────────────────────────────────┐
+│                      RESEARCH STAGE                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  --full-research          --research                            │
+│        │                       │                                │
+│        ▼                       ▼                                │
+│  ┌───────────────┐      ┌───────────────┐                       │
+│  │ reis_analyst  │      │  reis_scout   │                       │
+│  │               │      │               │                       │
+│  │ Project-level │      │ Phase-level   │                       │
+│  │ analysis      │      │ research      │                       │
+│  │               │      │               │                       │
+│  │ Output:       │      │ Output:       │                       │
+│  │ context.md    │      │ research.md   │                       │
+│  └───────┬───────┘      └───────┬───────┘                       │
+│          │                      │                               │
+│          └──────────┬───────────┘                               │
+│                     ▼                                           │
+│          ┌───────────────────┐                                  │
+│          │ reis_synthesizer  │ (if multiple outputs)            │
+│          │                   │                                  │
+│          │ Output:           │                                  │
+│          │ synthesis.md      │                                  │
+│          └───────────────────┘                                  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### State Machine
+**Research Subagents:**
 
-The cycle maintains state throughout execution:
+| Subagent | Purpose | Output |
+|----------|---------|--------|
+| `reis_analyst` | Project-wide analysis, architecture review | `context.md` |
+| `reis_scout` | Phase-specific research, requirements analysis | `research.md` |
+| `reis_synthesizer` | Combines multiple research outputs | `synthesis.md` |
 
-- **IDLE**: No cycle running
-- **PLANNING**: Validating plan
-- **EXECUTING**: Running plan tasks
-- **VERIFYING**: Checking completion
-- **DEBUGGING**: Analyzing failures
-- **FIXING**: Applying fixes
-- **COMPLETE**: All done ✅
-- **FAILED**: Unrecoverable error ❌
+**When to Use Research:**
+- New project or unfamiliar codebase
+- Complex features requiring architectural decisions
+- When you need comprehensive context before planning
 
-State is persisted to `.reis/cycle-state.json` and survives interruptions.
+### Stage 2: PLANNING
 
-## Command Reference
+**Subagent:** `reis_planner`
 
-### Basic Syntax
+Creates a detailed execution plan for the phase.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      PLANNING STAGE                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Inputs:                        Output:                         │
+│  ├─ ROADMAP.md                  └─ PLAN.md                      │
+│  ├─ PROJECT.md                     ├─ Tasks with dependencies   │
+│  ├─ research.md (if exists)        ├─ Success criteria          │
+│  └─ context.md (if exists)         ├─ Verification steps        │
+│                                    └─ Rollback procedures       │
+│                                                                 │
+│  Enhanced Feature (v2.7):                                       │
+│  reis_planner now automatically reads research outputs from     │
+│  .planning/research/ directory if they exist, providing         │
+│  better context for plan creation.                              │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Stage 3: REVIEW
+
+**Subagent:** `reis_plan_reviewer`
+
+Validates the plan before execution to catch issues early.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       REVIEW STAGE                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Checks performed:                                              │
+│  ├─ File path validation (do targets exist?)                    │
+│  ├─ Already implemented detection                               │
+│  ├─ Dependency analysis                                         │
+│  ├─ Naming conflict detection                                   │
+│  ├─ Code pattern consistency                                    │
+│  └─ Missing import/utility detection                            │
+│                                                                 │
+│  Options:                                                       │
+│  --skip-review     Skip this stage entirely                     │
+│  --auto-fix        Automatically fix minor issues               │
+│                                                                 │
+│  Output: REVIEW_REPORT.md                                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Stage 4: EXECUTE
+
+**Subagent:** `reis_executor`
+
+Implements the plan by creating/modifying code.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      EXECUTE STAGE                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Execution Flow:                                                │
+│  1. Parse PLAN.md tasks                                         │
+│  2. Resolve task dependencies                                   │
+│  3. Execute tasks in waves (parallel where possible)            │
+│  4. Create atomic git commits per task                          │
+│  5. Update STATE.md progress                                    │
+│                                                                 │
+│  Wave Execution:                                                │
+│  ┌─────────────────────────────────────────────┐                │
+│  │ Wave 1: [Task 1.1] [Task 1.2] [Task 1.3]   │ ← parallel     │
+│  │            ↓          ↓          ↓          │                │
+│  │ Wave 2:        [Task 2.1] [Task 2.2]       │ ← parallel     │
+│  │                   ↓          ↓              │                │
+│  │ Wave 3:              [Task 3.1]            │ ← sequential   │
+│  └─────────────────────────────────────────────┘                │
+│                                                                 │
+│  Options:                                                       │
+│  --dry-run       Preview without executing                      │
+│  --verbose       Show detailed output                           │
+│  --timeout <ms>  Set execution timeout                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Stage 5: VERIFY
+
+**Subagent:** `reis_verifier`
+
+Verifies that execution completed successfully.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       VERIFY STAGE                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Verification Checks:                                           │
+│  ├─ All deliverables exist                                      │
+│  ├─ Tests pass (npm test / configured test command)             │
+│  ├─ No syntax errors                                            │
+│  ├─ Success criteria from PLAN.md met                           │
+│  ├─ Feature completeness (FR4.1)                                │
+│  └─ No stub implementations left                                │
+│                                                                 │
+│  Options:                                                       │
+│  --strict        Fail on any warning                            │
+│  --verbose       Show detailed verification output              │
+│                                                                 │
+│  Output: VERIFICATION_REPORT.md                                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Stage 6: GATE (Quality Gates)
+
+Runs automated quality checks across multiple categories.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     QUALITY GATES STAGE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Gate Categories:                                               │
+│                                                                 │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │
+│  │  SECURITY   │  │   QUALITY   │  │ PERFORMANCE │             │
+│  │             │  │             │  │             │             │
+│  │ • Secrets   │  │ • Linting   │  │ • Bundle    │             │
+│  │ • Vulns     │  │ • Coverage  │  │   size      │             │
+│  │ • Patterns  │  │ • Complexity│  │ • Memory    │             │
+│  │ • Auth      │  │ • Standards │  │ • Speed     │             │
+│  └─────────────┘  └─────────────┘  └─────────────┘             │
+│                                                                 │
+│  ┌─────────────┐                                                │
+│  │ACCESSIBILITY│                                                │
+│  │             │                                                │
+│  │ • ARIA      │                                                │
+│  │ • Contrast  │                                                │
+│  │ • Keyboard  │                                                │
+│  └─────────────┘                                                │
+│                                                                 │
+│  Options:                                                       │
+│  --skip-gates           Skip all gates                          │
+│  --gate-only <category> Run only specific gate                  │
+│                                                                 │
+│  Output: GATE_REPORT.md                                         │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Stage 7: DEBUG (On Failure)
+
+**Subagent:** `reis_debugger`
+
+Activated when verification or gates fail.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       DEBUG STAGE                               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Debugging Flow:                                                │
+│                                                                 │
+│  1. Analyze failure reports                                     │
+│  2. Pattern match against known issues                          │
+│  3. Identify root cause                                         │
+│  4. Design solution                                             │
+│  5. Generate FIX_PLAN.md                                        │
+│                                                                 │
+│  Then:                                                          │
+│  6. reis_executor applies the fix                               │
+│  7. Return to VERIFY stage                                      │
+│  8. Repeat up to max-attempts (default: 3)                      │
+│                                                                 │
+│  ┌─────────────────────────────────────────────┐                │
+│  │                                             │                │
+│  │   FAIL ──► DEBUG ──► FIX ──► VERIFY ──┐    │                │
+│  │              ▲                        │    │                │
+│  │              └────────────────────────┘    │                │
+│  │                  (max 3 attempts)          │                │
+│  │                                             │                │
+│  └─────────────────────────────────────────────┘                │
+│                                                                 │
+│  Options:                                                       │
+│  --max-attempts <n>  Maximum debug/fix cycles (default: 3)      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Command Options
+
+### Full Options Reference
 
 ```bash
 reis cycle [phase-or-plan] [options]
+
+Arguments:
+  phase-or-plan          Phase number or path to PLAN.md file
+
+Research Options:
+  --research             Run reis_scout before planning (phase research)
+  --full-research        Run reis_analyst + reis_scout (project + phase research)
+
+Skip Options:
+  --skip-review          Skip plan review stage
+  --skip-gates           Skip quality gates stage
+  --quick                Skip research, review, AND gates (fast mode)
+
+Gate Options:
+  --gate-only <category> Run only specific gate (security|quality|performance|accessibility)
+
+Recovery Options:
+  --resume               Resume an interrupted cycle from last state
+  --max-attempts <n>     Maximum debug/fix attempts (default: 3)
+
+Auto-fix Options:
+  --auto-fix             Automatically fix minor plan issues during review
+
+Output Options:
+  -v, --verbose          Show detailed output
+  --dry-run              Preview cycle without executing
+  --timeout <ms>         Set stage timeout in milliseconds
+
+Global Options:
+  --no-kanban            Disable kanban board display
 ```
 
-### Arguments
+---
 
-- `phase-or-plan`: (Optional) Phase number (e.g., `1`) or path to PLAN.md file
-  - If omitted and resumable state exists, prompts to resume
-  - Examples: `reis cycle 1`, `reis cycle .planning/phase-2.PLAN.md`
+## Cycle Modes
 
-### Exit Codes
-
-- `0`: Cycle completed successfully
-- `1`: Cycle failed (see error message for details)
-- `130`: User interrupted (Ctrl+C)
-
-## Options
-
-### `--max-attempts <n>`
-
-Maximum number of debug/fix attempts before giving up.
+### 1. Default Mode (Full Cycle)
 
 ```bash
-reis cycle 1 --max-attempts 5
+reis cycle 1
 ```
 
-**Default**: 3  
-**Range**: 1-10  
-**Use when**: You expect multiple iterations to fix complex issues
+```
+PLAN → REVIEW → EXECUTE → VERIFY → GATE → (DEBUG) → COMPLETE
+```
 
-### `--auto-fix`
+**Use when:** Standard development, all quality checks needed.
 
-Automatically apply fixes without user confirmation.
+### 2. Research Mode
 
 ```bash
-reis cycle 1 --auto-fix
+# Phase research only
+reis cycle 1 --research
+
+# Full research (project + phase)
+reis cycle 1 --full-research
 ```
 
-**Default**: false  
-**Use when**: You trust the debugger and want unattended execution
+```
+RESEARCH → PLAN → REVIEW → EXECUTE → VERIFY → GATE → (DEBUG) → COMPLETE
+```
 
-### `--resume`
+**Use when:**
+- Starting a new project
+- Complex features requiring architectural decisions
+- Unfamiliar codebase
+- When you need comprehensive context
 
-Resume an interrupted cycle from its last state.
+### 3. Quick Mode
+
+```bash
+reis cycle 1 --quick
+```
+
+```
+PLAN → EXECUTE → VERIFY → (DEBUG) → COMPLETE
+```
+
+**Skips:** Research, Review, Gates
+
+**Use when:**
+- Small, low-risk changes
+- Bug fixes with clear solutions
+- Time-sensitive updates
+- Changes you're confident about
+
+⚠️ **Warning:** Quick mode reduces safety checks. Use for small, well-understood changes only.
+
+### 4. Resume Mode
 
 ```bash
 reis cycle --resume
 ```
 
-**Default**: false  
-**Use when**: Cycle was interrupted (Ctrl+C, crash, etc.)
+Continues an interrupted cycle from where it stopped.
 
-### `--continue-on-fail`
+**Use when:**
+- Cycle was interrupted (timeout, crash, manual stop)
+- Need to continue from a specific stage
+- After fixing external issues
 
-Continue cycle even if verification fails.
-
-```bash
-reis cycle 1 --continue-on-fail
-```
-
-**Default**: false  
-**Use when**: You want to proceed despite incomplete features (not recommended)
-
-### `-v, --verbose`
-
-Show detailed output at each step.
+### 5. Custom Mode
 
 ```bash
-reis cycle 1 --verbose
+# Skip specific stages
+reis cycle 1 --skip-review --skip-gates
+
+# Focus on specific gate
+reis cycle 1 --gate-only security
+
+# Research + skip review
+reis cycle 1 --research --skip-review
 ```
 
-**Default**: false  
-**Use when**: Debugging cycle issues or wanting full transparency
+---
+
+## Subagent Integration
+
+### Subagents Used in Cycle
+
+| Stage | Subagent | Fresh Context | Purpose |
+|-------|----------|---------------|---------|
+| Research | `reis_analyst` | ✅ 200K tokens | Project-wide analysis |
+| Research | `reis_scout` | ✅ 200K tokens | Phase-specific research |
+| Research | `reis_synthesizer` | ✅ 200K tokens | Combine research outputs |
+| Planning | `reis_planner` | ✅ 200K tokens | Create execution plan |
+| Review | `reis_plan_reviewer` | ✅ 200K tokens | Validate plan |
+| Execute | `reis_executor` | ✅ 200K tokens | Implement changes |
+| Verify | `reis_verifier` | ✅ 200K tokens | Verify completion |
+| Debug | `reis_debugger` | ✅ 200K tokens | Analyze failures |
+
+### Subagents NOT in Cycle
+
+| Subagent | Purpose | How to Use |
+|----------|---------|------------|
+| `reis_integrator` | Cross-phase wiring verification | `reis audit` command |
+| `reis_architect` | Roadmap creation | `reis roadmap` or manual |
+
+---
 
 ## State Management
 
-### State File
+### Cycle States
 
-Cycle state is saved to `.reis/cycle-state.json`:
+```
+RESEARCHING → PLANNING → REVIEWING → EXECUTING → VERIFYING → GATING → COMPLETE
+                                         │           │
+                                         └─── DEBUGGING ───► FIXING ───┘
+                                                     │
+                                                     └───► FAILED (after max attempts)
+```
 
-```json
-{
-  "phase": 1,
-  "planPath": ".planning/phase-1.PLAN.md",
-  "currentState": "VERIFYING",
-  "startTime": "2026-01-21T20:00:00Z",
-  "attempts": 1,
-  "maxAttempts": 3,
-  "options": {
-    "autoFix": false,
-    "verbose": false
+### State File Location
+
+```
+.planning/STATE.md
+```
+
+### State Tracking
+
+The cycle automatically tracks:
+- Current stage
+- Completed stages
+- Failed attempts
+- Timestamps
+- Wave progress (for parallel execution)
+
+### Viewing State
+
+```bash
+# View current state
+reis progress
+
+# View detailed state
+reis progress --verbose
+```
+
+---
+
+## Error Handling & Recovery
+
+### Automatic Recovery
+
+The cycle includes automatic error recovery:
+
+1. **Stage Failure**: Moves to DEBUG stage
+2. **Debug Analysis**: `reis_debugger` analyzes the failure
+3. **Fix Generation**: Creates `FIX_PLAN.md`
+4. **Fix Application**: `reis_executor` applies the fix
+5. **Re-verification**: Returns to VERIFY stage
+6. **Repeat**: Up to `max-attempts` (default: 3)
+
+### Manual Recovery
+
+```bash
+# Resume from last state
+reis cycle --resume
+
+# Check what went wrong
+reis debug --input .planning/VERIFICATION_REPORT.md
+
+# Fix manually and re-verify
+reis verify
+```
+
+### Common Failure Scenarios
+
+| Scenario | Auto-Recovery | Manual Action |
+|----------|---------------|---------------|
+| Test failure | ✅ reis_debugger analyzes | Review failing tests |
+| Syntax error | ✅ reis_debugger fixes | Check generated code |
+| Gate failure | ✅ Attempts fix | Review gate report |
+| Timeout | ❌ | Resume with `--resume` |
+| Network error | ❌ | Retry the cycle |
+| Max attempts reached | ❌ | Manual debugging needed |
+
+---
+
+## Quality Gates
+
+### Gate Categories
+
+#### Security Gate
+- Secret detection (API keys, passwords)
+- Vulnerability scanning
+- Security pattern violations
+- Authentication issues
+
+#### Quality Gate
+- ESLint/linting violations
+- Code coverage thresholds
+- Complexity metrics
+- Coding standards
+
+#### Performance Gate
+- Bundle size limits
+- Memory usage
+- Response time benchmarks
+
+#### Accessibility Gate
+- ARIA compliance
+- Color contrast
+- Keyboard navigation
+- Screen reader compatibility
+
+### Configuring Gates
+
+In `reis.config.js`:
+
+```javascript
+module.exports = {
+  gates: {
+    security: {
+      enabled: true,
+      failOn: 'error',  // 'error', 'warning', or 'never'
+    },
+    quality: {
+      enabled: true,
+      coverage: 80,     // Minimum coverage percentage
+      complexity: 10,   // Maximum cyclomatic complexity
+    },
+    performance: {
+      enabled: true,
+      maxBundleSize: '500kb',
+    },
+    accessibility: {
+      enabled: false,   // Disable if not applicable
+    },
   },
-  "history": [
-    {
-      "state": "PLANNING",
-      "timestamp": "2026-01-21T20:00:00Z",
-      "duration": 5000,
-      "result": "success"
-    }
-  ],
-  "completeness": 80
-}
+};
 ```
 
-### Resume Capability
-
-If a cycle is interrupted, state is preserved:
-
-1. **Ctrl+C**: Gracefully saves state and exits
-2. **Crash**: Last saved state is preserved
-3. **Next run**: Prompts to resume or start fresh
+### Running Specific Gates
 
 ```bash
-$ reis cycle 1
-⚠️  Interrupted cycle detected
-   Phase: 1
-   State: VERIFYING
-   Attempts: 1/3
+# Run only security gate
+reis cycle 1 --gate-only security
 
-Resume cycle? (Y/n): y
+# Skip all gates
+reis cycle 1 --skip-gates
 
-🔄 Resuming cycle from VERIFYING
+# Run gates manually
+reis gate
+reis gate --category security
 ```
 
-### State Cleanup
-
-State is automatically cleared on:
-- Successful completion
-- User starting a new cycle (with confirmation)
-
-To manually clear state:
-```bash
-rm .reis/cycle-state.json
-```
-
-## Examples
-
-### Example 1: Simple Phase Execution
-
-```bash
-$ reis cycle 1
-
-╔═══════════════════════════════════════════════════════════╗
-║  🔄 REIS Complete Cycle - Phase 1                         ║
-╚═══════════════════════════════════════════════════════════╝
-
-⏳ Step 1/4: Planning
-   ✓ Plan validated
-
-⚙️  Step 2/4: Executing
-   ✓ Plan executed (5 tasks)
-
-✓ Step 3/4: Verifying
-   ✓ Verification passed (100% complete)
-
-╔═══════════════════════════════════════════════════════════╗
-║  ✅ Cycle Complete!                                       ║
-╚═══════════════════════════════════════════════════════════╝
-
-Duration: 8m 30s
-Attempts: 0
-Next: reis cycle 2
-```
-
-### Example 2: Cycle with Debug/Fix Loop
-
-```bash
-$ reis cycle 2
-
-╔═══════════════════════════════════════════════════════════╗
-║  🔄 REIS Complete Cycle - Phase 2                         ║
-╚═══════════════════════════════════════════════════════════╝
-
-⏳ Step 1/4: Planning
-   ✓ Plan validated
-
-⚙️  Step 2/4: Executing
-   ✓ Plan executed (8 tasks)
-
-✓ Step 3/4: Verifying
-   ❌ Verification failed (75% complete)
-   
-   Issues found:
-   - Missing: src/auth/password-reset.js
-   - Missing: test/auth/password-reset.test.js
-   - Feature completeness: 6/8 tasks
-
-🔍 Step 4/4: Debugging
-   ⏳ Analyzing failures...
-   ✓ Debug report: .planning/debug/DEBUG_REPORT.md
-   ✓ Fix plan: .planning/debug/FIX_PLAN.md
-   
-   Apply fix? (Y/n): y
-   
-   ⏳ Applying fix...
-   ✓ Fix applied
-
-Re-verifying...
-   ✓ Verification passed (100% complete)
-
-╔═══════════════════════════════════════════════════════════╗
-║  ✅ Cycle Complete!                                       ║
-╚═══════════════════════════════════════════════════════════╝
-
-Duration: 15m 45s
-Attempts: 1
-Next: reis cycle 3
-```
-
-### Example 3: Auto-Fix Mode
-
-```bash
-$ reis cycle 2 --auto-fix
-
-# Same flow but skips "Apply fix? (Y/n)" prompts
-# Automatically applies all fixes
-```
-
-### Example 4: Resume After Interruption
-
-```bash
-$ reis cycle 3
-# ... working ...
-^C  # User presses Ctrl+C
-
-⚠️  Cycle interrupted by user
-State saved. Resume with: reis cycle --resume
-
-$ reis cycle --resume
-
-🔄 Resuming cycle from VERIFYING
-⏳ Step 3/4: Verifying
-   ✓ Verification passed (100% complete)
-...
-```
-
-### Example 5: Custom Plan Path
-
-```bash
-$ reis cycle .planning/hotfix/fix-auth.PLAN.md
-
-╔═══════════════════════════════════════════════════════════╗
-║  🔄 REIS Complete Cycle - Custom Plan                     ║
-╚═══════════════════════════════════════════════════════════╝
-...
-```
-
-### Example 6: Max Attempts Reached
-
-```bash
-$ reis cycle 2 --max-attempts 2
-
-...
-⏳ Step 3/4: Verifying (Attempt 1)
-   ❌ Verification failed (80% complete)
-
-🔍 Debugging...
-🔧 Applying fix...
-
-Re-verifying...
-   ❌ Verification failed (85% complete)
-
-🔍 Debugging...
-🔧 Applying fix...
-
-Re-verifying...
-   ❌ Verification failed (90% complete)
-
-❌ Max attempts reached (2)
-
-Options:
-  1. Review verification output
-  2. Fix issues manually
-  3. Increase max attempts: reis cycle 2 --max-attempts 5
-  4. Skip verification: reis cycle 2 --continue-on-fail
-```
+---
 
 ## Best Practices
 
-### 1. Start with Default Settings
+### 1. Start with Research for New Projects
 
 ```bash
-# Try default first
+# First phase of a new project
+reis cycle 1 --full-research
+```
+
+### 2. Use Quick Mode Sparingly
+
+```bash
+# Only for small, confident changes
+reis cycle 1 --quick
+```
+
+### 3. Don't Skip Review for Critical Features
+
+```bash
+# Keep review for important code
+reis cycle 1  # Default includes review
+```
+
+### 4. Set Appropriate Timeouts for Large Features
+
+```bash
+# Large feature with many files
+reis cycle 1 --timeout 600000  # 10 minutes
+```
+
+### 5. Use Resume Instead of Restarting
+
+```bash
+# If interrupted, don't start over
+reis cycle --resume  # Continues from last state
+```
+
+### 6. Review Gate Reports
+
+```bash
+# Check gate output before dismissing failures
+cat .planning/GATE_REPORT.md
+```
+
+### 7. Run Audit at Milestones
+
+```bash
+# Before completing a milestone
+reis audit v1.0
+reis complete-milestone v1.0
+```
+
+---
+
+## Examples
+
+### Example 1: Standard Feature Implementation
+
+```bash
+# Plan and execute phase 1
 reis cycle 1
 
-# Only adjust if needed
-reis cycle 1 --max-attempts 5
+# Output:
+# ✓ Planning complete → PLAN.md
+# ✓ Review passed → REVIEW_REPORT.md
+# ✓ Execution complete → 5 files changed, 3 commits
+# ✓ Verification passed → VERIFICATION_REPORT.md
+# ✓ Gates passed → GATE_REPORT.md
+# ✓ Phase 1 complete!
 ```
 
-### 2. Use Verbose Mode for First Run
+### Example 2: Complex Feature with Research
 
 ```bash
-# See what's happening
-reis cycle 1 --verbose
+# Research first for complex authentication feature
+reis cycle 3 --full-research
+
+# Output:
+# ✓ Project analysis complete → context.md
+# ✓ Phase research complete → research.md
+# ✓ Planning complete (using research) → PLAN.md
+# ... rest of cycle
 ```
 
-### 3. Review Debug Reports
+### Example 3: Quick Bug Fix
 
-When verification fails:
 ```bash
-# Check what went wrong
-cat .planning/debug/DEBUG_REPORT.md
+# Fast fix for a simple bug
+reis cycle 5 --quick
 
-# Review fix plan before applying
-cat .planning/debug/FIX_PLAN.md
+# Output:
+# ✓ Planning complete → PLAN.md
+# ✓ Execution complete → 1 file changed
+# ✓ Verification passed
+# ✓ Phase 5 complete!
 ```
 
-### 4. Handle Interruptions Gracefully
+### Example 4: Resuming After Interruption
 
 ```bash
-# Don't worry about Ctrl+C
-# State is saved automatically
-
-# Just resume later
+# Cycle was interrupted during execution
 reis cycle --resume
+
+# Output:
+# ℹ Resuming from EXECUTING stage
+# ✓ Execution complete → 3 files remaining
+# ✓ Verification passed
+# ✓ Gates passed
+# ✓ Phase complete!
 ```
 
-### 5. Trust the Process
-
-- Let the cycle complete without interference
-- Review outputs after completion
-- Trust the debugger's fix plans (90%+ accuracy)
-
-### 6. Use Auto-Fix for Routine Tasks
+### Example 5: Custom Gate Configuration
 
 ```bash
-# For well-tested phases
-reis cycle 1 --auto-fix
+# Only run security checks for sensitive code
+reis cycle 2 --skip-review --gate-only security
 
-# For complex/new phases, review fixes manually
-reis cycle 2
+# Output:
+# ✓ Planning complete
+# ✓ Execution complete
+# ✓ Verification passed
+# ✓ Security gate passed
+# ✓ Phase 2 complete!
 ```
+
+### Example 6: Debugging a Failed Cycle
+
+```bash
+# Cycle failed at verification
+reis cycle --resume
+
+# Output:
+# ℹ Resuming from DEBUGGING stage
+# ✓ Debug analysis complete → FIX_PLAN.md
+# ✓ Fix applied
+# ✓ Verification passed (attempt 2/3)
+# ✓ Gates passed
+# ✓ Phase complete!
+```
+
+---
 
 ## Troubleshooting
 
-### Plan Not Found
+### Issue: Cycle Stuck at Planning
 
-**Error:**
-```
-Error: Plan not found: .planning/phase-1.PLAN.md
-```
-
-**Solution:**
-```bash
-reis plan 1
-reis cycle 1
-```
-
-### Invalid Plan Format
-
-**Error:**
-```
-Error: Plan does not contain any tasks
-```
-
-**Solution:**
-- Ensure plan follows REIS PLAN.md format
-- Check for `## Task` or `<task>` sections
-
-### Verification Keeps Failing
-
-**Symptoms:**
-- Cycle reaches max attempts
-- Completeness stuck at <100%
+**Symptoms:** Planning stage takes too long or hangs
 
 **Solutions:**
-1. Review debug report:
-   ```bash
-   cat .planning/debug/DEBUG_REPORT.md
-   ```
+1. Check if ROADMAP.md exists and is valid
+2. Ensure phase number is correct
+3. Try with verbose: `reis cycle 1 --verbose`
+4. Check available disk space
 
-2. Fix manually:
-   ```bash
-   # Fix issues
-   # Then verify
-   reis verify .planning/phase-1.PLAN.md
-   ```
+### Issue: Review Finds Too Many Issues
 
-3. Increase attempts:
-   ```bash
-   reis cycle 1 --max-attempts 5
-   ```
+**Symptoms:** Review stage reports many warnings/errors
 
-### State Corruption
+**Solutions:**
+1. Review REVIEW_REPORT.md for details
+2. Use `--auto-fix` for minor issues: `reis cycle 1 --auto-fix`
+3. Manually fix critical issues and resume
+4. For complex issues, use `reis plan-gaps` to create fix plans
 
-**Symptoms:**
-- "Invalid state file" errors
-- Resume doesn't work
+### Issue: Verification Failing Repeatedly
 
-**Solution:**
-```bash
-# Clear corrupted state
-rm .reis/cycle-state.json
+**Symptoms:** Cycle keeps looping through DEBUG/FIX/VERIFY
 
-# Start fresh
-reis cycle 1
-```
+**Solutions:**
+1. Check VERIFICATION_REPORT.md for root cause
+2. Run `reis debug` manually for detailed analysis
+3. Check if tests require external services
+4. Review `--max-attempts` setting
 
-### Execution Hangs
+### Issue: Gates Blocking Completion
 
-**Symptoms:**
-- Cycle appears stuck
-- No progress for >5 minutes
+**Symptoms:** Quality gates failing even for valid code
 
-**Solution:**
-1. Press Ctrl+C to interrupt
-2. Check logs/outputs
-3. Resume with verbose:
-   ```bash
-   reis cycle --resume --verbose
-   ```
+**Solutions:**
+1. Review GATE_REPORT.md for specific failures
+2. Adjust gate thresholds in reis.config.js
+3. Use `--gate-only <category>` to isolate issues
+4. Temporarily use `--skip-gates` (not recommended for production)
 
-## FAQ
+### Issue: Resume Not Working
 
-### Q: How is this different from running commands manually?
+**Symptoms:** `--resume` starts from beginning
 
-**A:** Cycle automates the entire workflow including error recovery. Manual execution requires you to run plan → execute → verify → debug → fix → verify in sequence, handling errors yourself.
+**Solutions:**
+1. Check if STATE.md exists in .planning/
+2. Verify STATE.md isn't corrupted
+3. Check file permissions
+4. Try `reis progress` to see current state
 
-### Q: Can I use cycle for all phases?
+### Issue: Research Not Being Used
 
-**A:** Yes! Use it for any phase or custom plan.
+**Symptoms:** Planner ignoring research outputs
 
-### Q: What happens if I run cycle twice on the same phase?
-
-**A:** It will prompt to resume the existing cycle or start fresh.
-
-### Q: Is state shared between phases?
-
-**A:** No. Each cycle has its own state. Running `reis cycle 2` doesn't affect `reis cycle 1` state.
-
-### Q: Can I run multiple cycles in parallel?
-
-**A:** No. Only one cycle can run at a time. State would conflict.
-
-### Q: How do I skip verification?
-
-**A:** Use `--continue-on-fail`:
-```bash
-reis cycle 1 --continue-on-fail
-```
-(Not recommended except for testing)
-
-### Q: Can I customize the debug/fix behavior?
-
-**A:** Not directly, but you can:
-- Review fix plans before applying (default)
-- Use `--auto-fix` for automatic application
-- Adjust `--max-attempts` to control retry count
-
-### Q: What if the fix plan is wrong?
-
-**A:** 
-1. Decline the fix (type 'n')
-2. Fix manually
-3. Resume cycle
-4. Or run verify/debug separately
-
-### Q: Does cycle work with custom plans?
-
-**A:** Yes! Pass the plan path:
-```bash
-reis cycle ./my-custom-plan.PLAN.md
-```
-
-### Q: How much time does cycle save?
-
-**A:** Typically 30-50% compared to manual execution, especially when dealing with verification failures.
+**Solutions:**
+1. Ensure research files exist in `.planning/research/`
+2. Check file names match expected pattern
+3. Verify research completed successfully
+4. Use `--verbose` to see if planner detects research
 
 ---
 
-## Related Documentation
+## Related Commands
 
-- [CYCLE_WORKFLOW.md](CYCLE_WORKFLOW.md) - State machine design
-- [VERIFICATION.md](VERIFICATION.md) - Verification guide
-- [DEBUG.md](DEBUG.md) - Debug command guide
-- [README.md](../README.md) - Main documentation
+| Command | Description |
+|---------|-------------|
+| `reis plan` | Create plan without executing |
+| `reis execute` | Execute without verification |
+| `reis verify` | Verify without full cycle |
+| `reis debug` | Debug specific issues |
+| `reis gate` | Run quality gates only |
+| `reis quick <task>` | Quick one-off task |
+| `reis audit` | Milestone integration check |
+| `reis progress` | View current cycle state |
+| `reis checkpoint` | Create/manage checkpoints |
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** 2026-01-21  
-**Command:** `reis cycle`
+## Configuration Reference
+
+### reis.config.js Options for Cycle
+
+```javascript
+module.exports = {
+  // Cycle behavior
+  cycle: {
+    maxAttempts: 3,           // Max debug/fix attempts
+    autoCommit: true,         // Auto-commit after tasks
+    parallelExecution: true,  // Enable wave parallelism
+    timeout: 300000,          // Default timeout (5 min)
+  },
+  
+  // Research settings
+  research: {
+    autoContext: true,        // Auto-create context.md
+    synthesize: true,         // Auto-synthesize multiple outputs
+  },
+  
+  // Review settings
+  review: {
+    autoFix: false,           // Auto-fix minor issues
+    strictMode: false,        // Fail on warnings
+  },
+  
+  // Gate settings
+  gates: {
+    security: { enabled: true },
+    quality: { enabled: true, coverage: 80 },
+    performance: { enabled: true },
+    accessibility: { enabled: false },
+  },
+  
+  // Subagent settings
+  subagents: {
+    timeout: 300000,          // Subagent timeout
+    maxParallel: 4,           // Max parallel subagents
+  },
+};
+```
+
+---
+
+## Version History
+
+| Version | Changes |
+|---------|---------|
+| 2.7.0 | Added `--research`, `--full-research`, `--quick` flags |
+| 2.7.0 | Enhanced reis_planner to read research outputs |
+| 2.7.0 | Added RESEARCHING state to cycle |
+| 2.6.0 | Added quality gates integration |
+| 2.5.0 | Added wave-based parallel execution |
+| 2.4.0 | Added `--resume` capability |
+| 2.0.0 | Initial cycle command |
+
+---
+
+*For more information, see:*
+- [REIS Documentation](../README.md)
+- [Quality Gates Guide](./QUALITY_GATES.md)
+- [Parallel Execution](./PARALLEL_EXECUTION.md)
+- [Verification Patterns](./verification-patterns.md)
