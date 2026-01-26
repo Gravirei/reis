@@ -53,9 +53,9 @@ describe('Quality Gates', function() {
 
     it('should mark result as error', function() {
       const result = new GateResult('test', 'test');
-      result.error('Execution failed', new Error('test error'));
+      result.setError('Execution failed', new Error('test error'));
       assert.strictEqual(result.status, 'error');
-      assert.strictEqual(result.error, 'test error');
+      assert.strictEqual(result.errorDetails, 'test error');
     });
 
     it('should convert to JSON', function() {
