@@ -157,7 +157,11 @@ program
 program
   .command('execute [phase]')
   .description('Execute a phase')
-  .option('--dry-run', 'Show prompt without executing')
+  .option('--parallel', 'Enable parallel wave execution')
+  .option('--max-concurrent <n>', 'Maximum concurrent waves (default: 4)', '4')
+  .option('--conflict-strategy <strategy>', 'Conflict resolution: fail|queue|branch|merge (default: fail)', 'fail')
+  .option('--show-graph', 'Display dependency graph before execution')
+  .option('--dry-run', 'Show execution plan without running')
   .option('-v, --verbose', 'Show detailed output')
   .option('--no-commit', 'Skip auto-commit')
   .option('--timeout <ms>', 'Execution timeout in milliseconds')
