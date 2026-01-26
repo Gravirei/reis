@@ -2394,6 +2394,77 @@ fi
 **Recommendation:** Manual review of documentation changes recommended
 ```
 
+## Quality Gates Integration
+
+### Overview
+
+After successful verification, the REIS cycle can optionally run Quality Gates to check:
+- **Security**: Vulnerabilities, secrets, license compliance
+- **Quality**: Test coverage, linting, code complexity
+- **Performance**: Bundle size, build time, dependencies
+- **Accessibility**: WCAG compliance, ARIA usage
+
+### When Gates Run
+
+1. **In `reis cycle`**: Gates run automatically after verification passes (unless `--skip-gates`)
+2. **In `reis verify --with-gates`**: Gates run after verification
+3. **Configured via `reis.config.js`**: `gates.runOn: ['cycle', 'verify']`
+
+### Verifier Responsibilities
+
+As the verifier, you should:
+
+1. **Complete verification first** - Gates only run after successful verification
+2. **Note gate-relevant issues** - If you notice potential gate failures during verification, mention them:
+   - Missing test coverage (quality gate may fail)
+   - Hardcoded secrets or API keys (security gate will fail)
+   - License issues in dependencies (security gate may fail)
+   - Performance concerns (if performance gates enabled)
+
+3. **Recommend gate checks** - In your verification report, suggest:
+   ```
+   💡 Recommended: Run `reis gate` to check security and quality before merging.
+   ```
+
+4. **Don't duplicate gate checks** - Focus on feature completeness, not gate criteria. Gates handle:
+   - `npm audit` for vulnerabilities
+   - Lint errors/warnings
+   - Test coverage percentages
+   - License scanning
+
+### Verification Report Gate Section
+
+Include a brief gate readiness note in your report:
+
+```markdown
+## Gate Readiness
+
+- [ ] No hardcoded secrets detected
+- [ ] Dependencies appear up-to-date
+- [ ] Code follows project lint rules
+- [ ] Test files exist for new features
+
+💡 Run `reis verify --with-gates` or `reis gate` for full quality gate check.
+```
+
+### Handling Gate Failures in Cycle
+
+If the cycle enters debug phase due to gate failures (not verification failures):
+- The debug context will include `[GATE:category]` prefixed issues
+- Focus fix recommendations on the specific gate category that failed
+- Common fixes:
+  - Security: Update vulnerable deps, remove secrets, fix license issues
+  - Quality: Add tests, fix lint errors, reduce complexity
+  - Performance: Optimize bundle, reduce dependencies
+  - Accessibility: Add ARIA labels, fix contrast issues
+
+### Gate Integration Notes
+
+When outputting verification results:
+- If verification passes, mention: "Ready for quality gates check"
+- If you notice potential gate issues, flag them as advisory warnings
+- Don't fail verification for gate-only concerns (let gates handle those)
+
 ## Examples
 
 ### Example 1: Passing Verification
@@ -2500,9 +2571,27 @@ No issues found.
 ✅ Inline documentation present
 ✅ API docs updated
 
+## Gate Readiness Assessment
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| No hardcoded secrets | ✅ | No .env values or API keys in code |
+| Dependencies secure | ⚠️ | Run `npm audit` to verify |
+| Lint compliance | ✅ | No lint errors in changed files |
+| Test coverage | ✅ | New features have test files |
+
+### Recommendations
+- Run `reis gate security` before merging
+- Consider enabling quality gates in cycle: `gates.runOn: ['cycle']`
+
+---
+*Gate assessment is advisory. Run `reis gate` for authoritative results.*
+
 ## Recommendations
 
 No issues found. Ready to proceed to next plan.
+
+💡 Ready for quality gates check. Run `reis verify --with-gates` or `reis gate` for full assessment.
 
 ## Files Verified
 
@@ -2533,6 +2622,7 @@ No issues found. Ready to proceed to next plan.
 📄 Report: .planning/verification/phase-1/1-1-auth.VERIFICATION_REPORT.md
 
 ✨ Next: Ready for phase-1/1-2-profile
+🚦 Ready for quality gates check
 ```
 
 ### Example 2: Test Execution Scenarios
