@@ -194,6 +194,8 @@ program
   .option('--dry-run', 'Show prompt without executing')
   .option('-v, --verbose', 'Show detailed verification output')
   .option('-s, --strict', 'Fail on warnings')
+  .option('--with-gates', 'Run quality gates after verification')
+  .option('--skip-gates', 'Skip gates even if configured')
   .option('--timeout <ms>', 'Verification timeout in milliseconds')
   .action(async (target, options, command) => {
     const globalOpts = command.parent?.opts() || {};
@@ -319,11 +321,13 @@ program
 
 program
   .command('cycle [phase-or-plan]')
-  .description('Complete PLAN → EXECUTE → VERIFY → DEBUG cycle')
+  .description('Complete PLAN → EXECUTE → VERIFY → GATE → DEBUG cycle')
   .option('--max-attempts <n>', 'Maximum debug/fix attempts', '3')
   .option('--auto-fix', 'Apply fixes without confirmation')
   .option('--resume', 'Resume interrupted cycle')
   .option('--continue-on-fail', 'Continue even if verification fails')
+  .option('--skip-gates', 'Skip quality gates phase')
+  .option('--gate-only <category>', 'Run only specific gate category (security|quality|performance|accessibility)')
   .option('-v, --verbose', 'Detailed output')
   .action(async (phaseOrPlan, options, command) => {
     const globalOpts = command.parent?.opts() || {};
