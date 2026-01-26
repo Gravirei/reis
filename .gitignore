@@ -35,7 +35,7 @@ package/
 
 # Build and development docs (not for distribution)
 PUBLISHING_GUIDE.md
-REIS_BUILD_SUMMARY.md
+*_BUILD_SUMMARY.md
 VERIFICATION_REPORT.md
 
 # Temporary files
