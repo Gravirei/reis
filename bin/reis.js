@@ -79,6 +79,7 @@ const cycleCmd = require('../lib/commands/cycle.js');
 const decisionsCmd = require('../lib/commands/decisions.js');
 const treeCmd = require('../lib/commands/tree.js');
 const kanbanCmd = require('../lib/commands/kanban.js');
+const { reviewCommand } = require('../lib/commands/review.js');
 
 // Check for --help or -h flag before Commander parses
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -200,6 +201,18 @@ program
   .action(async (target, options, command) => {
     const globalOpts = command.parent?.opts() || {};
     await verifyCmd(target, { ...options, noKanban: globalOpts.kanban === false });
+  });
+
+// Review command
+program
+  .command('review [target]')
+  .description('Review plans against codebase before execution')
+  .option('--auto-fix', 'Automatically fix simple issues')
+  .option('--strict', 'Fail on warnings')
+  .option('--report [file]', 'Save review report to file')
+  .option('-v, --verbose', 'Show detailed output')
+  .action(async (target, options) => {
+    await reviewCommand(target, options);
   });
 
 // Progress Commands
@@ -326,6 +339,7 @@ program
   .option('--auto-fix', 'Apply fixes without confirmation')
   .option('--resume', 'Resume interrupted cycle')
   .option('--continue-on-fail', 'Continue even if verification fails')
+  .option('--skip-review', 'Skip plan review phase')
   .option('--skip-gates', 'Skip quality gates phase')
   .option('--gate-only <category>', 'Run only specific gate category (security|quality|performance|accessibility)')
   .option('-v, --verbose', 'Detailed output')
