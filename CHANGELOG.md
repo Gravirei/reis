@@ -1,5 +1,104 @@
 # Changelog
 
+## [2.6.0] - 2026-01-26
+
+### 🎯 Major Features
+
+#### Plan Reviewer Subagent (`reis_plan_reviewer`)
+A new subagent that validates REIS plans against your codebase BEFORE execution, preventing wasted effort from:
+- Tasks for things already implemented
+- Wrong file paths
+- Missing dependencies
+- Function signature mismatches
+
+**New REIS Cycle:**
+```
+PLAN → REVIEW → EXECUTE → VERIFY → GATE → DEBUG
+```
+
+#### Quality Gates Integration
+Quality gates now run automatically in the REIS cycle after verification.
+
+**Gate Categories:**
+- 🔒 Security: Vulnerabilities, secrets detection, license compliance
+- 📊 Quality: Code coverage, lint errors, complexity analysis
+- ⚡ Performance: Bundle size, dependencies (optional)
+- ♿ Accessibility: WCAG compliance (optional)
+
+#### Parallel Wave Execution
+Execute independent waves concurrently for faster phase completion.
+
+### ✨ New Commands
+
+```bash
+# Plan Review
+reis review                     # Review all plans in .planning/
+reis review <plan-path>         # Review specific plan
+reis review --auto-fix          # Auto-fix simple issues
+reis review --strict            # Fail on warnings
+
+# Quality Gates
+reis gate                       # Run all configured gates
+reis gate security              # Run security gates only
+reis gate quality               # Run quality gates only
+reis gate status                # Show gate configuration
+
+# Parallel Execution
+reis execute <phase> --parallel            # Enable parallel waves
+reis execute <phase> --max-concurrent 4    # Limit concurrent waves
+reis visualize --dependencies              # Show wave dependency graph
+```
+
+### 🔧 Cycle Command Updates
+
+```bash
+reis cycle <phase>              # Full cycle with review + gates
+reis cycle --skip-review        # Skip plan review phase
+reis cycle --skip-gates         # Skip quality gates phase
+reis cycle --auto-fix           # Auto-fix plan issues during review
+```
+
+### 📁 New Files
+
+**Plan Reviewer:**
+- `lib/utils/code-analyzer.js` - Codebase analysis utilities
+- `lib/utils/plan-reviewer.js` - Plan validation engine
+- `lib/commands/review.js` - Review CLI command
+- `subagents/reis_plan_reviewer.md` - Subagent definition
+- `docs/PLAN_REVIEW.md` - Documentation
+
+**Quality Gates:**
+- `lib/utils/gate-runner.js` - Gate execution engine
+- `lib/utils/gate-reporter.js` - Gate result reporting
+- `lib/utils/gates/security-gate.js` - Security checks
+- `lib/utils/gates/quality-gate.js` - Quality checks
+- `lib/utils/gates/performance-gate.js` - Performance checks
+- `lib/utils/gates/accessibility-gate.js` - Accessibility checks
+- `lib/commands/gate.js` - Gate CLI command
+- `docs/QUALITY_GATES.md` - Documentation
+
+**Parallel Execution:**
+- `lib/utils/wave-dependency-graph.js` - DAG for wave dependencies
+- `lib/utils/dependency-parser.js` - Parse @dependencies from PLAN.md
+- `lib/utils/parallel-wave-scheduler.js` - Batch scheduling
+- `lib/utils/execution-coordinator.js` - Async orchestration
+- `lib/utils/wave-conflict-detector.js` - File conflict detection
+- `lib/utils/conflict-resolver.js` - Resolution strategies
+- `docs/PARALLEL_EXECUTION.md` - Documentation
+
+### 🔄 Updated Subagents
+
+- **reis_verifier** - Now includes gate readiness assessment
+- **reis_debugger** - Handles `[GATE:category]` prefixed issues
+- **reis_executor** - Knows gate fix patterns
+
+### 📊 Test Coverage
+
+- 663 tests passing
+- New test files for all features
+
+---
+
 All notable changes to REIS will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
