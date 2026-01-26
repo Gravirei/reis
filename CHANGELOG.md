@@ -1,5 +1,55 @@
 # Changelog
 
+## [2.6.2] - 2026-01-26
+
+### 🐛 Critical Bug Fix
+
+#### Subagents Not Installed/Updated on `npm install`
+- **Added `postinstall` script** to automatically install REIS files when package is installed
+- **Subagents now always update** to latest version (previously skipped if files existed)
+- **Fixed missing `reis_plan_reviewer.md`** subagent not being installed
+- Added `--silent` flag support for clean postinstall output
+
+### 📦 What Changed
+
+- `npm install -g @gravirei/reis` now automatically installs all subagents
+- Subagent files are always overwritten to stay in sync with package version
+- Silent mode: no output during `npm install` (cleaner experience)
+
+---
+
+## [2.6.1] - 2026-01-26
+
+### 🐛 Bug Fixes
+
+#### Fixed `reis update` Command
+- **Fixed crash** when a new version was available (missing `showWarning` function)
+- Command now works correctly for all scenarios
+
+### ✨ UI Improvements
+
+#### Redesigned `reis update` Command
+- Added welcome banner (consistent with `reis help`)
+- Shows current version first, then checks for updates
+- Beautiful bordered info boxes for status display
+- **User confirmation prompt** before downloading updates
+- Clear success/error messages with helpful instructions
+- Non-interactive mode fallback with manual instructions
+
+#### Redesigned `reis whats-new` Command
+- Added welcome banner (consistent with `reis help`)
+- **Now parses actual `CHANGELOG.md`** instead of hardcoded content
+- Shows up to 3 major sections with smart truncation
+- Displays bullet points, headers, and code examples nicely
+- Fallback message if version not found in changelog
+- Links to full changelog and documentation
+
+### 🔧 Internal Changes
+
+- Added `showWarning` function to `lib/utils/command-helpers.js`
+
+---
+
 ## [2.6.0] - 2026-01-26
 
 ### 🎯 Major Features

@@ -1,6 +1,6 @@
 {
   "name": "@gravirei/reis",
-  "version": "2.6.0",
+  "version": "2.6.2",
   "description": "Roadmap Execution & Implementation System v2.0 - Wave-based execution with checkpoints, metrics, and visualization for Atlassian Rovo Dev",
   "main": "lib/index.js",
   "bin": {
@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "mocha test/**/*.test.js --timeout 5000",
-    "test:watch": "mocha test/**/*.test.js --watch"
+    "test:watch": "mocha test/**/*.test.js --watch",
+    "postinstall": "node lib/install.js --silent"
   },
   "keywords": [
     "reis",
