@@ -35,6 +35,12 @@
    - Map existing codebases before planning
    - Example: "Map this project using reis_project_mapper"
 
+6. **For Plan Review:**
+   - Use `reis_plan_reviewer` subagent
+   - Validate plans against codebase before execution
+   - Detect already-implemented features, path errors, missing dependencies
+   - Example: "Review this plan using reis_plan_reviewer"
+
 ---
 
 ## 📊 Kanban Board Display
@@ -66,6 +72,7 @@
 
 ### When to Display
 - **reis_planner:** At start and end of planning
+- **reis_plan_reviewer:** At start and end of plan review
 - **reis_executor:** At start and after each task completes
 - **reis_verifier:** At start and end of verification
 - **reis_debugger:** At start and end of debug analysis
@@ -85,24 +92,30 @@ When user says "use reis" or "follow reis methodology":
    → Creates ROADMAP.md, detailed PLAN.md files
    → Shows kanban: Planning ◉
 
-3. EXECUTE
+3. REVIEW
+   → reis_plan_reviewer
+   → Validates plan against codebase
+   → Detects issues before execution
+   → Shows kanban: Review ◉
+
+4. EXECUTE
    → reis_executor
    → Implements features from PLAN.md
    → Shows kanban: Execute ◉, with wave/task progress
 
-4. VERIFY
+5. VERIFY
    → reis_verifier
    → FR4.1: Check ALL features implemented
    → Run tests, validate success criteria
    → Shows kanban: Verify ◉
 
-5. DEBUG (if verification fails)
+6. DEBUG (if verification fails)
    → reis_debugger
    → FR2.1: Detect incomplete implementations
    → Generate targeted FIX_PLAN.md
    → Shows kanban: Debug ◉
 
-6. FIX & RE-VERIFY
+7. FIX & RE-VERIFY
    → reis_executor (execute fix)
    → reis_verifier (re-verify)
    → Loop until passing
@@ -124,7 +137,7 @@ When user says "use reis" or "follow reis methodology":
 
 ✅ Always invoke appropriate REIS subagent  
 ✅ Use parallel execution when possible (up to 4 parallel subagents)  
-✅ Follow the complete cycle: PLAN → EXECUTE → VERIFY → DEBUG  
+✅ Follow the complete cycle: PLAN → REVIEW → EXECUTE → VERIFY → DEBUG  
 ✅ Display kanban board at start and during progress updates  
 ✅ Practice what we preach (dogfooding!)  
 
