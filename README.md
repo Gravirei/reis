@@ -146,10 +146,46 @@ reis assumptions        # Document assumptions
 reis plan               # Create phase plan
 reis discuss            # Discuss phase approach
 reis research           # Research requirements
+reis review             # Review plan before execution
 reis execute            # Execute current phase
 reis execute-plan [f]   # Execute with wave-based flow (v2.0)
 reis verify             # Verify completion
 ```
+
+### Plan Review
+
+Review plans against your codebase before execution to catch issues early:
+
+```bash
+# Review all plans
+reis review
+
+# Review specific plan
+reis review .planning/phases/feature/PLAN.md
+
+# Review with auto-fix
+reis review --auto-fix
+
+# Review with strict mode
+reis review --strict
+```
+
+**What Gets Checked:**
+- File existence in codebase
+- Functions already implemented
+- Exports already in place
+- Dependencies available
+- Path correctness
+
+**Status Codes:**
+| Status | Icon | Meaning |
+|--------|------|---------|
+| `ok` | ✅ | Ready for execution |
+| `already_complete` | ✅ | Already implemented |
+| `path_error` | ⚠️ | Path incorrect |
+| `missing_dependency` | ❌ | Dependency missing |
+
+**Learn more:** [Plan Review Guide](docs/PLAN_REVIEW.md)
 
 ### Verification
 
@@ -509,13 +545,16 @@ reis uninstall          # Uninstall
 
 ## Subagents
 
-REIS includes 4 specialized subagents for Rovo Dev:
+REIS includes 5 specialized subagents for Rovo Dev:
 
 ### 🎯 reis_planner
 Creates executable phase plans with task breakdown, dependency analysis, resource requirements, and success criteria.
 
 ### ⚡ reis_executor
 Executes plans with atomic commits, deviation handling, checkpoints, state management, and auto-fix capabilities.
+
+### 🔍 reis_plan_reviewer
+Reviews plans against your codebase before execution, detecting already-implemented features, path errors, missing dependencies, and potential conflicts.
 
 ### ✅ reis_verifier
 Verifies execution results against success criteria, runs test suites, validates code quality, detects missing features (FR4.1), and generates comprehensive verification reports.
@@ -541,6 +580,7 @@ Maps codebases with architecture analysis, dependency mapping, tech stack identi
 - [WAVE_EXECUTION.md](docs/WAVE_EXECUTION.md) - Wave-based execution guide
 - [CHECKPOINTS.md](docs/CHECKPOINTS.md) - Checkpoint system documentation
 - [CONFIG_GUIDE.md](docs/CONFIG_GUIDE.md) - Configuration reference
+- [PLAN_REVIEW.md](docs/PLAN_REVIEW.md) - Plan review before execution
 
 ### After Installation
 
