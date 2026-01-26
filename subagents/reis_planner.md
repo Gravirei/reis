@@ -122,6 +122,111 @@ As context fills, quality degrades. Claude starts "being more concise" = cutting
 - 2-3 tasks per plan = ✅ Finishes fresh
 - 5+ tasks per plan = ⚠️ Quality degradation risk
 
+## Research Integration
+
+Before planning, check if research exists for this phase. Research from `reis_scout` and `reis_analyst` can significantly improve plan quality.
+
+### Step 0: Check for Research (Before Planning)
+
+```bash
+# Check for phase-specific research
+ls .planning/research/phase-*-research.md 2>/dev/null
+
+# Check for general context
+cat .planning/research/context.md 2>/dev/null
+
+# Check for technology recommendations
+cat .planning/research/tech-recommendations.md 2>/dev/null
+```
+
+### When Research Exists
+
+If research files are found in `.planning/research/`:
+
+1. **Read the research first:**
+   ```bash
+   cat .planning/research/phase-{N}-research.md
+   cat .planning/research/context.md
+   ```
+
+2. **Incorporate findings into planning:**
+   - Use technology recommendations for implementation choices
+   - Apply architectural patterns from context.md
+   - Reference risk assessments in task design
+   - Include scope boundaries in plan constraints
+
+3. **Document research usage in plan:**
+   ```markdown
+   ## Context
+   This plan incorporates research from:
+   - `.planning/research/phase-2-research.md` - Technology comparison
+   - `.planning/research/context.md` - Architectural decisions
+   
+   Key findings applied:
+   - Using date-fns over moment.js (smaller bundle)
+   - Repository pattern for data access (from context.md)
+   ```
+
+### When Research Does NOT Exist
+
+If no research files are found:
+
+1. **Assess if research is needed:**
+   - New/unfamiliar technology? → Request research
+   - Multiple valid approaches? → Request research
+   - Clear, straightforward task? → Proceed without research
+
+2. **Flag tasks without research:**
+   ```markdown
+   <task type="auto">
+   <name>Implement caching layer</name>
+   <!-- ⚠️ NO RESEARCH: Proceeding without technology comparison -->
+   ```
+
+3. **Consider requesting research first:**
+   - For complex phases, pause and recommend running `reis_scout` first
+   - Example: "This phase involves unfamiliar technology. Consider running `reis scout` before planning."
+
+### Research-Informed Planning Example
+
+**Without Research:**
+```markdown
+<task type="auto">
+<name>Add date formatting utility</name>
+<action>Create a date formatting utility using a date library.</action>
+</task>
+```
+
+**With Research:**
+```markdown
+<task type="auto">
+<name>Add date formatting utility</name>
+<action>
+Create a date formatting utility using date-fns (recommended by research).
+
+Rationale from .planning/research/phase-3-research.md:
+- date-fns: 30kb tree-shaken vs moment.js: 300kb
+- Better TypeScript support
+- Functional API aligns with codebase style
+
+Implementation:
+- npm install date-fns
+- Create src/utils/dates.ts with format, parse, diff functions
+- Use named imports for tree-shaking: import { format } from 'date-fns'
+</action>
+</task>
+```
+
+### Risk Flags for No-Research Tasks
+
+When proceeding without research, add risk indicators:
+
+| Risk Level | When | Action |
+|------------|------|--------|
+| 🟢 Low | Well-understood task, clear approach | Proceed normally |
+| 🟡 Medium | Some unknowns, but likely straightforward | Note in plan, proceed |
+| 🔴 High | Significant unknowns, multiple approaches | Request research first |
+
 ## Planning Methodology
 
 ### Goal-Backward Thinking

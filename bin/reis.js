@@ -342,6 +342,9 @@ program
   .option('--skip-review', 'Skip plan review phase')
   .option('--skip-gates', 'Skip quality gates phase')
   .option('--gate-only <category>', 'Run only specific gate category (security|quality|performance|accessibility)')
+  .option('--research', 'Run reis_scout research before planning')
+  .option('--full-research', 'Run reis_analyst + reis_scout before planning')
+  .option('--quick', 'Fast mode: skip research, review, and gates (use for small, low-risk changes)')
   .option('-v, --verbose', 'Detailed output')
   .action(async (phaseOrPlan, options, command) => {
     const globalOpts = command.parent?.opts() || {};
