@@ -4090,5 +4090,51 @@
     "context": {},
     "timestamp": "2026-01-26T15:58:12.255Z",
     "reverted": false
+  },
+  {
+    "id": "11e08649-d13a-4b77-9ffb-7abc87076423",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-01-26T16:12:16.539Z",
+    "reverted": false
+  },
+  {
+    "id": "e91b3833-3438-45a7-869e-feb6cd5b038e",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-26T16:12:16.541Z",
+    "reverted": false
+  },
+  {
+    "id": "c8f16253-84ae-448a-b71f-26db232623e3",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-26T16:12:16.542Z",
+    "reverted": false
+  },
+  {
+    "id": "0fcc1380-45ad-4a91-be2a-c9d3b329347a",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-01-26T16:12:16.544Z",
+    "reverted": false
   }
 ]
