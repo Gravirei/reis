@@ -2,7 +2,91 @@
 
 ## Overview
 
-The REIS Cycle Command automates the complete development workflow: PLAN → EXECUTE → VERIFY → DEBUG → FIX. This document defines the state machine that orchestrates this workflow.
+The REIS Cycle Command automates the complete development workflow:
+
+```
+PLAN → EXECUTE → VERIFY → GATE → DEBUG (if needed)
+```
+
+This document defines the state machine that orchestrates this workflow.
+
+## Cycle Phases
+
+### 1. PLAN
+Create or update the execution plan using `reis_planner` subagent.
+
+### 2. EXECUTE
+Implement the plan using `reis_executor` subagent.
+
+### 3. VERIFY
+Verify implementation completeness using `reis_verifier` subagent.
+
+### 4. GATE (New in v2.5)
+Run quality gates to check:
+- **Security**: Vulnerabilities, secrets, license compliance
+- **Quality**: Test coverage, linting, code complexity
+- **Performance**: Bundle size, dependencies (optional)
+- **Accessibility**: WCAG compliance (optional)
+
+### 5. DEBUG
+If verification or gates fail, analyze issues using `reis_debugger` subagent.
+
+## Gate Phase Details
+
+### When Gates Run
+- Automatically after successful verification in `reis cycle`
+- Manually with `reis verify --with-gates`
+- Controlled by `gates.runOn` in config
+
+### Gate Behavior
+- **blockOnFail: true** (default) - Gate failure triggers debug phase
+- **blockOnFail: false** - Gate failure shows warning, cycle continues
+- **blockOnWarning: true** - Treat warnings as failures
+
+### Skipping Gates
+```bash
+reis cycle --skip-gates           # Skip all gates
+reis cycle --gate-only security   # Run only security gates
+```
+
+## Configuration
+
+```javascript
+// reis.config.js
+module.exports = {
+  gates: {
+    enabled: true,
+    runOn: ['cycle'],        // 'cycle', 'verify', or both
+    blockOnFail: true,       // Block cycle on gate failure
+    blockOnWarning: false,   // Block on warnings
+    timeout: 30000,          // Gate timeout (ms)
+    
+    security: { enabled: true },
+    quality: { enabled: true },
+    performance: { enabled: false },
+    accessibility: { enabled: false }
+  }
+};
+```
+
+## CLI Commands
+
+```bash
+# Full cycle with gates
+reis cycle 3
+
+# Cycle without gates
+reis cycle 3 --skip-gates
+
+# Cycle with specific gate category
+reis cycle 3 --gate-only security
+
+# Verification with gates
+reis verify --with-gates
+
+# Resume interrupted cycle
+reis cycle --resume
+```
 
 ## State Machine
 
@@ -13,7 +97,8 @@ The REIS Cycle Command automates the complete development workflow: PLAN → EXE
 | **IDLE** | No cycle running | PLANNING |
 | **PLANNING** | Generating or validating plan | EXECUTING, FAILED |
 | **EXECUTING** | Running plan tasks | VERIFYING, FAILED |
-| **VERIFYING** | Checking completion criteria | COMPLETE, DEBUGGING, FAILED |
+| **VERIFYING** | Checking completion criteria | GATING, DEBUGGING, FAILED |
+| **GATING** | Running quality gates | COMPLETE, DEBUGGING, FAILED |
 | **DEBUGGING** | Analyzing failures | FIXING, FAILED |
 | **FIXING** | Applying fix plan | VERIFYING, FAILED |
 | **COMPLETE** | All tasks successful | IDLE |
@@ -56,10 +141,19 @@ The REIS Cycle Command automates the complete development workflow: PLAN → EXE
     │                  │
     │ Pass (100%)      │ Fail (<100%)
     ▼                  ▼
+┌─────────────────────────────────────────┐  ┌────────────────┐
+│              GATING (v2.5)              │  │   DEBUGGING    │
+│    - Run security gates                 │  │ (verification  │
+│    - Run quality gates                  │  │  failures)     │
+│    - Optional: performance, a11y        │  └───────┬────────┘
+└───┬──────────────────┬──────────────────┘          │
+    │                  │                             │
+    │ Gates pass       │ Gates fail                  │
+    ▼                  ▼                             │
 ┌──────────┐    ┌─────────────────────────────────────────────┐
 │ COMPLETE │    │             DEBUGGING                        │
-│          │    │    - Analyze verification failures           │
-│          │    │    - Classify issues                         │
+│          │    │    - Analyze verification/gate failures      │
+│          │    │    - Classify issues [GATE:category]         │
 └──────────┘    │    - Generate fix plan                       │
                 └───┬──────────────────────┬───────────────────┘
                     │                      │
@@ -83,13 +177,16 @@ The REIS Cycle Command automates the complete development workflow: PLAN → EXE
                  │ Pass       │ Fail (< max attempts)
                  ▼            │
          ┌──────────┐         │
-         │ COMPLETE │         └─→ Back to DEBUGGING
-         └──────────┘
-                               │ Fail (≥ max attempts)
-                               ▼
-                          ┌──────────┐
-                          │  FAILED  │
-                          └──────────┘
+         │  GATING  │         └─→ Back to DEBUGGING
+         └────┬─────┘
+              │
+              │ Gates pass
+              ▼
+         ┌──────────┐         │ Fail (≥ max attempts)
+         │ COMPLETE │         ▼
+         └──────────┘    ┌──────────┐
+                         │  FAILED  │
+                         └──────────┘
 ```
 
 ## State Persistence
@@ -195,9 +292,40 @@ The REIS Cycle Command automates the complete development workflow: PLAN → EXE
 4. Collect missing items
 
 **Next State:**
-- 100% complete → COMPLETE
+- 100% complete → GATING
 - <100% complete → DEBUGGING
 - Error → FAILED
+
+### VERIFYING → GATING
+
+**Trigger:** Verification passes (completeness = 100%)
+
+**Actions:**
+1. Check if gates enabled (`gates.enabled` and `gates.runOn` includes 'cycle')
+2. Skip if `--skip-gates` flag provided
+3. Run only specified category if `--gate-only <category>` provided
+4. Run all enabled gate categories
+5. Collect gate results
+
+**Next State:**
+- All gates pass → COMPLETE
+- Gates fail and `blockOnFail: true` → DEBUGGING
+- Gates fail and `blockOnFail: false` → COMPLETE (with warnings)
+- Error → FAILED
+
+### GATING → DEBUGGING
+
+**Trigger:** Gate failure with `blockOnFail: true`
+
+**Actions:**
+1. Collect failed gate results
+2. Prefix issues with `[GATE:category]` (e.g., `[GATE:security]`)
+3. Pass to debugger for analysis
+4. Generate gate-specific fix recommendations
+
+**Next State:**
+- Fix plan generated → FIXING
+- Cannot generate fix → FAILED
 
 ### VERIFYING → DEBUGGING
 
@@ -394,6 +522,6 @@ reis cycle <phase>
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** 2026-01-18  
-**Status:** Design Complete
+**Version:** 2.0.0  
+**Last Updated:** 2026-01-26  
+**Status:** Design Complete (Updated for Gate Integration)

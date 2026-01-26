@@ -252,6 +252,73 @@ module.exports = {
 };
 ```
 
+## Cycle Integration
+
+### Automatic Gates in Cycle
+
+Quality gates run automatically as part of the REIS cycle after successful verification:
+
+```
+PLAN → EXECUTE → VERIFY → GATE → DEBUG (if needed)
+```
+
+The gate phase ensures code quality before marking a phase complete.
+
+### Configuration
+
+```javascript
+// reis.config.js
+module.exports = {
+  gates: {
+    enabled: true,
+    runOn: ['cycle'],      // Auto-run in cycle
+    blockOnFail: true,     // Fail cycle if gates fail
+    blockOnWarning: false  // Continue on warnings
+  }
+};
+```
+
+### CLI Options
+
+| Flag | Description |
+|------|-------------|
+| `--skip-gates` | Skip gate phase entirely |
+| `--gate-only <cat>` | Run only specific category |
+| `--with-gates` | Force gates in verify command |
+
+### Gate Failures in Cycle
+
+When gates fail during a cycle:
+
+1. Cycle enters DEBUG phase
+2. Issues are prefixed with `[GATE:category]` (e.g., `[GATE:security]`)
+3. Debug recommendations focus on the specific gate category
+4. Fix and resume with `reis cycle --resume`
+
+**Example output:**
+```
+❌ Gate check failed
+
+[GATE:security] 2 high vulnerabilities found
+  - lodash@4.17.15 - Prototype Pollution (CVE-2020-8203)
+  - minimist@1.2.5 - Prototype Pollution (CVE-2021-44906)
+
+Entering debug phase...
+```
+
+### Skipping Gates
+
+```bash
+# Skip all gates
+reis cycle 3 --skip-gates
+
+# Run only security gates
+reis cycle 3 --gate-only security
+
+# Run only quality gates  
+reis cycle 3 --gate-only quality
+```
+
 ## Extending Gates
 
 You can create custom gates by extending `BaseGate`:

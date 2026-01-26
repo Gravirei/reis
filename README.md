@@ -329,8 +329,23 @@ Next: reis cycle 2
 --auto-fix            # Apply fixes without confirmation
 --resume              # Resume interrupted cycle
 --continue-on-fail    # Continue even if verification fails
+--skip-gates          # Skip quality gate checks
+--gate-only <cat>     # Run only specific gate category
 -v, --verbose         # Detailed output
 ```
+
+### Quality Gates in Cycle
+
+Gates automatically run after verification to ensure code quality:
+
+```bash
+reis cycle 3              # Includes gates
+reis cycle 3 --skip-gates # Without gates
+```
+
+The gate phase checks security, quality, and optionally performance/accessibility before marking a phase complete. Gate failures trigger the debug phase with `[GATE:category]` prefixed issues.
+
+See [Quality Gates](docs/QUALITY_GATES.md) for configuration.
 
 **Learn more:** [Complete Cycle Guide](docs/CYCLE_COMMAND.md)
 
