@@ -1,5 +1,109 @@
 # Changelog
 
+## [2.7.0] - 2026-01-26
+
+### 🚀 Major Release: GSD Feature Migration
+
+This release brings a major enhancement to REIS by migrating powerful features from GSD (Get Shit Done) methodology, including 5 new subagents, 4 new commands, and enhanced cycle capabilities.
+
+### ✨ New Subagents (5)
+
+| Subagent | Purpose |
+|----------|---------|
+| **reis_scout** | Phase-level research before planning |
+| **reis_analyst** | Project-level analysis and context gathering |
+| **reis_synthesizer** | Combines multiple research outputs |
+| **reis_architect** | Dedicated roadmap creation |
+| **reis_integrator** | Cross-phase wiring verification (used by `reis audit`) |
+
+### 🆕 New Commands (4)
+
+#### `reis quick <task>`
+Execute quick tasks without full research/verification cycle.
+```bash
+reis quick "fix typo in README"
+reis quick "add missing semicolon" --no-commit
+```
+
+#### `reis audit [milestone]`
+Audit milestone completion and cross-phase integration. Invokes `reis_integrator` for comprehensive checks.
+```bash
+reis audit v1.0
+reis audit --phase 3 --strict
+```
+
+#### `reis complete-milestone <milestone>`
+Archive completed milestones (runs audit first).
+```bash
+reis complete-milestone v1.0
+reis complete-milestone v1.0 --no-tag --skip-audit
+```
+
+#### `reis plan-gaps [milestone]`
+Identify and plan for tech debt before milestone completion.
+```bash
+reis plan-gaps v1.0
+reis plan-gaps --priority high --dry-run
+```
+
+### 🔄 Enhanced Cycle Command
+
+New flags for `reis cycle`:
+
+| Flag | Description |
+|------|-------------|
+| `--research` | Run `reis_scout` before planning (phase-level research) |
+| `--full-research` | Run `reis_analyst` + `reis_scout` before planning |
+| `--quick` | Fast mode: skip research, review, and gates |
+
+```bash
+# Default cycle (unchanged)
+reis cycle 1
+
+# With phase research
+reis cycle 1 --research
+
+# With full research (project + phase)
+reis cycle 1 --full-research
+
+# Quick mode for small changes
+reis cycle 1 --quick
+```
+
+### 📝 New Templates (4)
+
+- `templates/research.md` - Research output format
+- `templates/context.md` - Project context tracking
+- `templates/UAT.md` - User Acceptance Testing checklist
+- `templates/SUMMARY.md` - Phase execution summary
+
+### 📚 New Documentation (3)
+
+- `docs/verification-patterns.md` - Stub detection, wiring checks
+- `docs/tdd.md` - TDD workflow guidance for REIS projects
+- `docs/model-profiles.md` - Quality/balanced/budget agent modes
+- `docs/CYCLE_COMMAND.md` - Comprehensive cycle documentation (707 lines)
+- `docs/diagrams/` - Mermaid diagrams for cycle workflow
+
+### 🎯 Design Decisions
+
+- **Research is opt-in**: Default cycle remains fast, research runs only with flags
+- **Integration checks separate**: `reis_integrator` runs via `reis audit`, not in default cycle
+- **Enhanced planner**: `reis_planner` now automatically reads research outputs if they exist
+
+### 📊 Summary
+
+| Category | Added |
+|----------|-------|
+| Subagents | 5 new |
+| Commands | 4 new |
+| Templates | 4 new |
+| Docs | 4 new |
+| Cycle Flags | 3 new |
+| Total Files | 20+ new/modified |
+
+---
+
 ## [2.6.2] - 2026-01-26
 
 ### 🐛 Critical Bug Fix
