@@ -210,6 +210,29 @@ program
   });
 
 program
+  .command('visualize')
+  .description('Visualize project data (progress, waves, roadmap, metrics, dependencies, timeline)')
+  .option('--type <type>', 'Visualization type: progress|waves|roadmap|metrics|dependencies|timeline', 'progress')
+  .option('--dependencies', 'Show wave dependency graph')
+  .option('--timeline', 'Show estimated execution timeline')
+  .option('--format <fmt>', 'Output format: ascii|mermaid (for dependencies)', 'ascii')
+  .option('--watch', 'Auto-refresh display')
+  .option('--compact', 'Compact output')
+  .option('--no-color', 'Disable colors')
+  .action(async (options) => {
+    const visualizeCmd = require('../lib/commands/visualize.js');
+    const args = [];
+    if (options.type) { args.push('--type', options.type); }
+    if (options.dependencies) { args.push('--dependencies'); }
+    if (options.timeline) { args.push('--timeline'); }
+    if (options.format) { args.push('--format', options.format); }
+    if (options.watch) { args.push('--watch'); }
+    if (options.compact) { args.push('--compact'); }
+    if (options.color === false) { args.push('--no-color'); }
+    await visualizeCmd(args);
+  });
+
+program
   .command('pause')
   .description('Pause current work and save state')
   .action(() => pauseCmd({}));
