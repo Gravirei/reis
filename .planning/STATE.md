@@ -1302,3 +1302,65 @@ _None_
 - Skipped CLI registration (Task 4.2) per user instructions - will be handled in Phase 5
 
 **Blockers/Issues:** None
+
+## 2026-01-27 - Phase 3 Plan 3-2 Complete
+
+**Completed:** 3-2-cycle-enhancements
+
+**Objective:** Add opt-in research flags and quick mode to reis cycle command
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- Added --research flag to invoke reis_scout before planning
+- Added --full-research flag to invoke reis_analyst + reis_scout before planning
+- Added --quick flag for fast mode (skips research, review, gates)
+- RESEARCHING state added to cycle state manager for resume support
+- Kanban renderer updated to display Research stage
+- All 663 tests passing
+
+**Decisions made:**
+- Research is opt-in only, default cycle unchanged
+- Research failures are non-blocking (cycle continues)
+- Quick mode explicitly disables research, review, and gates
+
+**Blockers/Issues:** None
+
+## 2026-01-26 - Phase 2-1 Roadmap & Integration Subagents Complete
+
+**Completed:** Phase-2-1-roadmap-integration-subagents
+
+**Objective:** Create reis_architect and reis_integrator subagents, enhance reis_planner with research integration
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- reis_architect verified with goal-backward decomposition and wave planning
+- reis_integrator verified as `reis audit` tool (not default cycle)
+- reis_planner enhanced with Research Integration section
+- 11 total subagents now in ecosystem
+
+**Decisions made:**
+- reis_architect and reis_integrator already existed from Wave 1 - verified content meets specs
+- Added comprehensive research integration guidance to planner
+
+**Blockers/Issues:** None
+
+## 2026-01-26 - Phase 5-2 Remaining Templates Complete
+
+**Completed:** Phase-5-2-remaining-templates
+
+**Objective:** Create UAT.md and SUMMARY.md templates to complete template collection
+
+**Status:** ✓ Complete
+
+**Key outcomes:**
+- templates/UAT.md created with comprehensive UAT checklist structure
+- templates/SUMMARY.md created with phase execution summary format
+- Both templates use consistent placeholder syntax
+- Templates include clear instructions via HTML comments
+
+**Decisions made:**
+- None required - followed existing template patterns
+
+**Blockers/Issues:** None
