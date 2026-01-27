@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.7.1] - 2026-01-27
+
+### 🧩 Task-level Resume & Crash Recovery (Executor)
+
+This release improves resilience during long-running executions by introducing task-level checkpointing and safer resume behavior after interruptions (power cut, lost internet, process crash).
+
+### ✨ Added
+
+- **Task-level execution state** stored in `.reis/execution-state.json`
+- **Execution locking** via `.reis/execution.lock` to prevent concurrent resumes
+- **Heartbeat + stale detection** so interrupted `RUNNING` tasks can be marked `ABORTED` and safely resumed
+- **New resume flags** on execution flows:
+  - `reis execute <phase> --resume`
+  - `reis cycle --resume --resume-execution`
+  - Optional targeting: `--from-wave`, `--from-task`, `--replay`
+- **Git safety controls** for safer re-runs:
+  - `--auto-stash`
+  - `--rollback soft|mixed|hard`
+
+### 🔧 Changed
+
+- Command modules consistently return `EXIT_CODES` (library-safe) to support predictable orchestration and testing.
+
+### ✅ Verification
+
+- `npm test`
+
 ## [2.7.0] - 2026-01-26
 
 ### 🚀 Major Release: GSD Feature Migration
