@@ -4,18 +4,21 @@
  * function/export detection, and dependency/import analysis.
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * CodeAnalyzer class for codebase analysis utilities
  */
-class CodeAnalyzer {
+export class CodeAnalyzer {
+  baseDir: string;
+  private _packageJsonCache: Record<string, unknown> | boolean | null;
+
   /**
    * Create a new CodeAnalyzer instance
    * @param {string} [baseDir=process.cwd()] - Base directory for relative paths
    */
-  constructor(baseDir = process.cwd()) {
+  constructor(baseDir: string = process.cwd()) {
     this.baseDir = baseDir;
     this._packageJsonCache = null;
   }
@@ -402,7 +405,7 @@ class CodeAnalyzer {
    * @returns {{exists: boolean, version: string|null, isDev: boolean}} Dependency info
    */
   checkNpmDependency(packageName) {
-    const pkg = this._getPackageJson();
+    const pkg = this._getPackageJson() as Record<string, Record<string, string>> | null;
     if (!pkg) {
       return { exists: false, version: null, isDev: false };
     }
@@ -609,7 +612,3 @@ class CodeAnalyzer {
     }
   }
 }
-
-module.exports = {
-  CodeAnalyzer
-};

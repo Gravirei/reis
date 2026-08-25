@@ -3,15 +3,15 @@
  * @module lib/utils/gates/performance-gate
  */
 
-const { BaseGate, GateResult } = require('../gate-runner');
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const { BaseGate, GateResult } = require('../gate-runner.js');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Performance Gate - runs performance-related checks
  */
-class PerformanceGate extends BaseGate {
+export class PerformanceGate extends BaseGate {
   /**
    * Create a performance gate
    * @param {Object} config - Gate configuration
@@ -307,4 +307,3 @@ class PerformanceGate extends BaseGate {
   }
 }
 
-module.exports = { PerformanceGate };

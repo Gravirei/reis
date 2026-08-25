@@ -3,18 +3,43 @@
  * @module lib/utils/gate-reporter
  */
 
-const chalk = require('chalk');
+import chalk from 'chalk';
+
+import type { GateStatus, SerializedGateResult } from '../../src/types/gates.js';
+
+interface GateResultLike {
+  gateName: string;
+  category: string;
+  status: GateStatus;
+  message: string;
+  details?: unknown[];
+  duration?: number;
+  timestamp?: string | null;
+  name?: string;
+  file?: string;
+  toJSON?(): SerializedGateResult;
+}
+
+type GateSummary = Record<string, number>;
+
+export interface GateReporterOptions {
+  format?: 'ascii' | 'json' | 'markdown';
+  verbose?: boolean;
+  colors?: boolean;
+  width?: number;
+}
 
 /**
  * Gate Reporter - generates formatted reports for gate results
  */
-class GateReporter {
-  /**
-   * Create a gate reporter
-   * @param {Object} options - Reporter options
-   */
-  constructor(options = {}) {
-    this.format = options.format || 'ascii'; // 'ascii' | 'json' | 'markdown'
+export class GateReporter {
+  format: 'ascii' | 'json' | 'markdown';
+  verbose: boolean;
+  colors: boolean;
+  width: number;
+
+  constructor(options: GateReporterOptions = {}) {
+    this.format = options.format || 'ascii';
     this.verbose = options.verbose || false;
     this.colors = options.colors !== false;
     this.width = options.width || 75;
@@ -25,7 +50,7 @@ class GateReporter {
    * @param {string} status - Status string
    * @returns {string}
    */
-  getStatusIcon(status) {
+  getStatusIcon(status: string): string {
     const icons = {
       passed: '✅',
       warning: '⚠️',
@@ -35,7 +60,7 @@ class GateReporter {
       pending: '⏳',
       running: '◉'
     };
-    return icons[status] || '❓';
+    return icons[status as GateStatus] || '❓';
   }
 
   /**
@@ -43,7 +68,7 @@ class GateReporter {
    * @param {string} status - Status string
    * @returns {string}
    */
-  getStatusText(status) {
+  getStatusText(status: string): string {
     if (!this.colors) return status.toUpperCase();
 
     const statusColors = {
@@ -56,7 +81,7 @@ class GateReporter {
       running: chalk.cyan
     };
 
-    const colorFn = statusColors[status] || chalk.white;
+    const colorFn = statusColors[status as GateStatus] || chalk.white;
     return colorFn(status.toUpperCase());
   }
 
@@ -65,7 +90,7 @@ class GateReporter {
    * @param {Object} summary - Summary object
    * @returns {string}
    */
-  getOverallStatus(summary) {
+  getOverallStatus(summary: GateSummary): 'failed' | 'warning' | 'passed' {
     if (summary.failed > 0 || summary.error > 0) {
       return 'failed';
     } else if (summary.warning > 0) {
@@ -80,7 +105,7 @@ class GateReporter {
    * @param {Object} summary - Summary object
    * @returns {string}
    */
-  generateReport(results, summary) {
+  generateReport(results: GateResultLike[], summary: GateSummary): string {
     switch (this.format) {
       case 'json':
         return this.generateJsonReport(results, summary);
@@ -98,7 +123,7 @@ class GateReporter {
    * @param {Object} summary - Summary object
    * @returns {string}
    */
-  generateAsciiReport(results, summary) {
+  generateAsciiReport(results: GateResultLike[], summary: GateSummary): string {
     const w = this.width;
     const lines = [];
 
@@ -126,7 +151,7 @@ class GateReporter {
     lines.push(emptyLine);
 
     // Group results by category
-    const byCategory = {};
+    const byCategory: Record<string, GateResultLike[]> = {};
     for (const result of results) {
       if (!byCategory[result.category]) {
         byCategory[result.category] = [];
@@ -164,8 +189,9 @@ class GateReporter {
         // Show details in verbose mode
         if (this.verbose && result.details && result.details.length > 0) {
           for (const detail of result.details.slice(0, 3)) {
-            const detailStr = typeof detail === 'object' 
-              ? `${detail.name || detail.file || 'Item'}: ${detail.message || detail.status || ''}`
+            const detailObj = detail as { name?: string; file?: string; message?: string; status?: string };
+            const detailStr = typeof detail === 'object' && detail !== null
+              ? `${detailObj.name || detailObj.file || 'Item'}: ${detailObj.message || detailObj.status || ''}`
               : String(detail);
             const truncDetail = detailStr.length > w - 16 
               ? detailStr.slice(0, w - 19) + '...'
@@ -209,7 +235,7 @@ class GateReporter {
    * @param {Object} summary - Summary object
    * @returns {string}
    */
-  generateJsonReport(results, summary) {
+  generateJsonReport(results: GateResultLike[], summary: GateSummary): string {
     return JSON.stringify({
       timestamp: new Date().toISOString(),
       summary: {
@@ -226,7 +252,7 @@ class GateReporter {
    * @param {Object} summary - Summary object
    * @returns {string}
    */
-  generateMarkdownReport(results, summary) {
+  generateMarkdownReport(results: GateResultLike[], summary: GateSummary): string {
     const lines = [];
 
     lines.push('# 🛡️ Quality Gate Report');
@@ -250,7 +276,7 @@ class GateReporter {
     lines.push('');
 
     // Group by category
-    const byCategory = {};
+    const byCategory: Record<string, GateResultLike[]> = {};
     for (const result of results) {
       if (!byCategory[result.category]) {
         byCategory[result.category] = [];
@@ -299,7 +325,7 @@ class GateReporter {
    * @param {Array} results - Category results
    * @returns {string}
    */
-  getCategoryStatus(results) {
+  getCategoryStatus(results: GateResultLike[]): string {
     if (results.some(r => r.status === 'failed' || r.status === 'error')) {
       return 'failed';
     }
@@ -317,7 +343,7 @@ class GateReporter {
    * @param {string} str - String with potential ANSI codes
    * @returns {string}
    */
-  stripAnsi(str) {
+  stripAnsi(str: string): string {
     return str.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
   }
 
@@ -325,7 +351,7 @@ class GateReporter {
    * Print report to console
    * @param {string} report - Report string
    */
-  print(report) {
+  print(report: string): void {
     console.log(report);
   }
 
@@ -334,10 +360,10 @@ class GateReporter {
    * @param {Array} results - Array of GateResult objects
    * @param {Object} summary - Summary object
    */
-  printReport(results, summary) {
+  printReport(results: GateResultLike[], summary: GateSummary): void {
     const report = this.generateReport(results, summary);
     this.print(report);
   }
 }
 
-module.exports = { GateReporter };
+

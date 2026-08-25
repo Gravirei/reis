@@ -54,3 +54,10 @@ lib/utils/state-manager.js
 lib/utils/kanban-renderer.js
 lib/utils/metrics-tracker.js
 lib/utils/decision-tracker.js
+lib/utils/gate-reporter.js
+lib/utils/code-analyzer.js
+lib/utils/gates/security-gate.js
+lib/utils/gates/quality-gate.js
+lib/utils/gates/performance-gate.js
+lib/utils/gates/accessibility-gate.js
+lib/utils/gates/index.js

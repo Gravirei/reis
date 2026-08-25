@@ -3,16 +3,16 @@
  * @module lib/utils/gates/quality-gate
  */
 
-const { BaseGate, GateResult } = require('../gate-runner');
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const chalk = require('chalk');
+const { BaseGate, GateResult } = require('../gate-runner.js');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import chalk from 'chalk';
 
 /**
  * Quality Gate - runs code quality checks
  */
-class QualityGate extends BaseGate {
+export class QualityGate extends BaseGate {
   /**
    * Create a quality gate
    * @param {Object} config - Gate configuration
@@ -511,4 +511,3 @@ class QualityGate extends BaseGate {
   }
 }
 
-module.exports = { QualityGate };

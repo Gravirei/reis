@@ -3,22 +3,22 @@
  * @module lib/utils/gates/accessibility-gate
  */
 
-const { BaseGate, GateResult } = require('../gate-runner');
-const fs = require('fs');
-const path = require('path');
+const { BaseGate, GateResult } = require('../gate-runner.js');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Accessibility Gate - runs accessibility-related checks
  */
-class AccessibilityGate extends BaseGate {
+export class AccessibilityGate extends BaseGate {
   /**
    * Create an accessibility gate
    * @param {Object} config - Gate configuration
    */
-  constructor(config = {}) {
+  constructor(config: Record<string, unknown> = {}) {
     super('accessibility', 'accessibility', config);
-    this.wcagLevel = config.wcagLevel || 'AA';
-    this.failOn = config.failOn || 'serious'; // 'critical' | 'serious' | 'moderate' | 'minor'
+    this.wcagLevel = (config.wcagLevel as string) || 'AA';
+    this.failOn = (config.failOn as string) || 'serious';
   }
 
   /**
@@ -331,4 +331,3 @@ class AccessibilityGate extends BaseGate {
   }
 }
 
-module.exports = { AccessibilityGate };
