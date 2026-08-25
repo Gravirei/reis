@@ -411,4 +411,4 @@ if (require.main === module) {
   });
 }
 
-export { install, performInstallation };
+export { install, performInstallation, PLATFORMS, ALL_PLATFORM_KEYS };

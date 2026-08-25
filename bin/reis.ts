@@ -505,7 +505,7 @@ program
   .command('uninstall')
   .description('Uninstall REIS')
   .action(async () => {
-    const uninstallCmd = require('../lib/commands/uninstall');
+    const { uninstall: uninstallCmd } = require('../lib/commands/uninstall.js');
     await uninstallCmd({});
   });
 
