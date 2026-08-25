@@ -3,6 +3,7 @@ import inquirer from 'inquirer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { execSync } from 'child_process';
 import { PLATFORMS } from './install.js';
 import { removeClaudeHooks } from './install.js';
 
@@ -39,6 +40,41 @@ function candidateBaseDirs(platformKey: string, defaultBase: string): string[] {
     candidates.add(path.isAbsolute(v) ? v : path.join(process.cwd(), v));
   }
   return [...candidates];
+}
+
+// Back up an installation directory before removal (keeps last 3 per platform)
+function backupInstallDir(baseDir: string, platformKey: string): string | null {
+  try {
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const backupRoot = path.join(os.homedir(), '.reis-uninstall-backups', platformKey);
+    fs.mkdirSync(backupRoot, { recursive: true });
+    const dest = path.join(backupRoot, `reis-${stamp}`);
+    fs.mkdirSync(dest, { recursive: true });
+    // copy contents (reis dir + agents + commands) without executing anything
+    for (const entry of [path.join(baseDir, 'reis'), path.join(baseDir, 'commands', 'reis')]) {
+      if (fs.existsSync(entry)) {
+        const target = path.join(dest, path.basename(path.dirname(entry)) === 'reis' ? 'reis' : 'commands-reis');
+        fs.cpSync(entry, target, { recursive: true });
+      }
+    }
+    if (fs.existsSync(path.join(baseDir, platformKey === 'rovodev' ? 'subagents' : 'agents'))) {
+      fs.cpSync(
+        path.join(baseDir, platformKey === 'rovodev' ? 'subagents' : 'agents'),
+        path.join(dest, 'agents'),
+        { recursive: true }
+      );
+    }
+    // retain newest 3 backups per platform
+    try {
+      const backups = fs.readdirSync(backupRoot).sort().reverse();
+      for (const old of backups.slice(3)) {
+        fs.rmSync(path.join(backupRoot, old), { recursive: true, force: true });
+      }
+    } catch {}
+    return dest;
+  } catch {
+    return null;
+  }
 }
 
 // Detect REIS installations across all supported platforms
@@ -114,7 +150,8 @@ function showError(error: string): void {
  * Uninstall command - remove REIS files with confirmation
  * @param {Object} args - {}
  */
-export async function uninstall(args: any): Promise<void> {
+export async function uninstall(args: any & { yes?: boolean }): Promise<void> {
+  const nonInteractive = args?.yes || process.argv.includes('--yes');
   console.log(chalk.white.bold(`
   ██████  ███████ ██ ███████
   ██   ██ ██      ██ ██
@@ -144,7 +181,10 @@ export async function uninstall(args: any): Promise<void> {
   console.log(chalk.gray('\n  Your project .planning/ directories will NOT be affected.\n'));
 
   let selectedKeys: string[];
-  if (installs.length === 1) {
+  if (nonInteractive) {
+    selectedKeys = installs.map(i => i.key);
+    console.log(chalk.gray('  Non-interactive mode: removing all detected installations.\n'));
+  } else if (installs.length === 1) {
     selectedKeys = [installs[0].key];
   } else {
     try {
@@ -166,21 +206,28 @@ export async function uninstall(args: any): Promise<void> {
   }
 
   console.log('');
-  try {
-    const { choice } = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'choice',
-        message: `Remove REIS from ${selectedKeys.length} installation(s)? (1 = yes, 2 = cancel):`,
-        default: '2',
-        validate: (input: string) => {
-          if (input === '1' || input === '2') {
-            return true;
+  if (!nonInteractive) {
+    let choice: string;
+    try {
+      const answer = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'choice',
+          message: `Remove REIS from ${selectedKeys.length} installation(s)? (1 = yes, 2 = cancel):`,
+          default: '2',
+          validate: (input: string) => {
+            if (input === '1' || input === '2') {
+              return true;
+            }
+            return 'Please enter 1 or 2';
           }
-          return 'Please enter 1 or 2';
         }
-      }
-    ]);
+      ]);
+      choice = answer.choice;
+    } catch {
+      console.log(chalk.red('\n✗ Uninstall cancelled or failed\n'));
+      return;
+    }
 
     console.log('');
 
@@ -188,13 +235,23 @@ export async function uninstall(args: any): Promise<void> {
       console.log(chalk.green('  ✓ Uninstall cancelled\n'));
       return;
     }
+  }
 
+  try {
     console.log(chalk.cyan('  Uninstalling REIS...\n'));
 
     for (const key of selectedKeys) {
       const inst = installs.find(i => i.key === key);
       if (!inst) {
         continue;
+      }
+
+      const backupPath = backupInstallDir(
+        path.dirname(inst.reisDir),
+        inst.key
+      );
+      if (backupPath) {
+        console.log(chalk.gray(`  • [${inst.key}] Backed up to ${backupPath}`));
       }
 
       if (fs.existsSync(inst.reisDir)) {
