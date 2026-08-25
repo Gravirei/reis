@@ -14,6 +14,7 @@ module.exports = tseslint.config(
       'templates/**',
       'eslint.config.js',
       'temp_reference/**',
+      'hooks/**',
       // Legacy source: re-included as it is migrated to src/ in later phases
       'lib/**',
       'bin/**',

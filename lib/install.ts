@@ -234,7 +234,9 @@ function injectClaudeHooks(settingsPath: string, hookCommands: { event: string; 
       return;
     }
   }
-  fs.copyFileSync(settingsPath, settingsPath + '.reis-backup');
+  if (fs.existsSync(settingsPath)) {
+    fs.copyFileSync(settingsPath, settingsPath + '.reis-backup');
+  }
   settings.hooks = settings.hooks || {};
   for (const { event, command, matcher } of hookCommands) {
     const arr = (settings.hooks[event] = settings.hooks[event] || []);
