@@ -8,9 +8,29 @@
  * - Export decision data
  */
 
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+
+export interface DecisionRecord {
+  id: string;
+  treeId: string;
+  selectedPath: string[];
+  metadata: Record<string, unknown>;
+  context: Record<string, unknown>;
+  timestamp: string;
+  reverted?: boolean;
+  revertReason?: string;
+  [key: string]: unknown;
+}
+
+interface DecisionsFile {
+  decisions: DecisionRecord[];
+}
+
+function isDecisionsFile(value: unknown): value is DecisionsFile {
+  return typeof value === 'object' && value !== null && Array.isArray((value as DecisionsFile).decisions);
+}
 
 const DECISIONS_FILE = '.reis/decisions.json';
 
@@ -23,7 +43,7 @@ const DECISIONS_FILE = '.reis/decisions.json';
  * @param {Object} decision.context - Additional context
  * @returns {Object} Saved decision with ID
  */
-function trackDecision(decision) {
+export function trackDecision(decision: Partial<DecisionRecord>): DecisionRecord {
   ensureDecisionsFile();
 
   const decisions = loadDecisions();
@@ -57,7 +77,7 @@ function trackDecision(decision) {
  * @param {Date} [filters.before] - Filter decisions before date
  * @returns {Array<Object>} Filtered decisions
  */
-function getDecisions(filters = {}) {
+export function getDecisions(filters: Record<string, unknown> = {}): DecisionRecord[] {
   const decisions = loadDecisions();
   
   return decisions.filter(decision => {
@@ -80,11 +100,11 @@ function getDecisions(filters = {}) {
     if (filters.after || filters.before) {
       const decisionDate = new Date(decision.timestamp);
       
-      if (filters.after && decisionDate < new Date(filters.after)) {
+      if (filters.after && decisionDate < new Date(filters.after as string | number | Date)) {
         return false;
       }
       
-      if (filters.before && decisionDate > new Date(filters.before)) {
+      if (filters.before && decisionDate > new Date(filters.before as string | number | Date)) {
         return false;
       }
     }
@@ -98,7 +118,7 @@ function getDecisions(filters = {}) {
  * @param {string} id - Decision ID
  * @returns {Object|null} Decision record or null
  */
-function getDecisionById(id) {
+export function getDecisionById(id: string): DecisionRecord | null {
   const decisions = loadDecisions();
   return decisions.find(d => d.id === id) || null;
 }
@@ -109,7 +129,7 @@ function getDecisionById(id) {
  * @param {string} [reason] - Reason for reversion
  * @returns {boolean} True if successful
  */
-function revertDecision(decisionId, reason = '') {
+export function revertDecision(decisionId: string, reason: string = ''): boolean {
   const decisions = loadDecisions();
   const decision = decisions.find(d => d.id === decisionId);
   
@@ -132,9 +152,9 @@ function revertDecision(decisionId, reason = '') {
  * @param {string} treeId - Tree identifier
  * @returns {Array<Object>} Decision history
  */
-function getDecisionHistory(treeId) {
+export function getDecisionHistory(treeId: string): DecisionRecord[] {
   return getDecisions({ treeId }).sort((a, b) => {
-    return new Date(b.timestamp) - new Date(a.timestamp);
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
   });
 }
 
@@ -143,10 +163,10 @@ function getDecisionHistory(treeId) {
  * @param {number} limit - Maximum number of decisions to return
  * @returns {Array<Object>} Recent decisions
  */
-function getRecentDecisions(limit = 10) {
+export function getRecentDecisions(limit: number = 10): DecisionRecord[] {
   const decisions = loadDecisions();
   return decisions
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     .slice(0, limit);
 }
 
@@ -155,7 +175,7 @@ function getRecentDecisions(limit = 10) {
  * @param {string} decisionId - Decision ID
  * @returns {boolean} True if deleted
  */
-function deleteDecision(decisionId) {
+export function deleteDecision(decisionId: string): boolean {
   const decisions = loadDecisions();
   const index = decisions.findIndex(d => d.id === decisionId);
   
@@ -173,7 +193,7 @@ function deleteDecision(decisionId) {
  * @param {Object} filters - Optional filters
  * @returns {string} JSON string
  */
-function exportToJSON(filters = {}) {
+export function exportToJSON(filters: Record<string, unknown> = {}): string {
   const decisions = getDecisions(filters);
   return JSON.stringify(decisions, null, 2);
 }
@@ -183,7 +203,7 @@ function exportToJSON(filters = {}) {
  * @param {Object} filters - Optional filters
  * @returns {string} CSV string
  */
-function exportToCSV(filters = {}) {
+export function exportToCSV(filters: Record<string, unknown> = {}): string {
   const decisions = getDecisions(filters);
   
   if (decisions.length === 0) {
@@ -238,15 +258,15 @@ function exportToCSV(filters = {}) {
  * Get statistics about decisions
  * @returns {Object} Statistics
  */
-function getStatistics() {
+export function getStatistics(): Record<string, unknown> {
   const decisions = loadDecisions();
   
   const stats = {
     total: decisions.length,
     reverted: decisions.filter(d => d.reverted).length,
     active: decisions.filter(d => !d.reverted).length,
-    byTree: {},
-    byPhase: {},
+    byTree: {} as Record<string, number>,
+    byPhase: {} as Record<string, number>,
     recentCount: 0
   };
   
@@ -254,8 +274,9 @@ function getStatistics() {
   decisions.forEach(d => {
     stats.byTree[d.treeId] = (stats.byTree[d.treeId] || 0) + 1;
     
-    if (d.context.phase) {
-      stats.byPhase[d.context.phase] = (stats.byPhase[d.context.phase] || 0) + 1;
+    const phase = d.context.phase;
+    if (phase && typeof phase === 'string') {
+      stats.byPhase[phase] = (stats.byPhase[phase] || 0) + 1;
     }
   });
   
@@ -273,7 +294,7 @@ function getStatistics() {
  * Clear all decisions (with confirmation)
  * @returns {boolean} True if cleared
  */
-function clearAllDecisions() {
+export function clearAllDecisions(): boolean {
   saveDecisions([]);
   return true;
 }
@@ -282,14 +303,21 @@ function clearAllDecisions() {
  * Load decisions from file
  * @returns {Array<Object>} Decisions array
  */
-function loadDecisions() {
+function loadDecisions(): DecisionRecord[] {
   if (!fs.existsSync(DECISIONS_FILE)) {
     return [];
   }
   
   try {
     const content = fs.readFileSync(DECISIONS_FILE, 'utf-8');
-    return JSON.parse(content);
+    const parsed: unknown = JSON.parse(content);
+    if (Array.isArray(parsed)) {
+      return parsed as DecisionRecord[];
+    }
+    if (isDecisionsFile(parsed)) {
+      return parsed.decisions;
+    }
+    return [];
   } catch (error) {
     console.error('Error loading decisions:', error.message);
     return [];
@@ -300,7 +328,7 @@ function loadDecisions() {
  * Save decisions to file
  * @param {Array<Object>} decisions - Decisions to save
  */
-function saveDecisions(decisions) {
+export function saveDecisions(decisions: DecisionRecord[]): void {
   ensureDecisionsFile();
   fs.writeFileSync(DECISIONS_FILE, JSON.stringify(decisions, null, 2), 'utf-8');
 }
@@ -308,7 +336,7 @@ function saveDecisions(decisions) {
 /**
  * Ensure decisions file and directory exist
  */
-function ensureDecisionsFile() {
+export function ensureDecisionsFile(): void {
   const dir = path.dirname(DECISIONS_FILE);
   
   if (!fs.existsSync(dir)) {
@@ -324,24 +352,10 @@ function ensureDecisionsFile() {
  * Generate UUID v4 (fallback for older Node versions)
  * @returns {string} UUID
  */
-function generateUUID() {
+function generateUUID(): string {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
   });
 }
-
-module.exports = {
-  trackDecision,
-  getDecisions,
-  getDecisionById,
-  revertDecision,
-  getDecisionHistory,
-  getRecentDecisions,
-  deleteDecision,
-  exportToJSON,
-  exportToCSV,
-  getStatistics,
-  clearAllDecisions
-};

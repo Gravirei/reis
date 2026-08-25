@@ -51,3 +51,6 @@ tmp_rovodev_*
 lib/utils/path-sanitizer.js
 lib/utils/config.js
 lib/utils/state-manager.js
+lib/utils/kanban-renderer.js
+lib/utils/metrics-tracker.js
+lib/utils/decision-tracker.js

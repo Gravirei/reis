@@ -3,25 +3,34 @@
  * Renders ASCII kanban board with progress bars and multiple styles
  */
 
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
+import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
+
+import type { ReisConfig } from '../../src/types/config.js';
+
+interface ExecutorStatus {
+  active: number;
+  total: number;
+}
+
+let executorStatus: ExecutorStatus | null = null;
 
 // Box drawing characters
-const BOX = {
+export const BOX = {
   topLeft: '┌', topRight: '┐', bottomLeft: '└', bottomRight: '┘',
   horizontal: '─', vertical: '│',
   teeDown: '┬', teeUp: '┴', teeRight: '├', teeLeft: '┤', cross: '┼'
 };
 
 // Progress bar characters
-const PROGRESS = {
+export const PROGRESS = {
   filled: '■',
   empty: '░'
 };
 
 // Status icons
-const ICONS = {
+export const ICONS = {
   active: '◉',
   waiting: '○',
   complete: '✓',
@@ -31,7 +40,7 @@ const ICONS = {
 };
 
 // Column widths (adjusted to match approved design)
-const WIDTHS = {
+export const WIDTHS = {
   phases: 14,
   inProgress: 14,
   cycleLabel: 14,
@@ -39,14 +48,23 @@ const WIDTHS = {
   completed: 18
 };
 
+interface ParallelWaveDisplayState {
+  enabled: boolean;
+  maxConcurrent: number;
+  runningWaves: Record<string, unknown>[];
+  waitingWaves: Record<string, unknown>[];
+  completedWaves: Record<string, unknown>[];
+  dependencies: Map<string, string[]>;
+}
+
 // Parallel execution state (for wave display)
-let parallelWaveState = {
+let parallelWaveState: ParallelWaveDisplayState = {
   enabled: false,
   maxConcurrent: 4,
-  runningWaves: [],      // [{id, progress, name}]
-  waitingWaves: [],      // [{id, dependsOn}]
-  completedWaves: [],    // [{id, duration}]
-  dependencies: new Map() // waveId -> [dependencyIds]
+  runningWaves: [],
+  waitingWaves: [],
+  completedWaves: [],
+  dependencies: new Map()
 };
 
 /**
@@ -55,7 +73,7 @@ let parallelWaveState = {
  * @param {number} width - Total width including brackets (default 16)
  * @returns {string} Formatted progress bar like [■■░░ 45%  ░░░░]
  */
-function renderProgressBar(percent, width = 16) {
+export function renderProgressBar(percent: number, width: number = 16): string {
   // Handle special cases: not started
   if (percent === null || percent === undefined || percent < 0) {
     const innerWidth = width - 2; // subtract brackets
@@ -93,8 +111,14 @@ function renderProgressBar(percent, width = 16) {
 /**
  * KanbanBoard class - Main renderer
  */
-class KanbanBoard {
-  constructor(options = {}) {
+export class KanbanBoard {
+  style: string;
+  noColor: boolean;
+  state: Record<string, unknown> | null;
+  cycleState: Record<string, unknown> | null;
+  executorStatus: ExecutorStatus;
+
+  constructor(options: { style?: string; noColor?: boolean } = {}) {
     this.style = options.style || 'full';
     this.noColor = options.noColor || false;
     this.state = null;
@@ -611,7 +635,7 @@ class KanbanBoard {
    * @returns {string} Single line like: "P1 Setup [■■░░ 38%] Execute ⫴2/4 | Completed: 0"
    */
   renderCompact() {
-    const phase = this.state?.currentPhase;
+    const phase = this.state?.currentPhase as { id: number; name?: string } | undefined;
     const phaseName = phase ? `P${phase.id} ${phase.name || ''}`.trim() : 'No active phase';
     
     // Current stage and progress
@@ -635,7 +659,7 @@ class KanbanBoard {
       : '';
     
     // Completed count
-    const completedCount = this.state?.completedCycles?.length || 0;
+    const completedCount = (this.state?.completedCycles as unknown[] | undefined)?.length || 0;
     
     // Build the compact line with box
     const content = `${phaseName} ${progressBar} ${currentStage}${execStatus} | Completed: ${completedCount}`;
@@ -655,7 +679,7 @@ class KanbanBoard {
    * @returns {string} Just status text like: "▶ P1 Setup │ Execute [■■░░ 38%] ⫴2/4 │ Cycles: 1 done"
    */
   renderMinimal() {
-    const phase = this.state?.currentPhase;
+    const phase = this.state?.currentPhase as { id: number; name?: string } | undefined;
     const phaseName = phase ? `${ICONS.current} P${phase.id} ${phase.name || ''}`.trim() : 'Idle';
     
     // Current stage and progress
@@ -677,7 +701,7 @@ class KanbanBoard {
       : '';
     
     // Completed count
-    const completedCount = this.state?.completedCycles?.length || 0;
+    const completedCount = (this.state?.completedCycles as unknown[] | undefined)?.length || 0;
     
     if (!currentStage) {
       return `${phaseName} │ Cycles: ${completedCount} done`;
@@ -737,23 +761,23 @@ class KanbanBoard {
     // Get current phase from cycle state
     if (this.cycleState?.phase !== undefined) {
       this.state.currentPhase = {
-        id: this.cycleState.phase,
-        name: this.cycleState.planPath?.split('/').pop()?.replace('.PLAN.md', '') || '',
+        id: this.cycleState.phase as number,
+        name: String(this.cycleState.planPath ?? '').split('/').pop()?.replace('.PLAN.md', '') || '',
         tasks: []
       };
     }
     
     // Load completed cycles from cycle state
-    if (this.cycleState?.completedPhases) {
-      this.state.completedCycles = this.cycleState.completedPhases.map((p, i) => ({
+    if (Array.isArray(this.cycleState?.completedPhases)) {
+      this.state.completedCycles = (this.cycleState.completedPhases as unknown[]).map((p, i) => ({
         id: i,
-        phase: typeof p === 'object' ? p.phase : p
+        phase: typeof p === 'object' && p !== null ? (p as Record<string, unknown>).phase : p
       }));
     }
     
     // Apply any stored executor status
-    if (module.exports._executorStatus) {
-      this.executorStatus = module.exports._executorStatus;
+    if (executorStatus) {
+      this.executorStatus = executorStatus;
     }
   }
 }
@@ -763,29 +787,29 @@ class KanbanBoard {
  * @param {Object} options - {style, noKanban, forceShow}
  * @returns {boolean} Whether kanban was shown
  */
-function showKanbanBoard(options = {}) {
+export function showKanbanBoard(options: { style?: string; noColor?: boolean; noKanban?: boolean; forceShow?: boolean } = {}): boolean {
   // Check if kanban should be shown
   if (options.noKanban) {
     return false;
   }
   
   // Load config
-  let config = {};
+  let config: ReisConfig | Record<string, never> = {};
   try {
-    const { loadConfig } = require('./config');
+    const { loadConfig } = require('./config.js') as typeof import('./config.js');
     config = loadConfig() || {};
   } catch (e) {
     // Config loading is optional
   }
-  
+
   // Check if enabled (default true)
-  const kanbanConfig = config.kanban || {};
+  const kanbanConfig = (config as ReisConfig).kanban ?? { enabled: true, style: 'full' };
   if (kanbanConfig.enabled === false && !options.forceShow) {
     return false;
   }
   
   // Create and render board
-  const style = options.style || kanbanConfig.style || 'full';
+  const style = options.style || (kanbanConfig.style ?? 'full');
   const board = new KanbanBoard({ style, noColor: options.noColor });
   board.loadState();
   
@@ -801,9 +825,8 @@ function showKanbanBoard(options = {}) {
  * @param {number} active - Active executor count
  * @param {number} total - Total executor count
  */
-function updateExecutorStatus(active, total) {
-  // Store in module-level state for next render
-  module.exports._executorStatus = { active, total };
+export function updateExecutorStatus(active: number, total: number): void {
+  executorStatus = { active, total };
 }
 
 /**
@@ -816,7 +839,7 @@ function updateExecutorStatus(active, total) {
  * @param {Array} state.completedWaves - Completed waves [{id, duration}]
  * @param {Map|Object} state.dependencies - Wave dependencies map
  */
-function updateParallelWaveState(state) {
+export function updateParallelWaveState(state: Partial<ParallelWaveDisplayState> | null): void {
   if (!state) {
     parallelWaveState = {
       enabled: false,
@@ -841,7 +864,7 @@ function updateParallelWaveState(state) {
   };
   
   // Also update executor status for backward compatibility
-  module.exports._executorStatus = {
+  executorStatus = {
     active: parallelWaveState.runningWaves.length,
     total: parallelWaveState.runningWaves.length + 
            parallelWaveState.waitingWaves.length + 
@@ -853,7 +876,7 @@ function updateParallelWaveState(state) {
  * Get current parallel wave state
  * @returns {Object} Current parallel wave state
  */
-function getParallelWaveState() {
+export function getParallelWaveState(): ParallelWaveDisplayState {
   return { ...parallelWaveState };
 }
 
@@ -863,7 +886,7 @@ function getParallelWaveState() {
  * @param {Object} options - Display options
  * @returns {string} Formatted parallel execution display
  */
-function renderParallelExecutionDisplay(options = {}) {
+export function renderParallelExecutionDisplay(options: Record<string, unknown> = {}): string {
   const board = new KanbanBoard(options);
   const lines = [];
   
@@ -910,7 +933,7 @@ function renderParallelExecutionDisplay(options = {}) {
     lines.push(BOX.vertical + ' '.repeat(50) + BOX.vertical);
     lines.push(BOX.vertical + '  Completed Waves:'.padEnd(50) + BOX.vertical);
     state.completedWaves.slice(-3).forEach(wave => {
-      const duration = wave.duration ? ` (${(wave.duration / 1000).toFixed(1)}s)` : '';
+      const duration = wave.duration ? ` (${(Number(wave.duration) / 1000).toFixed(1)}s)` : '';
       const line = `    ${wave.id} ${ICONS.complete}${duration}`;
       lines.push(BOX.vertical + line.padEnd(50) + BOX.vertical);
     });
@@ -928,7 +951,7 @@ function renderParallelExecutionDisplay(options = {}) {
  * @param {Object} options - Override options
  * @returns {boolean} Whether kanban should show
  */
-function shouldShowKanban(options = {}) {
+export function shouldShowKanban(options: Record<string, unknown> = {}): boolean {
   if (options.noKanban) {
     return false;
   }
@@ -950,7 +973,7 @@ function shouldShowKanban(options = {}) {
  * Get current kanban state (for testing/debugging)
  * @returns {Object} Current state object
  */
-function getKanbanState() {
+export function getKanbanState(): Record<string, unknown> {
   const board = new KanbanBoard();
   board.loadState();
   return {
@@ -960,19 +983,3 @@ function getKanbanState() {
   };
 }
 
-// Export everything
-module.exports = {
-  KanbanBoard,
-  BOX,
-  PROGRESS,
-  ICONS,
-  WIDTHS,
-  renderProgressBar,
-  showKanbanBoard,
-  updateExecutorStatus,
-  updateParallelWaveState,
-  getParallelWaveState,
-  renderParallelExecutionDisplay,
-  shouldShowKanban,
-  getKanbanState
-};

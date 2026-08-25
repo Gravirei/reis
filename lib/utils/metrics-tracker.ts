@@ -3,14 +3,44 @@
  * Track execution metrics, performance data, and success rates
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+interface WaveExecutionRecord {
+  timestamp?: string | number;
+  startTime?: string | number;
+  duration?: number;
+  [key: string]: unknown;
+}
+
+interface CheckpointRecord {
+  [key: string]: unknown;
+}
+
+interface MetricsData {
+  waveExecutions: WaveExecutionRecord[];
+  checkpoints: CheckpointRecord[];
+  summary: {
+    totalWaves: number;
+    successfulWaves: number;
+    failedWaves: number;
+    successRate: number;
+    averageDuration: number;
+    totalExecutionTime: number;
+    lastUpdated: string;
+  };
+}
 
 /**
  * MetricsTracker class - persistent metrics storage and analysis
  */
 class MetricsTracker {
-  constructor(projectRoot = process.cwd()) {
+  projectRoot: string;
+  planningDir: string;
+  metricsPath: string;
+  data: MetricsData;
+
+  constructor(projectRoot: string = process.cwd()) {
     this.projectRoot = projectRoot;
     this.planningDir = path.join(projectRoot, '.planning');
     this.metricsPath = path.join(this.planningDir, 'METRICS.md');
@@ -20,7 +50,7 @@ class MetricsTracker {
   /**
    * Load metrics from METRICS.md
    */
-  loadMetrics() {
+  loadMetrics(): MetricsData {
     if (!fs.existsSync(this.metricsPath)) {
       return this.createInitialMetrics();
     }
@@ -43,10 +73,10 @@ class MetricsTracker {
   /**
    * Create initial metrics structure
    */
-  createInitialMetrics() {
+  createInitialMetrics(): MetricsData {
     return {
-      waveExecutions: [],
-      checkpoints: [],
+      waveExecutions: [] as WaveExecutionRecord[],
+      checkpoints: [] as CheckpointRecord[],
       summary: {
         totalWaves: 0,
         successfulWaves: 0,
@@ -476,8 +506,8 @@ class MetricsTracker {
   }
 }
 
-module.exports = {
-  MetricsTracker,
-  // Export helper functions for testing
-  createMetricsTracker: (projectRoot) => new MetricsTracker(projectRoot)
-};
+export { MetricsTracker };
+
+export function createMetricsTracker(projectRoot: string): MetricsTracker {
+  return new MetricsTracker(projectRoot);
+}
