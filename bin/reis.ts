@@ -57,7 +57,7 @@ async function runInstall(overwrite: boolean): Promise<void> {
       const osMod = await import('os');
       const marker = pathMod.join(osMod.homedir(), '.claude/reis/.profile');
       const persisted = fsMod.readFileSync(marker, 'utf8').trim();
-      if (['core', 'standard', 'full'].includes(persisted)) effectiveProfile = persisted as any;
+      if (persisted) effectiveProfile = persisted;
     } catch {}
   }
   // Targets: default to all platforms unless flags narrow it down

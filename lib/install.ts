@@ -333,20 +333,34 @@ function loadProfilesManifest(commandsSourceDir: string): ProfilesManifest {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 }
 
+function resolveProfileSet(spec: string, manifest: ProfilesManifest): Set<string> {
+  // spec = comma-separated mix of tier names and explicit command names,
+  // e.g. "core,ship,stats" or "standard". Union of closures.
+  const knownCommands = new Set(manifest.full || []);
+  const tiers: Profile[] = ['core', 'standard', 'full'];
+  const allowed = new Set<string>();
+  for (const part of spec.split(',').map(p => p.trim()).filter(Boolean)) {
+    if ((tiers as string[]).includes(part)) {
+      for (const c of manifest[part as Profile] || []) {
+        allowed.add(c);
+      }
+    } else if (knownCommands.has(part)) {
+      allowed.add(part);
+    } else {
+      throw new Error(
+        `Unknown profile entry "${part}". Known tiers: ${tiers.join('/')}; commands: ${manifest.full.join(', ')}`
+      );
+    }
+  }
+  return allowed;
+}
+
 function filterCommandsForProfile(
   files: string[],
   manifest: ProfilesManifest,
-  profile: Profile
+  profileSpec: string
 ): { file: string; cmd: string }[] {
-  const tiers: Profile[] = ['core', 'standard', 'full'];
-  const allowed = new Set<string>();
-  for (const tier of tiers.slice(0, tiers.indexOf(profile) + 1)) {
-    for (const c of manifest[tier] || []) {
-      allowed.add(c);
-    }
-  }
-  // Non-command assets always ship
-  allowed.add('profiles');
+  const allowed = resolveProfileSet(profileSpec, manifest);
   return files
     .map(f => ({ file: f, cmd: f.replace(/\.md$/, '') }))
     .filter(e => allowed.has(e.cmd));
@@ -447,7 +461,7 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: Profile, configDirOverride?: string, portableHooks = false) {
+async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: string, configDirOverride?: string, portableHooks = false) {
   const rootDir = scope === 'local' ? process.cwd() : os.homedir();
   const platforms = resolvePlatforms(target);
   let totalFiles = 0;
@@ -546,7 +560,7 @@ async function performInstallation(overwrite = false, silent = false, target = '
       const commandsSourceDir = path.join(packageDir, 'commands', 'reis');
       if (fs.existsSync(commandsSourceDir)) {
         const manifest = loadProfilesManifest(commandsSourceDir);
-        const activeProfile: Profile = profile || 'full';
+        const activeProfile: string = profile || 'full';
         const cmdTarget = path.join(baseDir, platform.commands.dirName);
         ensureDir(cmdTarget);
         const rawFiles = fs.readdirSync(commandsSourceDir).filter(f => f.endsWith('.md'));
@@ -604,8 +618,7 @@ async function performInstallation(overwrite = false, silent = false, target = '
 
     // Persist profile for `reis update` continuity (global scope only)
     if (scope === 'global' && platform.commands) {
-      const activeProfile: Profile = profile || 'full';
-      fs.writeFileSync(path.join(reisDir, '.profile'), activeProfile);
+      fs.writeFileSync(path.join(reisDir, '.profile'), profile || 'full');
     }
 
     // Install hook scripts (all platforms can use them manually)
