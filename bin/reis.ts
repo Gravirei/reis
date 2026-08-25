@@ -32,6 +32,7 @@ function showHelp(): void {
     --hooks / --no-hooks   Toggle lifecycle hooks injection (default: hooks)
     --profile=<name>       Command set: core | standard | full (default: full)
     --config-dir <path>    Override the tool config directory (single platform only)
+    --portable-hooks       Emit $HOME-relative hook paths (WSL/docker bind-mounts)
 
   Learn more: https://github.com/Gravirei/reis
 `);
@@ -45,6 +46,7 @@ async function runInstall(overwrite: boolean): Promise<void> {
   const profile = profileArg ? profileArg.split('=')[1] : undefined;
   const cfgIdx = process.argv.indexOf('--config-dir');
   const configDirOverride = cfgIdx !== -1 ? process.argv[cfgIdx + 1] : undefined;
+  const portableHooks = process.argv.includes('--portable-hooks') || process.env.REIS_PORTABLE_HOOKS === '1';
   const { performInstallation } = await import('../lib/install.js');
   // On update without explicit --profile, respect previously persisted choice
   let effectiveProfile = profile;
@@ -61,7 +63,7 @@ async function runInstall(overwrite: boolean): Promise<void> {
   // Targets: default to all platforms unless flags narrow it down
   const targets = ['rovodev', 'gemini', 'claude', 'codex', 'copilot']
     .filter(p => process.argv.includes(`--${p}`));
-  await performInstallation(overwrite, false, targets.length ? targets.join(',') : 'all', scope, hooks, effectiveProfile as any, configDirOverride);
+  await performInstallation(overwrite, false, targets.length ? targets.join(',') : 'all', scope, hooks, effectiveProfile as any, configDirOverride, portableHooks);
 }
 
 async function main(): Promise<void> {

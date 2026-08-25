@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from 'fs';
+import packageJson from '../package.json';
 import path from 'path';
 import os from 'os';
 import chalk from 'chalk';
@@ -446,7 +447,7 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: Profile, configDirOverride?: string) {
+async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: Profile, configDirOverride?: string, portableHooks = false) {
   const rootDir = scope === 'local' ? process.cwd() : os.homedir();
   const platforms = resolvePlatforms(target);
   let totalFiles = 0;
@@ -598,6 +599,9 @@ async function performInstallation(overwrite = false, silent = false, target = '
       }
     }
 
+    // Version marker for update-awareness hook
+    fs.writeFileSync(path.join(reisDir, '.reis-version'), packageJson.version);
+
     // Persist profile for `reis update` continuity (global scope only)
     if (scope === 'global' && platform.commands) {
       const activeProfile: Profile = profile || 'full';
@@ -612,12 +616,16 @@ async function performInstallation(overwrite = false, silent = false, target = '
 
     // Inject lifecycle hooks into Claude Code settings (only supported runtime)
     if (platform.key === 'claude' && hooks) {
+      // Portable mode emits $HOME-relative paths (WSL/docker bind-mount safe);
       const hooksBase = scope === 'local'
         ? `.${platform.baseDir}/reis/hooks`
-        : `~/${platform.baseDir}/reis/hooks`;
+        : portableHooks
+          ? `$HOME/${platform.baseDir}/reis/hooks`
+          : `~/${platform.baseDir}/reis/hooks`;
       const settingsPath = path.join(baseDir, 'settings.json');
       injectClaudeHooks(settingsPath, [
         { event: 'SessionStart', command: `${hooksBase}/session-start.sh` },
+        { event: 'SessionStart', command: `node ${hooksBase}/check-update.js` },
         { event: 'PreToolUse', command: `node ${hooksBase}/workflow-guard.js`, matcher: 'Edit|Write' }
       ]);
       if (!silent) {
