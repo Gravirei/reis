@@ -456,6 +456,15 @@ async function performInstallation(overwrite = false, silent = false, target = '
       fileCount += count;
     }
 
+    // Copy methodology tree (workflows / references / contexts)
+    for (const section of ['workflows', 'references', 'contexts']) {
+      const src = path.join(packageDir, 'reis', section);
+      if (fs.existsSync(src)) {
+        const count = copyDirectory(src, path.join(reisDir, section), true);
+        fileCount += count;
+      }
+    }
+
     // Copy subagents from subagents/ to the platform agents directory
     // ALWAYS overwrite subagents - they should stay up-to-date with package version
     const subagentsSourceDir = path.join(packageDir, 'agents');

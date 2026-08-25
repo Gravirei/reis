@@ -34,6 +34,13 @@ describe('Installer (v3 agent-native package)', function () {
       assert.ok(fs.existsSync(path.join(proj, '.gemini/commands/reis/plan.toml')));
       assert.ok(fs.existsSync(path.join(proj, '.codex/prompts/reis-plan.md')));
       assert.ok(fs.existsSync(path.join(proj, '.copilot/skills/plan/SKILL.md')));
+
+      // methodology tree installed per platform
+      const wf = path.join(proj, '.claude/reis/workflows');
+      assert.ok(fs.existsSync(wf), 'workflows dir');
+      assert.ok(fs.readdirSync(wf).filter(f => f.endsWith('.md')).length >= 24, '24+ workflows');
+      assert.ok(fs.existsSync(path.join(proj, '.claude/reis/references/state-format.md')));
+      assert.ok(fs.existsSync(path.join(proj, '.claude/reis/contexts/execution.md')));
     } finally {
       process.chdir(cwd);
       fs.rmSync(proj, { recursive: true, force: true });

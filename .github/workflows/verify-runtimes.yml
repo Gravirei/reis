@@ -1,0 +1,37 @@
+name: Cross-runtime verification
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1' # weekly, Mondays 06:00 UTC
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install runtime CLIs
+        run: |
+          npm install -g @anthropic-ai/claude-code @github/copilot @openai/codex 2>/dev/null || true
+      - name: Run verification harness
+        env:
+          CLAUDE_AUTH: ${{ secrets.CLAUDE_AUTH_JSON }}
+          COPILOT_CONFIG: ${{ secrets.COPILOT_CONFIG_JSON }}
+          CODEX_AUTH: ${{ secrets.CODEX_AUTH_JSON }}
+        run: |
+          # Seed auth artifacts when secrets are provided (probes become PASS
+          # instead of SKIP); absent secrets simply yield SKIPs.
+          mkdir -p ~/.claude ~/.copilot ~/.codex
+          [ -n "$CLAUDE_AUTH" ] && echo "$CLAUDE_AUTH" > ~/.claude/settings.json || true
+          [ -n "$COPILOT_CONFIG" ] && echo "$COPILOT_CONFIG" > ~/.copilot/config.json || true
+          [ -n "$CODEX_AUTH" ] && echo "$CODEX_AUTH" > ~/.codex/auth.json || true
+          bash scripts/verify-runtimes.sh claude codex copilot gemini
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reis-runtime-logs
+          path: /tmp/reis-verify-*/
