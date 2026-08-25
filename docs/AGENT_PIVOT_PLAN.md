@@ -106,8 +106,19 @@ Extend the existing registry-based installer:
 | Runtime quirks (Codex TOML prompts, Copilot naming) | Same transform-test loop as the agent-file work; verify per-runtime in Phase D |
 | Losing deterministic guarantees (state parsing) | References include exact bash + format specs; revisit SDK decision only after real-world friction |
 
-## 6. Open decisions (need your call before Phase C)
+## 6. Decisions (RESOLVED)
 
-1. Slash namespace: `reis:*` (colon) or `reis-*` (hyphen)? GSD moved to hyphen for compatibility.
-2. Keep Rovo Dev tool lists in agent frontmatter, or strip everywhere?
-3. Project-local installs: default off (flag-only) or offered interactively?
+1. **Slash namespace: `reis:*`** (colon form). Installer must convert to hyphen
+   form only for runtimes verified not to support colons (GSD maintains an
+   explicit allow-list for this — copy that approach).
+2. **Agent tool lists: GSD model adopted.** Canonical agent format uses
+   Claude Code tool names (Read/Write/Edit/Bash/Grep/Glob/WebFetch/WebSearch,
+   scoped per role). Current Rovo-specific names (open_files,
+   expand_code_chunks, …) are replaced. Installer translates per runtime:
+   - claude: passthrough
+   - copilot: tool-name mapping → JSON array (see GSD convertCopilotToolName)
+   - codex: no tools key; read-only roles get sandbox_mode = "read-only"
+   - gemini: strip (no equivalent support today)
+   Blanket stripping is retired.
+3. **Local installs: offered interactively** alongside global during install
+   (plus `--local` / `--global` flags for non-interactive use).
