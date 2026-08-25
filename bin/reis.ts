@@ -553,9 +553,11 @@ program.action(async () => {
           }
         ]);
 
+        const scope: 'global' | 'local' = process.argv.includes('--local') ? 'local' : 'global';
+
         // Perform installation directly with overwrite
         const { performInstallation } = require('../lib/install.js');
-        await performInstallation(true, true, target.join(',')); // overwrite=true, silent=true
+        await performInstallation(true, true, target.join(','), scope); // overwrite=true, silent=true
 
         console.log(chalk.green('  ✓ REIS reinstalled successfully'));
         console.log(chalk.gray(`  Locations: ${target.map((t: string) => '~/.' + t + '/reis/').join(', ')}`));
@@ -613,8 +615,9 @@ program.action(async () => {
       ]);
       
       // Perform installation directly
+      const scope: 'global' | 'local' = process.argv.includes('--local') ? 'local' : 'global';
       const { performInstallation } = require('../lib/install.js');
-      await performInstallation(false, true, target); // overwrite=false, silent=true
+      await performInstallation(false, true, target, scope); // overwrite=false, silent=true
       
       console.log(chalk.green('  ✓ REIS installed successfully'));
       console.log(chalk.gray(`  Location: ${target === 'both' ? '~/.rovodev/reis/ and ~/.gemini/reis/' : '~/.' + target + '/reis/'}`));
@@ -625,8 +628,9 @@ program.action(async () => {
       console.log(chalk.gray('  Non-interactive mode - installing automatically...\n'));
       
       // Perform installation directly
+      const scope: 'global' | 'local' = process.argv.includes('--local') ? 'local' : 'global';
       const { performInstallation } = require('../lib/install.js');
-      await performInstallation(false, true, 'both'); // overwrite=false, silent=true
+      await performInstallation(false, true, 'all', scope); // overwrite=false, silent=true
       
       console.log(chalk.green('  ✓ REIS installed successfully'));
       console.log(chalk.gray('  Location: ~/.rovodev/reis/ and ~/.gemini/reis/'));

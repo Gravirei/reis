@@ -27,6 +27,12 @@ const hasInteractiveStdin = process.stdin.isTTY && !process.stdin.destroyed && t
 const isInteractive = !isCIEnvironment && !isSudo && hasInteractiveStdin;
 
 // Supported installation platforms
+interface CommandTarget {
+  dirName: string;
+  extension: string;
+  mode: 'markdown' | 'gemini-toml' | 'codex-prompt' | 'copilot-skill';
+}
+
 interface PlatformConfig {
   key: string;
   baseDir: string;
@@ -34,6 +40,7 @@ interface PlatformConfig {
   agentExtension: string;
   transform: 'rovodev' | 'strip-tools' | 'codex-toml';
   clientName: string;
+  commands: CommandTarget | null;
 }
 
 const PLATFORMS: Record<string, PlatformConfig> = {
@@ -43,7 +50,8 @@ const PLATFORMS: Record<string, PlatformConfig> = {
     agentsDirName: 'subagents',
     agentExtension: '.md',
     transform: 'rovodev',
-    clientName: 'Atlassian Rovo Dev'
+    clientName: 'Atlassian Rovo Dev',
+    commands: null
   },
   gemini: {
     key: 'gemini',
@@ -51,7 +59,8 @@ const PLATFORMS: Record<string, PlatformConfig> = {
     agentsDirName: 'agents',
     agentExtension: '.md',
     transform: 'strip-tools',
-    clientName: 'Gemini CLI'
+    clientName: 'Gemini CLI',
+    commands: { dirName: 'commands/reis', extension: '.toml', mode: 'gemini-toml' }
   },
   claude: {
     key: 'claude',
@@ -59,7 +68,8 @@ const PLATFORMS: Record<string, PlatformConfig> = {
     agentsDirName: 'agents',
     agentExtension: '.md',
     transform: 'strip-tools',
-    clientName: 'Claude Code'
+    clientName: 'Claude Code',
+    commands: { dirName: 'commands/reis', extension: '.md', mode: 'markdown' }
   },
   codex: {
     key: 'codex',
@@ -67,7 +77,8 @@ const PLATFORMS: Record<string, PlatformConfig> = {
     agentsDirName: 'agents',
     agentExtension: '.toml',
     transform: 'codex-toml',
-    clientName: 'OpenAI Codex'
+    clientName: 'OpenAI Codex',
+    commands: { dirName: 'prompts', extension: '.md', mode: 'codex-prompt' }
   },
   copilot: {
     key: 'copilot',
@@ -75,7 +86,8 @@ const PLATFORMS: Record<string, PlatformConfig> = {
     agentsDirName: 'agents',
     agentExtension: '.agent.md',
     transform: 'strip-tools',
-    clientName: 'GitHub Copilot CLI'
+    clientName: 'GitHub Copilot CLI',
+    commands: { dirName: 'skills', extension: '/SKILL.md', mode: 'copilot-skill' }
   }
 };
 
@@ -145,6 +157,70 @@ function stripToolsBlock(content: string): string {
   return content.replace(/^tools:\n(?:- .*\n)+/m, '');
 }
 
+// Rewrite methodology-path references for the target platform and scope
+function rewritePaths(content: string, baseDir: string, scopeRoot: string): string {
+  // Canonical authored form references ~/.claude/reis/
+  if (scopeRoot === os.homedir()) {
+    return content.split('~/.claude/reis/').join(`~/${baseDir}/reis/`);
+  }
+  // Local (project) installs: agent runs inside the project, relative paths work
+  return content.split('~/.claude/reis/').join(`${baseDir}/reis/`);
+}
+
+interface ParsedCommand {
+  name: string;
+  description: string;
+  body: string;
+}
+
+// Parse a command dispatcher markdown file (frontmatter + body)
+function parseCommandFile(content: string): ParsedCommand | null {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!match) {
+    return null;
+  }
+  const nameMatch = match[1].match(/^name:\s*(.+)$/m);
+  const descMatch = match[1].match(/^description:\s*(.+)$/m);
+  return {
+    name: nameMatch ? nameMatch[1].trim() : 'unknown',
+    description: descMatch ? descMatch[1].trim() : '',
+    body: match[2].trim()
+  };
+}
+
+// Convert a parsed command to Gemini TOML command format
+function toGeminiTOML(cmd: ParsedCommand): string {
+  const description = cmd.description.replace(/"/g, '\\"');
+  const prompt = cmd.body.replace(/\$ARGUMENTS/g, '{{args}}');
+  return [
+    `description = "${description}"`,
+    ``,
+    `prompt = """`,
+    prompt,
+    `"""`,
+    ''
+  ].join('\n');
+}
+
+// Convert a parsed command to a Copilot skill definition
+function toCopilotSkill(cmd: ParsedCommand): string {
+  const description = cmd.description.replace(/"/g, "'");
+  return [
+    `---`,
+    `name: ${cmd.name.replace(':', '-')}`,
+    `description: "${description}"`,
+    `---`,
+    ``,
+    cmd.body,
+    ''
+  ].join('\n');
+}
+
+// Convert a parsed command to a Codex prompt file (frontmatter stripped)
+function toCodexPrompt(cmd: ParsedCommand): string {
+  return `${cmd.body}\n`;
+}
+
 // Main installation function
 async function install() {
   try {
@@ -203,8 +279,27 @@ async function install() {
         }
       ]);
 
+      let scope: 'global' | 'local' = 'global';
+      try {
+        const { installScope } = await inquirer.prompt([
+          {
+            type: 'list',
+            name: 'installScope',
+            message: 'Install scope?',
+            choices: [
+              { name: 'Global - available in all projects (~)', value: 'global' },
+              { name: 'Current project only (./)', value: 'local' }
+            ],
+            default: 'global'
+          }
+        ]);
+        scope = installScope;
+      } catch {
+        // keep global on prompt failure
+      }
+
       console.log('');
-      await performInstallation(false, false, target.join(','));
+      await performInstallation(false, false, target.join(','), scope);
     } catch (promptError) {
       // inquirer failed, install anyway
       if (!isSilentMode) {
@@ -221,13 +316,13 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'all') {
-  const homeDir = os.homedir();
+async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global') {
+  const rootDir = scope === 'local' ? process.cwd() : os.homedir();
   const platforms = resolvePlatforms(target);
   let totalFiles = 0;
 
   for (const platform of platforms) {
-    const baseDir = path.join(homeDir, platform.baseDir);
+    const baseDir = path.join(rootDir, platform.baseDir);
 
     // Define target directories
     const reisDir = path.join(baseDir, 'reis');
@@ -300,6 +395,61 @@ async function performInstallation(overwrite = false, silent = false, target = '
           console.log(chalk.yellow(`  ⚠ Failed to process ${file}: ${(e as any).message}`));
         }
       });
+    }
+
+    // Install slash-command dispatchers (where the platform supports them)
+    if (platform.commands) {
+      const commandsSourceDir = path.join(packageDir, 'commands', 'reis');
+      if (fs.existsSync(commandsSourceDir)) {
+        const cmdTarget = path.join(baseDir, platform.commands.dirName);
+        ensureDir(cmdTarget);
+        const commandFiles = fs.readdirSync(commandsSourceDir).filter(f => f.endsWith('.md'));
+        for (const file of commandFiles) {
+          try {
+            const raw = fs.readFileSync(path.join(commandsSourceDir, file), 'utf8');
+            const parsed = parseCommandFile(raw);
+            if (!parsed) {
+              continue;
+            }
+            const body = rewritePaths(raw, platform.baseDir, rootDir);
+            const cmdName = file.replace(/\.md$/, '');
+            let out: string;
+            let destName: string;
+            switch (platform.commands.mode) {
+              case 'gemini-toml': {
+                const p2 = parseCommandFile(body);
+                out = p2 ? toGeminiTOML(p2) : '';
+                destName = `${cmdName}.toml`;
+                break;
+              }
+              case 'codex-prompt': {
+                const p3 = parseCommandFile(body);
+                out = p3 ? toCodexPrompt(p3) : '';
+                destName = `reis-${cmdName}.md`;
+                break;
+              }
+              case 'copilot-skill': {
+                const p4 = parseCommandFile(body);
+                out = p4 ? toCopilotSkill(p4) : '';
+                destName = `${cmdName}/SKILL.md`;
+                break;
+              }
+              default:
+                out = stripToolsBlock(body);
+                destName = `${cmdName}.md`;
+            }
+            if (!out) {
+              continue;
+            }
+            const dest = path.join(cmdTarget, destName);
+            ensureDir(path.dirname(dest));
+            fs.writeFileSync(dest, out);
+            fileCount++;
+          } catch (e) {
+            console.log(chalk.yellow(`  ⚠ Failed to process command ${file}: ${(e as any).message}`));
+          }
+        }
+      }
     }
 
     totalFiles += fileCount;

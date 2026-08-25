@@ -13,6 +13,7 @@ module.exports = tseslint.config(
       'examples/**',
       'templates/**',
       'eslint.config.js',
+      'temp_reference/**',
       // Legacy source: re-included as it is migrated to src/ in later phases
       'lib/**',
       'bin/**',

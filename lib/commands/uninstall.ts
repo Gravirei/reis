@@ -13,6 +13,7 @@ interface PlatformInstallStatus {
   reisDir: string;
   agentsDir: string;
   agentFiles: string[];
+  commandPaths: { path: string; kind: 'dir' | 'namespaced-files'; rel: string }[];
 }
 
 // Detect REIS installations across all supported platforms
@@ -34,14 +35,29 @@ function detectInstalls(): PlatformInstallStatus[] {
       }
     }
 
-    if (fs.existsSync(reisDir) || agentFiles.length > 0) {
+    const commandPaths: PlatformInstallStatus['commandPaths'] = [];
+    if (platform.commands) {
+      if (platform.commands.dirName.includes('/')) {
+        // namespaced dir owned entirely by REIS (e.g. commands/reis)
+        commandPaths.push({ path: path.join(baseDir, platform.commands.dirName), kind: 'dir', rel: platform.commands.dirName });
+      }
+      if (platform.commands.mode === 'codex-prompt') {
+        commandPaths.push({ path: path.join(baseDir, platform.commands.dirName), kind: 'namespaced-files', rel: platform.commands.dirName });
+      }
+      if (platform.commands.mode === 'copilot-skill') {
+        commandPaths.push({ path: path.join(baseDir, platform.commands.dirName), kind: 'namespaced-files', rel: platform.commands.dirName });
+      }
+    }
+
+    if (fs.existsSync(reisDir) || agentFiles.length > 0 || commandPaths.some(cp => fs.existsSync(cp.path))) {
       found.push({
         key: platform.key,
         clientName: platform.clientName,
         baseDir: platform.baseDir,
         reisDir,
         agentsDir,
-        agentFiles
+        agentFiles,
+        commandPaths
       });
     }
   }
@@ -152,6 +168,32 @@ export async function uninstall(args: any): Promise<void> {
       }
       if (removedAgents > 0) {
         console.log(chalk.green(`  ✓ [${inst.key}] Removed ${removedAgents} REIS agent file(s)`));
+      }
+
+      for (const cp of inst.commandPaths) {
+        try {
+          if (!fs.existsSync(cp.path)) {
+            continue;
+          }
+          if (cp.kind === 'dir') {
+            fs.rmSync(cp.path, { recursive: true, force: true });
+            console.log(chalk.green(`  ✓ [${inst.key}] Removed ~/${inst.baseDir}/${cp.rel}/`));
+          } else {
+            // shared dir - remove only reis-namespaced entries
+            const entries = fs.readdirSync(cp.path).filter(f => f.startsWith('reis-') || f.startsWith('reis_'));
+            let removed = 0;
+            for (const entry of entries) {
+              const p2 = path.join(cp.path, entry);
+              fs.rmSync(p2, { recursive: true, force: true });
+              removed++;
+            }
+            if (removed > 0) {
+              console.log(chalk.green(`  ✓ [${inst.key}] Removed ${removed} REIS entr(ies) from ~/${inst.baseDir}/${cp.rel}/`));
+            }
+          }
+        } catch (e) {
+          console.log(chalk.yellow(`  ⚠ [${inst.key}] Failed to clean ${cp.rel}: ${(e as any).message}`));
+        }
       }
     }
 

@@ -46,5 +46,5 @@ existing project.
 ## References
 
 - @templates/PROJECT.md (project description format)
-- @templates/STATE.md (state file format until @reis/references/state-format.md lands)
+- @templates/STATE.md (state file format per @reis/references/state-format.md)
 - @agents/reis_project_mapper (subagent for large repositories)
