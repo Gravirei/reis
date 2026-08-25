@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-const { program } = require('commander');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import chalk from 'chalk';
+import { program } from 'commander';
+
 const packageJson = require('../package.json');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const chalk = require('chalk');
 
 // Show welcome banner (always, not just first run)
 function showBanner() {
@@ -59,40 +60,40 @@ function checkExistingInstallation() {
 let shouldShowBanner = false;
 
 // Command implementations - Core commands
-const helpCmd = require('../lib/commands/help.js');
-const versionCmd = require('../lib/commands/version.js');
-const newCmd = require('../lib/commands/new.js');
-const mapCmd = require('../lib/commands/map.js');
-const requirementsCmd = require('../lib/commands/requirements.js');
-const roadmapCmd = require('../lib/commands/roadmap.js');
+import helpCmd from '../lib/commands/help.js';
+import versionCmd from '../lib/commands/version.js';
+import newCmd from '../lib/commands/new.js';
+import mapCmd from '../lib/commands/map.js';
+import requirementsCmd from '../lib/commands/requirements.js';
+import roadmapCmd from '../lib/commands/roadmap.js';
 
 // Command implementations - Phase Management commands
-const planCmd = require('../lib/commands/plan.js');
-const discussCmd = require('../lib/commands/discuss.js');
-const researchCmd = require('../lib/commands/research.js');
-const assumptionsCmd = require('../lib/commands/assumptions.js');
-const executeCmd = require('../lib/commands/execute.js');
-const executePlanCmd = require('../lib/commands/execute-plan.js');
-const verifyCmd = require('../lib/commands/verify.js');
+import planCmd from '../lib/commands/plan.js';
+import discussCmd from '../lib/commands/discuss.js';
+import researchCmd from '../lib/commands/research.js';
+import assumptionsCmd from '../lib/commands/assumptions.js';
+import executeCmd from '../lib/commands/execute.js';
+import executePlanCmd from '../lib/commands/execute-plan.js';
+import verifyCmd from '../lib/commands/verify.js';
 
 // Command implementations - Other commands
-const progressCmd = require('../lib/commands/progress.js');
-const pauseCmd = require('../lib/commands/pause.js');
-const resumeCmd = require('../lib/commands/resume.js');
-const checkpointCmd = require('../lib/commands/checkpoint.js');
-const addCmd = require('../lib/commands/add.js');
-const insertCmd = require('../lib/commands/insert.js');
-const removeCmd = require('../lib/commands/remove.js');
-const milestoneCmd = require('../lib/commands/milestone.js');
-const todoCmd = require('../lib/commands/todo.js');
-const todosCmd = require('../lib/commands/todos.js');
-const debugCmd = require('../lib/commands/debug.js');
-const configCmd = require('../lib/commands/config.js');
-const cycleCmd = require('../lib/commands/cycle.js');
-const decisionsCmd = require('../lib/commands/decisions.js');
-const treeCmd = require('../lib/commands/tree.js');
-const kanbanCmd = require('../lib/commands/kanban.js');
-const { reviewCommand } = require('../lib/commands/review.js');
+import progressCmd from '../lib/commands/progress.js';
+import pauseCmd from '../lib/commands/pause.js';
+import resumeCmd from '../lib/commands/resume.js';
+import checkpointCmd from '../lib/commands/checkpoint.js';
+import addCmd from '../lib/commands/add.js';
+import insertCmd from '../lib/commands/insert.js';
+import removeCmd from '../lib/commands/remove.js';
+import { milestone as milestoneCmd } from '../lib/commands/milestone.js';
+import { todo as todoCmd } from '../lib/commands/todo.js';
+import { todos as todosCmd } from '../lib/commands/todos.js';
+import debugCmd from '../lib/commands/debug.js';
+import configCmd from '../lib/commands/config.js';
+import cycleCmd from '../lib/commands/cycle.js';
+import decisionsCmd from '../lib/commands/decisions.js';
+import treeCmd from '../lib/commands/tree.js';
+import kanbanCmd from '../lib/commands/kanban.js';
+import { reviewCommand } from '../lib/commands/review.js';
 
 // Check for --help or -h flag before Commander parses
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -117,32 +118,32 @@ program.option('--no-kanban', 'Hide kanban board for this command');
 program
   .command('help')
   .description('Show comprehensive help with all commands')
-  .action(() => helpCmd());
+  .action(() => { helpCmd(); });
 
 program
   .command('version')
   .description('Show version and install location')
-  .action(() => versionCmd());
+  .action(() => { versionCmd(); });
 
 program
   .command('new [idea]')
   .description('Initialize a new REIS project')
-  .action((idea) => newCmd({idea}));
+  .action((idea) => { newCmd({idea}); });
 
 program
   .command('map')
   .description('Analyze and map existing codebase')
-  .action(() => mapCmd({}));
+  .action(() => { mapCmd({}); });
 
 program
   .command('requirements')
   .description('Generate or update requirements document')
-  .action(() => requirementsCmd({}));
+  .action(() => { requirementsCmd({}); });
 
 program
   .command('roadmap')
   .description('Generate or update project roadmap')
-  .action(() => roadmapCmd({}));
+  .action(() => { roadmapCmd({}); });
 
 // Phase Management Commands
 program
@@ -156,17 +157,17 @@ program
 program
   .command('discuss [phase]')
   .description('Discuss implementation approach for a phase')
-  .action((phase) => discussCmd({phase}));
+  .action((phase) => { discussCmd({phase}); });
 
 program
   .command('research [phase]')
   .description('Research technical solutions for a phase')
-  .action((phase) => researchCmd({phase}));
+  .action((phase) => { researchCmd({phase}); });
 
 program
   .command('assumptions [phase]')
   .description('Document and validate assumptions')
-  .action((phase) => assumptionsCmd({phase}));
+  .action((phase) => { assumptionsCmd({phase}); });
 
 program
   .command('execute [phase]')
@@ -275,7 +276,7 @@ program
 program
   .command('pause')
   .description('Pause current work and save state')
-  .action(() => pauseCmd({}));
+  .action(() => { pauseCmd({}); });
 
 program
   .command('resume')
@@ -301,17 +302,17 @@ program
 program
   .command('add <feature>')
   .description('Add feature to roadmap')
-  .action((feature) => addCmd({feature}));
+  .action((feature) => { addCmd({feature}); });
 
 program
   .command('insert <phase> <feature>')
   .description('Insert feature at specific phase')
-  .action((phase, feature) => insertCmd({phase, feature}));
+  .action((phase, feature) => { insertCmd({phase, feature}); });
 
 program
   .command('remove <phase>')
   .description('Remove phase from roadmap')
-  .action((phase) => removeCmd({phase}));
+  .action((phase) => { removeCmd({phase}); });
 
 // Milestone Commands
 program
@@ -319,18 +320,18 @@ program
   .description('Manage milestones')
   .argument('<subcommand>', 'Subcommand: complete, discuss, or new')
   .argument('[name]', 'Milestone name (required for complete/new)')
-  .action((subcommand, name) => milestoneCmd({subcommand, name}));
+  .action((subcommand, name) => { milestoneCmd({subcommand, name}); });
 
 // Utility Commands
 program
   .command('todo <description>')
   .description('Add a TODO item')
-  .action((description) => todoCmd({description}));
+  .action((description) => { todoCmd({description}); });
 
 program
   .command('todos [area]')
   .description('List TODO items')
-  .action((area) => todosCmd({area}));
+  .action((area) => { todosCmd({area}); });
 
 program
   .command('debug [target]')
@@ -346,7 +347,7 @@ program
   });
 
 // Quick task execution (no full cycle)
-const quickCmd = require('../lib/commands/quick.js');
+import quickCmd from '../lib/commands/quick.js';
 program
   .command('quick <task>')
   .description('Execute a quick task without full research/verification cycle')
@@ -355,11 +356,11 @@ program
   .option('-v, --verbose', 'Detailed output')
   .action(async (task, options, command) => {
     const globalOpts = command.parent?.opts() || {};
-    await quickCmd(task, { ...options, noKanban: globalOpts.kanban === false });
+    await quickCmd(task);
   });
 
 // Audit command (milestone verification)
-const auditCmd = require('../lib/commands/audit.js');
+import auditCmd from '../lib/commands/audit.js';
 program
   .command('audit [milestone]')
   .description('Audit milestone completion and cross-phase integration (uses reis_integrator)')
@@ -373,7 +374,7 @@ program
   });
 
 // Complete milestone command
-const completeMilestoneCmd = require('../lib/commands/complete-milestone.js');
+import completeMilestoneCmd from '../lib/commands/complete-milestone.js';
 program
   .command('complete-milestone <milestone>')
   .description('Archive completed milestone (runs audit first)')
@@ -388,7 +389,7 @@ program
   });
 
 // Plan gaps command
-const planGapsCmd = require('../lib/commands/plan-gaps.js');
+import planGapsCmd from '../lib/commands/plan-gaps.js';
 program
   .command('plan-gaps [milestone]')
   .description('Identify and plan for tech debt and gaps before milestone completion')
@@ -427,7 +428,7 @@ program
   .option('--json', 'Output as JSON (for show)')
   .option('-f, --force', 'Force overwrite (for init)')
   .option('--path <path>', 'Custom config path')
-  .action((subcommand, options) => configCmd({ subcommand, ...options }));
+  .action((subcommand, options) => { configCmd({ subcommand, ...options }); });
 
 // Decision Tree Commands
 program
@@ -479,9 +480,9 @@ program
     kanbanCmd(args, {});
   });
 
-const updateCmd = require('../lib/commands/update.js');
-const whatsNewCmd = require('../lib/commands/whats-new.js');
-const docsCmd = require('../lib/commands/docs.js');
+import { update as updateCmd } from '../lib/commands/update.js';
+import { whatsNew as whatsNewCmd } from '../lib/commands/whats-new.js';
+import { docs as docsCmd } from '../lib/commands/docs.js';
 
 program
   .command('update')

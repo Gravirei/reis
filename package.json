@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "test": "mocha test/**/*.test.js --timeout 5000",
     "pretest": "npm run build",
+    "prepare": "npm run build",
     "test:watch": "mocha test/**/*.test.js --watch",
     "postinstall": "node lib/install.js --silent"
   },

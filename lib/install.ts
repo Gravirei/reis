@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const chalk = require('chalk');
-const inquirer = require('inquirer');
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import chalk from 'chalk';
+import inquirer from 'inquirer';
 
 // ASCII Art Banner
 const banner = `
@@ -284,4 +284,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { install, performInstallation };
+export { install, performInstallation };

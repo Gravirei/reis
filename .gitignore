@@ -121,3 +121,6 @@ lib/commands/version.js
 lib/commands/execute.js
 lib/commands/gate.js
 lib/utils/command-helpers.js
+bin/reis.js
+lib/install.js
+lib/index.js
