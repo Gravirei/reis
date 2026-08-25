@@ -15,7 +15,7 @@ import EventEmitter from 'events';
 
 // Get project root (where subagents/ directory lives)
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
-const SUBAGENTS_DIR = path.join(PROJECT_ROOT, 'subagents');
+const AGENTS_DIR = path.join(PROJECT_ROOT, 'agents');
 
 // ============================================================================
 // Custom Error Classes
@@ -355,11 +355,11 @@ export function parseYamlFrontmatter(content: string): { frontmatter: Record<str
  * @returns {string[]}
  */
 function listSubagentsInternal() {
-  if (!fs.existsSync(SUBAGENTS_DIR)) {
+  if (!fs.existsSync(AGENTS_DIR)) {
     return [];
   }
 
-  return fs.readdirSync(SUBAGENTS_DIR)
+  return fs.readdirSync(AGENTS_DIR)
     .filter(file => file.endsWith('.md') && !file.startsWith('.'))
     .map(file => file.replace('.md', ''));
 }
@@ -380,7 +380,7 @@ export function listSubagents() {
  * @throws {InvalidDefinitionError} If definition is malformed
  */
 export function loadSubagentDefinition(name: string): SubagentDefinition {
-  const filePath = path.join(SUBAGENTS_DIR, `${name}.md`);
+  const filePath = path.join(AGENTS_DIR, `${name}.md`);
 
   // Check if file exists
   if (!fs.existsSync(filePath)) {

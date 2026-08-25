@@ -265,7 +265,7 @@ async function performInstallation(overwrite = false, silent = false, target = '
 
     // Copy subagents from subagents/ to the platform agents directory
     // ALWAYS overwrite subagents - they should stay up-to-date with package version
-    const subagentsSourceDir = path.join(packageDir, 'subagents');
+    const subagentsSourceDir = path.join(packageDir, 'agents');
     if (fs.existsSync(subagentsSourceDir)) {
       const subagentFiles = fs.readdirSync(subagentsSourceDir);
       subagentFiles.forEach(file => {

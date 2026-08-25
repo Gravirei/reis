@@ -4412,5 +4412,143 @@
     "context": {},
     "timestamp": "2026-08-25T15:46:58.563Z",
     "reverted": false
+  },
+  {
+    "id": "4d9d6923-9dd0-4c0a-8985-2912be87866f",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-08-25T19:10:48.528Z",
+    "reverted": false
+  },
+  {
+    "id": "cc74da1c-1762-4c2a-94e3-7aab3360db98",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:10:48.544Z",
+    "reverted": false
+  },
+  {
+    "id": "02c74800-2285-4e98-8884-5cb7580d844f",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:10:48.555Z",
+    "reverted": false
+  },
+  {
+    "id": "ae502b7e-9b6f-4b57-b450-ca040dab7b8a",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:10:48.564Z",
+    "reverted": false
+  },
+  {
+    "id": "30081159-684e-4197-a3fc-4b7d9e72b225",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-08-25T19:12:21.388Z",
+    "reverted": false
+  },
+  {
+    "id": "c5134f1d-4bf2-405a-a04b-6ad6b85a5933",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:12:21.394Z",
+    "reverted": false
+  },
+  {
+    "id": "9a47bb58-0e90-43e7-bfa4-255180c64ce6",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:12:21.399Z",
+    "reverted": false
+  },
+  {
+    "id": "409c2612-eb59-4020-b410-c5006f9cf08e",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:12:21.408Z",
+    "reverted": false
+  },
+  {
+    "id": "e535d89e-ce99-4d30-9f31-0d631c25cff5",
+    "treeId": "Test Tree",
+    "selectedPath": [
+      "Option A"
+    ],
+    "metadata": {},
+    "context": {
+      "env": "test"
+    },
+    "timestamp": "2026-08-25T19:12:44.800Z",
+    "reverted": false
+  },
+  {
+    "id": "29caba84-96a2-4423-b89a-d34ed017f94b",
+    "treeId": "Tree 1",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:12:44.807Z",
+    "reverted": false
+  },
+  {
+    "id": "d682b266-5f5c-43a2-9bc1-600c67d5ab91",
+    "treeId": "Tree 2",
+    "selectedPath": [
+      "B"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:12:44.813Z",
+    "reverted": false
+  },
+  {
+    "id": "d20c4663-38cf-443f-83b5-b56609fb3469",
+    "treeId": "Test",
+    "selectedPath": [
+      "A"
+    ],
+    "metadata": {},
+    "context": {},
+    "timestamp": "2026-08-25T19:12:44.821Z",
+    "reverted": false
   }
 ]
