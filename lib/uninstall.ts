@@ -3,7 +3,8 @@ import inquirer from 'inquirer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { PLATFORMS, removeClaudeHooks } from './install.js';
+import { PLATFORMS } from './install.js';
+import { removeClaudeHooks } from './install.js';
 
 interface PlatformInstallStatus {
   key: string;
@@ -15,13 +16,47 @@ interface PlatformInstallStatus {
   commandPaths: { path: string; kind: 'dir' | 'namespaced-files'; rel: string }[];
 }
 
+// Candidate base directories for a platform: default home path plus any
+// env-var override location (installs may live in either).
+function candidateBaseDirs(platformKey: string, defaultBase: string): string[] {
+  const homeDir = os.homedir();
+  const candidates = new Set<string>([path.join(homeDir, defaultBase)]);
+  const envNames: Record<string, string[]> = {
+    claude: ['CLAUDE_CONFIG_DIR'],
+    gemini: ['GEMINI_CONFIG_DIR'],
+    codex: ['CODEX_HOME', 'CODEX_CONFIG_DIR'],
+    copilot: ['COPILOT_HOME', 'COPILOT_CONFIG_DIR'],
+    rovodev: ['ROVODEV_HOME', 'ROVODEV_CONFIG_DIR']
+  };
+  for (const envName of envNames[platformKey] || []) {
+    const v = process.env[envName];
+    if (v) candidates.add(path.isAbsolute(v) ? v : path.join(homeDir, v));
+  }
+  // --config-dir flag (matches installer behavior; single platform)
+  const idx = process.argv.indexOf('--config-dir');
+  if (idx !== -1 && process.argv[idx + 1]) {
+    const v = process.argv[idx + 1];
+    candidates.add(path.isAbsolute(v) ? v : path.join(process.cwd(), v));
+  }
+  return [...candidates];
+}
+
 // Detect REIS installations across all supported platforms
 function detectInstalls(): PlatformInstallStatus[] {
-  const homeDir = os.homedir();
   const found: PlatformInstallStatus[] = [];
 
   for (const platform of Object.values(PLATFORMS)) {
-    const baseDir = path.join(homeDir, platform.baseDir);
+    const baseDir = candidateBaseDirs(platform.key, platform.baseDir).find(dir => {
+      const hasReis = fs.existsSync(path.join(dir, 'reis'));
+      let hasAgents = false;
+      try {
+        hasAgents = fs.existsSync(path.join(dir, platform.agentsDirName)) &&
+          fs.readdirSync(path.join(dir, platform.agentsDirName)).some(f => f.startsWith('reis_'));
+      } catch {}
+      return hasReis || hasAgents;
+    }) || path.join(os.homedir(), platform.baseDir);
+
+    if (process.env.REIS_DEBUG) console.error(`[REIS_DEBUG] ${platform.key} candidates=${JSON.stringify(candidateBaseDirs(platform.key, platform.baseDir))} picked=${baseDir}`);
     const reisDir = path.join(baseDir, 'reis');
     const agentsDir = path.join(baseDir, platform.agentsDirName);
 
@@ -48,11 +83,14 @@ function detectInstalls(): PlatformInstallStatus[] {
       }
     }
 
+    const displayBase = baseDir.startsWith(os.homedir())
+      ? '~' + baseDir.slice(os.homedir().length)
+      : baseDir;
     if (fs.existsSync(reisDir) || agentFiles.length > 0 || commandPaths.some(cp => fs.existsSync(cp.path))) {
       found.push({
         key: platform.key,
         clientName: platform.clientName,
-        baseDir: platform.baseDir,
+        baseDir: displayBase,
         reisDir,
         agentsDir,
         agentFiles,
@@ -100,8 +138,8 @@ export async function uninstall(args: any): Promise<void> {
   console.log(chalk.bold.red('  ⚠️  Uninstall REIS\n'));
   console.log(chalk.yellow('  This will remove:'));
   for (const inst of installs) {
-    console.log(chalk.yellow(`    • [${inst.key}] ~/${inst.baseDir}/reis/ (documentation and templates)`));
-    console.log(chalk.yellow(`    • [${inst.key}] ${inst.agentFiles.length} REIS agent file(s) in ~/${inst.baseDir}/${path.basename(inst.agentsDir)}/`));
+    console.log(chalk.yellow(`    • [${inst.key}] ${inst.baseDir}/reis/ (documentation and templates)`));
+    console.log(chalk.yellow(`    • [${inst.key}] ${inst.agentFiles.length} REIS agent file(s) in ${inst.baseDir}/${path.basename(inst.agentsDir)}/`));
   }
   console.log(chalk.gray('\n  Your project .planning/ directories will NOT be affected.\n'));
 
@@ -115,7 +153,7 @@ export async function uninstall(args: any): Promise<void> {
           type: 'checkbox',
           name: 'targets',
           message: 'Which installations should be removed?',
-          choices: installs.map(i => ({ name: `${i.clientName} (~/${i.baseDir})`, value: i.key })),
+          choices: installs.map(i => ({ name: `${i.clientName} (${i.baseDir})`, value: i.key })),
           default: installs.map(i => i.key),
           validate: (answers: string[]) => answers.length > 0 || 'Select at least one target.'
         }
@@ -161,7 +199,7 @@ export async function uninstall(args: any): Promise<void> {
 
       if (fs.existsSync(inst.reisDir)) {
         fs.rmSync(inst.reisDir, { recursive: true, force: true });
-        console.log(chalk.green(`  ✓ [${inst.key}] Removed ~/${inst.baseDir}/reis/`));
+        console.log(chalk.green(`  ✓ [${inst.key}] Removed ${inst.baseDir}/reis/`));
       }
 
       let removedAgents = 0;
@@ -196,7 +234,7 @@ export async function uninstall(args: any): Promise<void> {
           }
           if (cp.kind === 'dir') {
             fs.rmSync(cp.path, { recursive: true, force: true });
-            console.log(chalk.green(`  ✓ [${inst.key}] Removed ~/${inst.baseDir}/${cp.rel}/`));
+            console.log(chalk.green(`  ✓ [${inst.key}] Removed ${inst.baseDir}/${cp.rel}/`));
           } else {
             // shared dir - remove only reis-namespaced entries
             const entries = fs.readdirSync(cp.path).filter(f => f.startsWith('reis-') || f.startsWith('reis_'));
@@ -207,7 +245,7 @@ export async function uninstall(args: any): Promise<void> {
               removed++;
             }
             if (removed > 0) {
-              console.log(chalk.green(`  ✓ [${inst.key}] Removed ${removed} REIS entr(ies) from ~/${inst.baseDir}/${cp.rel}/`));
+              console.log(chalk.green(`  ✓ [${inst.key}] Removed ${removed} REIS entr(ies) from ${inst.baseDir}/${cp.rel}/`));
             }
           }
         } catch (e) {

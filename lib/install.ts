@@ -93,6 +93,38 @@ const PLATFORMS: Record<string, PlatformConfig> = {
 
 const ALL_PLATFORM_KEYS = Object.keys(PLATFORMS);
 
+// Per-platform environment variables that override the config directory
+// (mirrors the tools' own documented env vars where they exist).
+const CONFIG_DIR_ENV: Record<string, string[]> = {
+  claude: ['CLAUDE_CONFIG_DIR'],
+  gemini: ['GEMINI_CONFIG_DIR'],
+  codex: ['CODEX_HOME', 'CODEX_CONFIG_DIR'],
+  copilot: ['COPILOT_HOME', 'COPILOT_CONFIG_DIR'],
+  rovodev: ['ROVODEV_HOME', 'ROVODEV_CONFIG_DIR']
+};
+
+/**
+ * Resolve the base directory for a platform.
+ * Priority: explicit --config-dir override > platform env var > default home path.
+ * @param platform      Platform config
+ * @param rootDir       Scope root (home for global, project for local)
+ * @param configDirOverride  --config-dir value (applies to single-target installs)
+ */
+function resolveBaseDir(platform: PlatformConfig, rootDir: string, configDirOverride?: string): string {
+  if (configDirOverride) {
+    return path.isAbsolute(configDirOverride)
+      ? configDirOverride
+      : path.join(rootDir, configDirOverride);
+  }
+  for (const envName of CONFIG_DIR_ENV[platform.key] || []) {
+    const v = process.env[envName];
+    if (v) {
+      return path.isAbsolute(v) ? v : path.join(rootDir, v);
+    }
+  }
+  return path.join(rootDir, platform.baseDir);
+}
+
 function resolvePlatforms(target: string): PlatformConfig[] {
   if (target === 'all') {
     return ALL_PLATFORM_KEYS.map(k => PLATFORMS[k]);
@@ -414,13 +446,17 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: Profile) {
+async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: Profile, configDirOverride?: string) {
   const rootDir = scope === 'local' ? process.cwd() : os.homedir();
   const platforms = resolvePlatforms(target);
   let totalFiles = 0;
 
+  if (configDirOverride && platforms.length > 1) {
+    throw new Error('--config-dir applies to a single platform. Narrow the target first (e.g. --claude).');
+  }
+
   for (const platform of platforms) {
-    const baseDir = path.join(rootDir, platform.baseDir);
+    const baseDir = resolveBaseDir(platform, rootDir, configDirOverride);
 
     // Define target directories
     const reisDir = path.join(baseDir, 'reis');
