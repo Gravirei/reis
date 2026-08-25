@@ -286,6 +286,39 @@ function removeClaudeHooks(settingsPath: string): boolean {
   }
 }
 
+// Token profiles: which commands get installed
+type Profile = 'core' | 'standard' | 'full';
+
+interface ProfilesManifest {
+  core: string[];
+  standard: string[];
+  full: string[];
+}
+
+function loadProfilesManifest(commandsSourceDir: string): ProfilesManifest {
+  const p = path.join(commandsSourceDir, 'profiles.json');
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+}
+
+function filterCommandsForProfile(
+  files: string[],
+  manifest: ProfilesManifest,
+  profile: Profile
+): { file: string; cmd: string }[] {
+  const tiers: Profile[] = ['core', 'standard', 'full'];
+  const allowed = new Set<string>();
+  for (const tier of tiers.slice(0, tiers.indexOf(profile) + 1)) {
+    for (const c of manifest[tier] || []) {
+      allowed.add(c);
+    }
+  }
+  // Non-command assets always ship
+  allowed.add('profiles');
+  return files
+    .map(f => ({ file: f, cmd: f.replace(/\.md$/, '') }))
+    .filter(e => allowed.has(e.cmd));
+}
+
 // Main installation function
 async function install() {
   try {
@@ -381,7 +414,7 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true) {
+async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true, profile?: Profile) {
   const rootDir = scope === 'local' ? process.cwd() : os.homedir();
   const platforms = resolvePlatforms(target);
   let totalFiles = 0;
@@ -466,9 +499,12 @@ async function performInstallation(overwrite = false, silent = false, target = '
     if (platform.commands) {
       const commandsSourceDir = path.join(packageDir, 'commands', 'reis');
       if (fs.existsSync(commandsSourceDir)) {
+        const manifest = loadProfilesManifest(commandsSourceDir);
+        const activeProfile: Profile = profile || 'full';
         const cmdTarget = path.join(baseDir, platform.commands.dirName);
         ensureDir(cmdTarget);
-        const commandFiles = fs.readdirSync(commandsSourceDir).filter(f => f.endsWith('.md'));
+        const rawFiles = fs.readdirSync(commandsSourceDir).filter(f => f.endsWith('.md'));
+        const commandFiles = filterCommandsForProfile(rawFiles, manifest, activeProfile).map(e => e.file);
         for (const file of commandFiles) {
           try {
             const raw = fs.readFileSync(path.join(commandsSourceDir, file), 'utf8');
@@ -515,6 +551,12 @@ async function performInstallation(overwrite = false, silent = false, target = '
           }
         }
       }
+    }
+
+    // Persist profile for `reis update` continuity (global scope only)
+    if (scope === 'global' && platform.commands) {
+      const activeProfile: Profile = profile || 'full';
+      fs.writeFileSync(path.join(reisDir, '.profile'), activeProfile);
     }
 
     // Install hook scripts (all platforms can use them manually)

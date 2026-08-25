@@ -30,6 +30,7 @@ function showHelp(): void {
     --local             Install into the current project instead of your home directory
     --global            Install into your home directory (default)
     --hooks / --no-hooks   Toggle lifecycle hooks injection (default: hooks)
+    --profile=<name>       Command set: core | standard | full (default: full)
 
   Learn more: https://github.com/Gravirei/reis
 `);
@@ -39,11 +40,25 @@ async function runInstall(overwrite: boolean): Promise<void> {
   const scope: 'global' | 'local' =
     process.argv.includes('--local') ? 'local' : 'global';
   const hooks = !process.argv.includes('--no-hooks');
+  const profileArg = process.argv.find(a => a.startsWith('--profile='));
+  const profile = profileArg ? profileArg.split('=')[1] : undefined;
   const { performInstallation } = await import('../lib/install.js');
+  // On update without explicit --profile, respect previously persisted choice
+  let effectiveProfile = profile;
+  if (!effectiveProfile && overwrite && scope === 'global') {
+    try {
+      const fsMod = await import('fs');
+      const pathMod = await import('path');
+      const osMod = await import('os');
+      const marker = pathMod.join(osMod.homedir(), '.claude/reis/.profile');
+      const persisted = fsMod.readFileSync(marker, 'utf8').trim();
+      if (['core', 'standard', 'full'].includes(persisted)) effectiveProfile = persisted as any;
+    } catch {}
+  }
   // Targets: default to all platforms unless flags narrow it down
   const targets = ['rovodev', 'gemini', 'claude', 'codex', 'copilot']
     .filter(p => process.argv.includes(`--${p}`));
-  await performInstallation(overwrite, false, targets.length ? targets.join(',') : 'all', scope, hooks);
+  await performInstallation(overwrite, false, targets.length ? targets.join(',') : 'all', scope, hooks, effectiveProfile as any);
 }
 
 async function main(): Promise<void> {
