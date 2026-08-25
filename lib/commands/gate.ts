@@ -59,7 +59,7 @@ export const DEFAULT_GATE_CONFIG = {
  * @returns {Object}
  */
 export function mergeConfig(userConfig: any = {}) {
-  const merged = { ...DEFAULT_GATE_CONFIG };
+  const merged: any = { ...DEFAULT_GATE_CONFIG };
 
   for (const category of ['security', 'quality', 'performance', 'accessibility']) {
     if (userConfig[category]) {
@@ -327,7 +327,7 @@ async function generateReport(options: any = {}) {
     verbose: true
   });
 
-  const report = reporter.generateReport(result.results as any, result.summary);
+  const report = reporter.generateReport(result.results as any, result.summary as any);
 
   const outputPath = options.output || 'GATE_REPORT.md';
   fs.writeFileSync(outputPath, report);

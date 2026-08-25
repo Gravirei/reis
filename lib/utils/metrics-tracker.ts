@@ -59,7 +59,7 @@ class MetricsTracker {
       const content = fs.readFileSync(this.metricsPath, 'utf8');
       return this.parseMetrics(content);
     } catch (error) {
-      console.warn(`Warning: Failed to load metrics: ${error.message}`);
+      console.warn(`Warning: Failed to load metrics: ${(error as any).message}`);
       // Create backup of corrupted file
       if (fs.existsSync(this.metricsPath)) {
         const backupPath = `${this.metricsPath}.backup-${Date.now()}`;
@@ -92,7 +92,7 @@ class MetricsTracker {
   /**
    * Parse METRICS.md content into structured data
    */
-  parseMetrics(content) {
+  parseMetrics(content: string) {
     const metrics = this.createInitialMetrics();
     const lines = content.split('\n');
 
@@ -142,8 +142,8 @@ class MetricsTracker {
             name,
             duration: parseInt(duration),
             status: status === '✓' ? 'completed' : 'failed',
-            commit: null,
-            error: null
+            commit: null as string | null,
+            error: null as string | null
           };
 
           // Parse extra info (commit or error)
@@ -184,7 +184,7 @@ class MetricsTracker {
   /**
    * Parse duration string (e.g., "18h 5m") to minutes
    */
-  parseDuration(text) {
+  parseDuration(text: string) {
     let totalMinutes = 0;
     const hourMatch = text.match(/(\d+)h/);
     const minMatch = text.match(/(\d+)m/);
@@ -198,7 +198,7 @@ class MetricsTracker {
   /**
    * Format minutes to human-readable duration
    */
-  formatDuration(minutes) {
+  formatDuration(minutes: number) {
     if (minutes < 60) {
       return `${minutes}m`;
     }
@@ -218,7 +218,7 @@ class MetricsTracker {
   /**
    * Record wave execution
    */
-  recordWaveExecution(waveData) {
+  recordWaveExecution(waveData: any) {
     const execution = {
       timestamp: waveData.timestamp || new Date().toISOString().replace('T', ' ').substring(0, 16),
       name: waveData.name,
@@ -260,7 +260,7 @@ class MetricsTracker {
   /**
    * Record checkpoint creation
    */
-  recordCheckpoint(checkpointData) {
+  recordCheckpoint(checkpointData: any) {
     const checkpoint = {
       timestamp: checkpointData.timestamp || new Date().toISOString().replace('T', ' ').substring(0, 16),
       name: checkpointData.name,
@@ -334,7 +334,7 @@ class MetricsTracker {
 
     // Filter executions within the time period
     const recentExecutions = this.data.waveExecutions.filter(e => {
-      const execDate = new Date(e.timestamp || e.startTime);
+      const execDate = new Date((e.timestamp || e.startTime) as string | number);
       return execDate >= cutoffDate;
     });
 
@@ -385,11 +385,11 @@ class MetricsTracker {
   /**
    * Group executions by wave size
    */
-  groupBySize(executions) {
-    const bySize = { small: [], medium: [], large: [] };
+  groupBySize(executions: WaveExecutionRecord[]) {
+    const bySize: Record<string, WaveExecutionRecord[]> = { small: [], medium: [], large: [] };
     
     executions.forEach(e => {
-      const size = e.size || 'medium';
+      const size = (e.size as string) || 'medium';
       if (bySize[size]) {
         bySize[size].push(e);
       }

@@ -120,7 +120,7 @@ export class ConflictResolver {
     // Sort conflicts by severity (high first)
     const sortedConflicts = [...conflicts].sort((a, b) => {
       const severityOrder = { high: 0, medium: 1, low: 2 };
-      return (severityOrder[a.severity] || 2) - (severityOrder[b.severity] || 2);
+      return ((severityOrder as Record<string, number>)[a.severity] || 2) - ((severityOrder as Record<string, number>)[b.severity] || 2);
     });
 
     for (const conflict of sortedConflicts) {
@@ -252,7 +252,7 @@ export class ConflictResolver {
       warnings: warnings,
       expectedMergeConflicts: conflicts.map(c => ({
         waves: c.waves,
-        files: c.overlaps.map(o => o.patternA),
+        files: c.overlaps.map((o: any) => o.patternA),
         severity: c.severity
       })),
       recommendations: [
@@ -300,7 +300,12 @@ export class ConflictResolver {
    * @returns {Object} Recommendations object
    */
   generateRecommendations(conflicts: any[] | null) {
-    const recommendations = {
+    const recommendations: {
+      preferredStrategy: string;
+      reasoning: string[];
+      alternativeStrategies: any[];
+      actionItems: any[];
+    } = {
       preferredStrategy: ResolutionStrategy.FAIL,
       reasoning: [],
       alternativeStrategies: [],
@@ -436,7 +441,7 @@ export class ConflictResolver {
    * Format fail message with conflict details
    * @private
    */
-  _formatFailMessage(conflicts) {
+  _formatFailMessage(conflicts: any[]) {
     const lines = ['Parallel execution blocked due to file conflicts:'];
     
     for (const conflict of conflicts) {
@@ -452,7 +457,7 @@ export class ConflictResolver {
    * Format overlaps for display
    * @private
    */
-  _formatOverlaps(overlaps) {
+  _formatOverlaps(overlaps: any[]) {
     if (!overlaps || overlaps.length === 0) {
       return 'pattern overlap';
     }
@@ -474,7 +479,7 @@ export class ConflictResolver {
    * Calculate merge order for branch strategy
    * @private
    */
-  _calculateMergeOrder(conflicts, branches) {
+  _calculateMergeOrder(conflicts: any[], branches: any[]) {
     // Simple topological sort based on conflict dependencies
     const order = [];
     const merged = new Set();

@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.8.0] - 2026-08-25
+
+### 🔁 Full TypeScript Migration
+
+The entire REIS codebase (CLI entry points, installer, all 40 commands, all 50+ utility modules) has been migrated from CommonJS JavaScript to strictly-typed TypeScript.
+
+### ✨ Added
+
+- **TypeScript build pipeline**: `tsc` compiles `lib/**/*.ts` and `bin/*.ts`; `prepare` script builds automatically on pack/publish/install
+- **Shared domain types** (`src/types/`): config, state, plan, cycle, gates, debug, parallel models
+- **Full `strict` mode**: `strictNullChecks`, `noImplicitAny`, and the complete strict family enabled
+- **Tooling scripts**: `npm run build`, `npm run typecheck`, `npm run dev`, `npm run lint`
+
+### 🔧 Changed
+
+- Test runner consolidated from mocha + Jest to Jest only (`npm test`); performance benchmarks moved to `npm run test:perf`
+- Published npm package ships compiled JavaScript only (TypeScript sources excluded via `.npmignore`)
+- ESLint with typescript-eslint across all TS sources
+
 ## [2.7.1] - 2026-01-27
 
 ### 🧩 Task-level Resume & Crash Recovery (Executor)

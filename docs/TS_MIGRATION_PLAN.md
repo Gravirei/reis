@@ -1,5 +1,11 @@
 # REIS — JavaScript → TypeScript Migration Plan
 
+> **STATUS: COMPLETE (v2.8.0).** All phases executed on `migration/js-to-ts`.
+> Deviations from this plan: emit strategy is in-place sibling output
+> (`tsconfig.build.json`) instead of a `src/ → dist/` flip; test runner
+> consolidated on Jest (not Vitest) since the CJS suites needed zero rewrites;
+> the aspirational debugger TS suite remains excluded from the default run.
+
 **Branch:** `migration/js-to-ts`
 **Scope:** Full conversion of the shipped CLI source (`bin/`, `lib/`) to TypeScript, with typed tests and a single build pipeline.
 **Strategy:** Incremental, phase-driven, compile-compatible at every step (`allowJs` during transition; `tsc` output stays CommonJS so the published npm package keeps working unchanged).

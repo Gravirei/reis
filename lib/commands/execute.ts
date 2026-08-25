@@ -122,7 +122,7 @@ async function execute(args: any, options: any = {}) {
       
       if (result.metadata?.artifacts?.length > 0) {
         console.log(chalk.cyan('Artifacts created:'));
-        result.metadata.artifacts.forEach(a => {
+        result.metadata.artifacts.forEach((a: string) => {
           console.log(chalk.gray(`  - ${a}`));
         });
       }
@@ -149,7 +149,7 @@ async function execute(args: any, options: any = {}) {
 /**
  * Find plan file for a phase
  */
-function findPlanPath(phase) {
+function findPlanPath(phase: number | string) {
   const planningDir = path.join(process.cwd(), '.planning');
   
   // Try phase-N.PLAN.md
@@ -208,7 +208,7 @@ function findPlanPath(phase) {
  * Display dependency graph for the plan
  * @param {string} planPath - Path to plan file
  */
-async function displayDependencyGraph(planPath) {
+async function displayDependencyGraph(planPath: string) {
   console.log(chalk.cyan('\n📊 Wave Dependency Graph\n'));
   
   try {
@@ -281,7 +281,7 @@ async function displayDependencyGraph(planPath) {
  * @param {number} maxConcurrent - Max concurrent waves
  * @param {string} conflictStrategy - Conflict resolution strategy
  */
-async function displayParallelExecutionPlan(planPath, maxConcurrent, conflictStrategy) {
+async function displayParallelExecutionPlan(planPath: string, maxConcurrent: number, conflictStrategy: string) {
   console.log(chalk.cyan('📋 Parallel Execution Plan\n'));
   console.log(chalk.gray(`  Max Concurrent: ${maxConcurrent}`));
   console.log(chalk.gray(`  Conflict Strategy: ${conflictStrategy}`));
@@ -403,19 +403,19 @@ async function executeParallel(planPath: string, phase: number, options: any = {
     const coordinator = new ExecutionCoordinator({
       timeout: options.timeout || 600000,
       stopOnFirstFailure: options.conflictStrategy === 'fail',
-      onWaveStart: ({ waveId }) => {
+      onWaveStart: ({ waveId }: any) => {
         console.log(chalk.blue(`  ▶ Starting ${waveId}...`));
         updateExecutorStatus(scheduler.running.size, parsed.waves.length);
       },
-      onWaveComplete: ({ waveId }) => {
+      onWaveComplete: ({ waveId }: any) => {
         console.log(chalk.green(`  ✓ Completed ${waveId}`));
         updateExecutorStatus(scheduler.running.size, parsed.waves.length);
       },
-      onWaveError: ({ waveId, error }) => {
+      onWaveError: ({ waveId, error }: any) => {
         console.log(chalk.red(`  ✗ Failed ${waveId}: ${error}`));
         updateExecutorStatus(scheduler.running.size, parsed.waves.length);
       },
-      onBatchComplete: ({ batchNumber, batch }) => {
+      onBatchComplete: ({ batchNumber, batch }: any) => {
         console.log(chalk.cyan(`\n  📦 Batch ${batchNumber} complete (${batch.length} waves)\n`));
       }
     });

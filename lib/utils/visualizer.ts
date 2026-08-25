@@ -247,7 +247,7 @@ export function createTable(headers: string[], rows: any[][], options: any = {})
   });
 
   // Format cell with alignment
-  const formatCell = (value, width, align = 'left') => {
+  const formatCell = (value: any, width: number, align: string = 'left') => {
     const str = String(value || '');
     if (align === 'right') {
       return str.padStart(width);
@@ -262,7 +262,7 @@ export function createTable(headers: string[], rows: any[][], options: any = {})
 
   // Create separator line
   const separator = borders
-    ? '─' + colWidths.map(w => '─'.repeat(w + 2)).join('┼') + '─'
+    ? '─' + colWidths.map((w: number) => '─'.repeat(w + 2)).join('┼') + '─'
     : '';
 
   // Format header
@@ -434,7 +434,7 @@ export function countNodes(treeData: any): number {
   if (!treeData || !treeData.branches) return 0;
   
   let count = 0;
-  const countBranches = (branches) => {
+  const countBranches = (branches: any[]) => {
     branches.forEach(branch => {
       count++;
       if (branch.children && branch.children.length > 0) {
@@ -524,7 +524,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
   lines.push('');
 
   // Render branches
-  const renderBranch = (branch, level, isLast, prefix) => {
+  const renderBranch = (branch: any, level: number, isLast: boolean, prefix: string) => {
     // Check depth limit
     if (level > depth) return;
 
@@ -580,7 +580,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
             medium: chalk.bold.yellow,
             low: chalk.bold.green
           };
-          const colorFn = priorityColors[branch.metadata.priority] || chalk.bold.white;
+          const colorFn = (priorityColors as Record<string, any>)[branch.metadata.priority] || chalk.bold.white;
           badge = colorFn(priorityText);
         } else {
           const priorityColors = {
@@ -588,7 +588,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
             medium: chalk.bgYellow.black,
             low: chalk.bgGreen.black
           };
-          const colorFn = priorityColors[branch.metadata.priority] || chalk.bgGray.white;
+          const colorFn = (priorityColors as Record<string, any>)[branch.metadata.priority] || chalk.bgGray.white;
           badge = colorFn(priorityText);
         }
         badges.push(badge);
@@ -604,7 +604,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
             medium: chalk.bold.yellow,
             low: chalk.bold.green
           };
-          const colorFn = riskColors[branch.metadata.risk] || chalk.bold.white;
+          const colorFn = (riskColors as Record<string, any>)[branch.metadata.risk] || chalk.bold.white;
           badge = colorFn(riskText);
         } else {
           const riskColors = {
@@ -612,7 +612,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
             medium: chalk.bgYellow.black,
             low: chalk.bgGreen.black
           };
-          const colorFn = riskColors[branch.metadata.risk] || chalk.bgGray.white;
+          const colorFn = (riskColors as Record<string, any>)[branch.metadata.risk] || chalk.bgGray.white;
           badge = colorFn(riskText);
         }
         badges.push(badge);
@@ -641,7 +641,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
       const shouldExpand = expandAll && !collapseAll;
       
       if (shouldExpand && level < depth) {
-        branch.children.forEach((child, i) => {
+        branch.children.forEach((child: any, i: number) => {
           const childIsLast = i === branch.children.length - 1;
           const childPrefix = prefix + (noColor ? continueLine : chalk.gray(continueLine)) + ' ';
           renderBranch(child, level + 1, childIsLast, childPrefix);
@@ -666,7 +666,7 @@ export function renderDecisionTree(treeData: any, options: any = {}): string {
 
   // Render all top-level branches
   if (treeData.branches && treeData.branches.length > 0) {
-    treeData.branches.forEach((branch, i) => {
+    treeData.branches.forEach((branch: any, i: number) => {
       const isLast = i === treeData.branches.length - 1;
       renderBranch(branch, 1, isLast, '  ');
     });
@@ -686,7 +686,7 @@ export function renderTreeInline(treeData: any): string {
     return '';
   }
 
-  const options = treeData.branches.map(b => {
+  const options = treeData.branches.map((b: any) => {
     let text = b.text;
     if (b.metadata && b.metadata.recommended) {
       text = '★ ' + text;

@@ -141,7 +141,7 @@ export class PatternMatcher {
   /**
    * Find matching patterns for current issue
    */
-  findMatches(analysis) {
+  findMatches(analysis: any) {
     const matches = [];
 
     for (const pattern of this.patterns) {
@@ -165,7 +165,7 @@ export class PatternMatcher {
   /**
    * Score how well a pattern matches the analysis
    */
-  scoreMatch(pattern, analysis) {
+  scoreMatch(pattern: any, analysis: any) {
     let score = 0;
 
     // Type match (most important)
@@ -200,7 +200,7 @@ export class PatternMatcher {
   /**
    * Extract evidence from analysis
    */
-  extractEvidence(analysis) {
+  extractEvidence(analysis: any) {
     const evidence = [];
 
     if (analysis.classification.evidence) {
@@ -221,7 +221,7 @@ export class PatternMatcher {
   /**
    * Calculate confidence based on match score and pattern frequency
    */
-  calculateConfidence(score, pattern) {
+  calculateConfidence(score: number, pattern: any) {
     // Weight by pattern frequency (how common it is)
     const frequencyWeight = pattern.frequency || 0.5;
     return score * 0.7 + frequencyWeight * 0.3;
@@ -230,7 +230,7 @@ export class PatternMatcher {
   /**
    * FR2.1: Record incomplete implementation pattern for learning
    */
-  recordIncompletePattern(analysis, resolution) {
+  recordIncompletePattern(analysis: any, resolution: any) {
     if (analysis.classification.type !== 'incomplete-implementation') {
       return;
     }
@@ -261,7 +261,7 @@ export class PatternMatcher {
   /**
    * Extract prevention strategies from analysis
    */
-  extractPrevention(analysis) {
+  extractPrevention(analysis: any) {
     const prevention = [];
 
     if (analysis.rootCause.likelyCause === 'executor-skip') {
@@ -281,12 +281,12 @@ export class PatternMatcher {
   /**
    * Get prevention strategies from matched patterns
    */
-  getPreventionStrategies(matches) {
+  getPreventionStrategies(matches: any[]) {
     const strategies = new Set();
 
     matches.forEach(match => {
       if (match.pattern.prevention) {
-        match.pattern.prevention.forEach(s => strategies.add(s));
+        match.pattern.prevention.forEach((s: any) => strategies.add(s));
       }
     });
 
@@ -296,12 +296,12 @@ export class PatternMatcher {
   /**
    * Get recommended solutions from matched patterns
    */
-  getRecommendedSolutions(matches) {
+  getRecommendedSolutions(matches: any[]) {
     const solutions = new Map();
 
     matches.forEach(match => {
       if (match.pattern.solutions) {
-        match.pattern.solutions.forEach(solution => {
+        match.pattern.solutions.forEach((solution: any) => {
           const count = solutions.get(solution) || 0;
           solutions.set(solution, count + match.score);
         });
@@ -317,7 +317,7 @@ export class PatternMatcher {
   /**
    * Generate pattern summary for report
    */
-  generatePatternSummary(matches) {
+  generatePatternSummary(matches: any[]) {
     if (matches.length === 0) {
       return 'No matching patterns found - this appears to be a novel issue.';
     }

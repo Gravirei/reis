@@ -50,13 +50,13 @@ export class Wave {
     this.startTime = new Date();
   }
 
-  complete(commitHash = null) {
+  complete(commitHash: string | null = null) {
     this.status = 'completed';
     this.endTime = new Date();
     this.commit = commitHash;
   }
 
-  fail(error) {
+  fail(error: any) {
     this.status = 'failed';
     this.endTime = new Date();
     this.error = error;
@@ -140,11 +140,11 @@ export class WaveExecutor {
   /**
    * Extract waves from PLAN.md content
    */
-  extractWaves(content) {
-    const waves = [];
+  extractWaves(content: string): Wave[] {
+    const waves: Wave[] = [];
     const lines = content.split('\n');
     
-    let currentWave = null;
+    let currentWave: Wave | null = null;
     let waveId = 0;
     let inWaveSection = false;
 
@@ -209,7 +209,7 @@ export class WaveExecutor {
   /**
    * Validate waves against configured size limits
    */
-  validateWaves(waves) {
+  validateWaves(waves: Wave[]): void {
     for (const wave of waves) {
       const sizeConfig = getWaveSize(this.config, wave.size);
       
@@ -315,7 +315,7 @@ export class WaveExecutor {
           commitHash = commit.shortHash;
         }
       } catch (error) {
-        console.warn(`Warning: Auto-commit failed: ${error.message}`);
+        console.warn(`Warning: Auto-commit failed: ${(error as Error).message}`);
       }
     }
 
@@ -343,7 +343,7 @@ export class WaveExecutor {
   /**
    * Fail current wave
    */
-  failCurrentWave(error) {
+  failCurrentWave(error: any) {
     const currentWave = this.getCurrentWave();
     
     if (!currentWave) {
@@ -451,7 +451,7 @@ export class WaveExecutor {
       deviations,
       totalDuration: this.waves
         .filter(w => w.getDuration())
-        .reduce((sum, w) => sum + w.getDuration(), 0)
+        .reduce((sum: number, w) => sum + (w.getDuration() as number), 0)
     };
 
     return report;
@@ -465,7 +465,7 @@ export class WaveExecutor {
    * Set maximum concurrent waves for parallel execution
    * @param {number} n - Maximum concurrent waves (1-10)
    */
-  setMaxConcurrent(n) {
+  setMaxConcurrent(n: number): void {
     if (typeof n !== 'number' || n < 1 || n > 10) {
       throw new Error('maxConcurrent must be a number between 1 and 10');
     }
@@ -490,7 +490,7 @@ export class WaveExecutor {
 
     // Use DependencyParser to get rich dependency information
     const parser = new DependencyParser();
-    let parsedPlan;
+    let parsedPlan: any;
     
     try {
       parsedPlan = parser.parseFile(this.planPath);
@@ -525,7 +525,7 @@ export class WaveExecutor {
    * @private
    * @param {Object} parsedPlan - Parsed plan from DependencyParser
    */
-  _syncWavesFromParsedPlan(parsedPlan) {
+  _syncWavesFromParsedPlan(parsedPlan: any): void {
     // Update existing waves with dependency info from parsed plan
     for (const parsed of parsedPlan.waves) {
       const existingWave = this.waves.find(w => 
@@ -572,17 +572,17 @@ export class WaveExecutor {
       maxConcurrent: this.maxConcurrent,
       strategy: 'dependency'
     });
-    this.scheduler.initialize(this.dependencyGraph);
+    this.scheduler.initialize(this.dependencyGraph!);
 
     // Initialize coordinator with callbacks for state tracking
     this.coordinator = new ExecutionCoordinator({
       timeout: options.timeout || 300000,
       retryCount: options.retryCount || 0,
       stopOnFirstFailure: options.stopOnFirstFailure || false,
-      onWaveStart: ({ waveId }) => this._onParallelWaveStart(waveId),
-      onWaveComplete: ({ waveId, result }) => this._onParallelWaveComplete(waveId, result),
-      onWaveError: ({ waveId, error }) => this._onParallelWaveError(waveId, error),
-      onBatchComplete: ({ batchNumber, results }) => this._onBatchComplete(batchNumber, results)
+      onWaveStart: ({ waveId }: { waveId: string }) => this._onParallelWaveStart(waveId),
+      onWaveComplete: ({ waveId, result }: { waveId: string; result: any }) => this._onParallelWaveComplete(waveId, result),
+      onWaveError: ({ waveId, error }: { waveId: string; error: any }) => this._onParallelWaveError(waveId, error),
+      onBatchComplete: ({ batchNumber, results }: { batchNumber: number; results: any[] }) => this._onBatchComplete(batchNumber, results)
     });
     this.coordinator.initialize(this.scheduler, new Map());
 
@@ -627,7 +627,7 @@ export class WaveExecutor {
     const executorMap = this._buildWaveExecutorMap(waveExecutor);
 
     // Execute using coordinator
-    const result = await this.coordinator.executeAll(executorMap);
+    const result = await this.coordinator!.executeAll(executorMap);
 
     // Update wave statuses from results
     this._updateWaveStatusesFromResults(result.results);
@@ -664,7 +664,7 @@ export class WaveExecutor {
     }
 
     // Try to resolve conflicts
-    const resolution = this.conflictResolver.resolve(conflicts, this.scheduler);
+    const resolution = this.conflictResolver!.resolve(conflicts, this.scheduler!);
 
     return {
       canProceed: resolution.resolved,
@@ -679,7 +679,7 @@ export class WaveExecutor {
    * @param {Function} customExecutor - Optional custom executor function
    * @returns {Map} Map of waveId -> executor function
    */
-  _buildWaveExecutorMap(customExecutor) {
+  _buildWaveExecutorMap(customExecutor: any) {
     const executorMap = new Map();
 
     for (let i = 0; i < this.waves.length; i++) {
@@ -713,11 +713,11 @@ export class WaveExecutor {
    * @returns {Object} Execution plan
    */
   _generateParallelPlan() {
-    const batches = [];
+    const batches: any[] = [];
     const tempScheduler = new ParallelWaveScheduler({
       maxConcurrent: this.maxConcurrent
     });
-    tempScheduler.initialize(this.dependencyGraph);
+    tempScheduler.initialize(this.dependencyGraph!);
 
     while (!tempScheduler.isComplete()) {
       const batch = tempScheduler.getNextBatch();
@@ -754,14 +754,14 @@ export class WaveExecutor {
    * @param {Array} batches - Execution batches
    * @returns {Object} Speedup metrics
    */
-  _calculateEstimatedSpeedup(batches) {
+  _calculateEstimatedSpeedup(batches: any[]) {
     const sequentialTime = this.waves.reduce((sum, w) => {
       return sum + getWaveSize(this.config, w.size).estimatedMinutes;
     }, 0);
 
-    const parallelTime = batches.reduce((sum, batch) => {
+    const parallelTime = batches.reduce((sum: number, batch: any) => {
       // Each batch takes the time of its longest wave
-      const maxBatchTime = Math.max(...batch.waves.map(waveId => {
+      const maxBatchTime = Math.max(...batch.waves.map((waveId: string) => {
         const idx = parseInt(waveId.replace('Wave ', '')) - 1;
         const wave = this.waves[idx];
         return wave ? getWaveSize(this.config, wave.size).estimatedMinutes : 0;
@@ -782,7 +782,7 @@ export class WaveExecutor {
    * @private
    * @param {Object} results - Results from coordinator
    */
-  _updateWaveStatusesFromResults(results) {
+  _updateWaveStatusesFromResults(results: any): void {
     for (const [waveId, result] of Object.entries(results) as [string, any][]) {
       const idx = parseInt(waveId.replace('Wave ', '')) - 1;
       const wave = this.waves[idx];
@@ -802,7 +802,7 @@ export class WaveExecutor {
    * @private
    * @param {string} waveId - Wave ID
    */
-  _onParallelWaveStart(waveId) {
+  _onParallelWaveStart(waveId: string): void {
     this.parallelState.pending.delete(waveId);
     this.parallelState.running.add(waveId);
 
@@ -821,7 +821,7 @@ export class WaveExecutor {
    * @param {string} waveId - Wave ID
    * @param {Object} result - Execution result
    */
-  _onParallelWaveComplete(waveId, result) {
+  _onParallelWaveComplete(waveId: string, result: any): void {
     this.parallelState.running.delete(waveId);
     this.parallelState.completed.add(waveId);
 
@@ -864,7 +864,7 @@ export class WaveExecutor {
    * @param {string} waveId - Wave ID
    * @param {string} error - Error message
    */
-  _onParallelWaveError(waveId, error) {
+  _onParallelWaveError(waveId: string, error: any): void {
     this.parallelState.running.delete(waveId);
     this.parallelState.failed.add(waveId);
 
@@ -884,9 +884,9 @@ export class WaveExecutor {
    * @param {number} batchNumber - Batch number
    * @param {Array} results - Batch results
    */
-  _onBatchComplete(batchNumber, results) {
-    const successful = results.filter(r => r.success).length;
-    const failed = results.filter(r => !r.success).length;
+  _onBatchComplete(batchNumber: number, results: any[]): void {
+    const successful = results.filter((r: any) => r.success).length;
+    const failed = results.filter((r: any) => !r.success).length;
     
     this.stateManager.addActivity(
       `[PARALLEL] Batch ${batchNumber} complete: ${successful} succeeded, ${failed} failed`

@@ -55,7 +55,7 @@ export class PerformanceGate extends BaseGate {
         details.push({
           name: check.name,
           status: 'error',
-          message: `Check failed: ${err.message}`
+          message: `Check failed: ${(err as Error).message}`
         });
       }
     }
@@ -76,7 +76,7 @@ export class PerformanceGate extends BaseGate {
    * @param {string} sizeStr - Size string (e.g., '500kb', '1mb')
    * @returns {number}
    */
-  parseSize(sizeStr) {
+  parseSize(sizeStr: string) {
     const match = String(sizeStr).match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i);
     if (!match) return 0;
     
@@ -84,7 +84,7 @@ export class PerformanceGate extends BaseGate {
     const unit = (match[2] || 'b').toLowerCase();
     
     const multipliers = { b: 1, kb: 1024, mb: 1024 * 1024, gb: 1024 * 1024 * 1024 };
-    return Math.round(num * (multipliers[unit] || 1));
+    return Math.round(num * ((multipliers as Record<string, number>)[unit] || 1));
   }
 
   /**
@@ -92,7 +92,7 @@ export class PerformanceGate extends BaseGate {
    * @param {number} bytes - Bytes
    * @returns {string}
    */
-  formatSize(bytes) {
+  formatSize(bytes: number) {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -112,9 +112,9 @@ export class PerformanceGate extends BaseGate {
     const buildDirs = ['dist', 'build', '.next', 'out', 'public/build'];
     let totalSize = 0;
     let fileCount = 0;
-    const largeFiles = [];
+    const largeFiles: { file: string; size: string }[] = [];
 
-    const scanDir = (dir) => {
+    const scanDir = (dir: string) => {
       try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
@@ -300,7 +300,7 @@ export class PerformanceGate extends BaseGate {
       return {
         name: 'Dependencies',
         status: 'error',
-        message: `Could not analyze dependencies: ${error.message}`,
+        message: `Could not analyze dependencies: ${(error as Error).message}`,
         details: []
       };
     }

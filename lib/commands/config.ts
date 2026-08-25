@@ -11,7 +11,7 @@ import { loadConfig, validateConfig, DEFAULT_CONFIG, createSampleConfig } from '
 /**
  * Deep merge two objects
  */
-function deepMerge(target, source) {
+function deepMerge(target: any, source: any) {
   const output = JSON.parse(JSON.stringify(target));
   
   if (isObject(target) && isObject(source)) {
@@ -34,7 +34,7 @@ function deepMerge(target, source) {
 /**
  * Check if value is an object
  */
-function isObject(item) {
+function isObject(item: any) {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
 
@@ -74,7 +74,7 @@ async function config(options: any = {}) {
 /**
  * Show current configuration
  */
-async function showConfig(projectRoot, configPath, asJson = false) {
+async function showConfig(projectRoot: string, configPath: string, asJson = false) {
   try {
     // If custom path provided, use directory of that path as projectRoot
     const actualProjectRoot = configPath !== path.join(projectRoot, 'reis.config.js')
@@ -151,7 +151,7 @@ async function showConfig(projectRoot, configPath, asJson = false) {
     }
     console.log('');
   } catch (error) {
-    console.error(chalk.red('Error loading config:'), error.message);
+    console.error(chalk.red('Error loading config:'), (error as any).message);
     process.exit(1);
   }
 }
@@ -159,7 +159,7 @@ async function showConfig(projectRoot, configPath, asJson = false) {
 /**
  * Initialize config file
  */
-async function initConfig(configPath, force = false) {
+async function initConfig(configPath: string, force = false) {
   try {
     // Check if config already exists
     if (fs.existsSync(configPath) && !force) {
@@ -192,7 +192,7 @@ async function initConfig(configPath, force = false) {
     console.log(chalk.gray(`  3. Run ${chalk.cyan('reis config show')} to view current config`));
     console.log(chalk.gray(`  4. Run ${chalk.cyan('reis config docs')} for detailed documentation\n`));
   } catch (error) {
-    console.error(chalk.red('Error creating config file:'), error.message);
+    console.error(chalk.red('Error creating config file:'), (error as any).message);
     process.exit(1);
   }
 }
@@ -200,7 +200,7 @@ async function initConfig(configPath, force = false) {
 /**
  * Validate config file
  */
-async function validateConfigFile(projectRoot, configPath) {
+async function validateConfigFile(projectRoot: string, configPath: string) {
   try {
     // Check if config file exists
     if (!fs.existsSync(configPath)) {
@@ -219,7 +219,7 @@ async function validateConfigFile(projectRoot, configPath) {
     } catch (error) {
       console.error(chalk.red(`\n✗ Config file has syntax errors:\n`));
       console.log(chalk.gray(`File: ${configPath}`));
-      console.log(chalk.red(`Error: ${error.message}\n`));
+      console.log(chalk.red(`Error: ${(error as any).message}\n`));
       process.exit(1);
     }
 
@@ -242,7 +242,7 @@ async function validateConfigFile(projectRoot, configPath) {
       process.exit(1);
     }
   } catch (error) {
-    console.error(chalk.red('Error validating config:'), error.message);
+    console.error(chalk.red('Error validating config:'), (error as any).message);
     process.exit(1);
   }
 }

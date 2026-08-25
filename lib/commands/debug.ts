@@ -264,11 +264,11 @@ async function invokeDebugger(prompt: string, options: any): Promise<any> {
   
   const invoker = new SubagentInvoker({ verbose: options.verbose });
   
-  invoker.on('progress', (data) => {
+  invoker.on('progress', (data: any) => {
     console.log(chalk.gray(`  ${data.message}`));
   });
   
-  invoker.on('artifact', (data) => {
+  invoker.on('artifact', (data: any) => {
     console.log(chalk.green(`  ✓ Generated: ${data.path}`));
   });
   

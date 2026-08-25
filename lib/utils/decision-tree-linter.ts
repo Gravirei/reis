@@ -118,7 +118,7 @@ function checkOrphanBranches(tree: ParsedDecisionTree, results: LintResults): vo
   // For now, we assume all branches are reachable from root
   // In a more complex implementation, we would track conditional paths
   
-  const allBranches = [];
+  const allBranches: DecisionBranch[] = [];
   const collectBranches = (branches: DecisionBranch[]): void => {
     branches.forEach(branch => {
       allBranches.push(branch);
@@ -146,7 +146,7 @@ function checkOrphanBranches(tree: ParsedDecisionTree, results: LintResults): vo
         // Simple check: warn if multiple branches have same condition
         const conditionCounts: Record<string, number> = {};
         ifConditions.forEach(cond => {
-          conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
+          conditionCounts[cond!] = (conditionCounts[cond!] || 0) + 1;
         });
         
         Object.entries(conditionCounts).forEach(([cond, count]) => {
@@ -196,7 +196,7 @@ function findParent(tree: ParsedDecisionTree, targetBranch: DecisionBranch): Dec
  * @param {Object} results - Results object to populate
  */
 function checkUnbalancedTree(tree: ParsedDecisionTree, results: LintResults): void {
-  const depths = [];
+  const depths: number[] = [];
 
   const getDepth = (branch: DecisionBranch, currentDepth = 0): void => {
     if (!branch.children || branch.children.length === 0) {
@@ -277,7 +277,7 @@ function checkMissingCommonOptions(tree: ParsedDecisionTree, results: LintResult
  * @param {Object} results - Results object to populate
  */
 function checkMetadataConsistency(tree: ParsedDecisionTree, results: LintResults): void {
-  const allBranches = [];
+  const allBranches: DecisionBranch[] = [];
   const collectBranches = (branches: DecisionBranch[]): void => {
     branches.forEach(branch => {
       allBranches.push(branch);
@@ -340,7 +340,7 @@ function checkMetadataConsistency(tree: ParsedDecisionTree, results: LintResults
  * @param {Object} results - Results object to populate
  */
 function validateConditionalSyntax(tree: ParsedDecisionTree, results: LintResults): void {
-  const allBranches = [];
+  const allBranches: DecisionBranch[] = [];
   const collectBranches = (branches: DecisionBranch[]): void => {
     branches.forEach(branch => {
       allBranches.push(branch);

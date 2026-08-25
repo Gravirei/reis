@@ -74,7 +74,7 @@ async function cycle(phaseOrPlan: number | string, options: any = {}) {
 /**
  * Show welcome banner
  */
-function showBanner(phaseOrPlan, options) {
+function showBanner(phaseOrPlan: number | string, options: any) {
   console.log();
   console.log(chalk.blue('╔═══════════════════════════════════════════════════════════╗'));
   
@@ -112,7 +112,7 @@ async function promptResume() {
   });
   
   return new Promise(resolve => {
-    rl.question(chalk.cyan('Resume cycle? (Y/n): '), answer => {
+    rl.question(chalk.cyan('Resume cycle? (Y/n): '), (answer: string) => {
       rl.close();
       const shouldResume = !answer || answer.toLowerCase() !== 'n';
       console.log();
@@ -124,7 +124,7 @@ async function promptResume() {
 /**
  * Show cycle configuration
  */
-function showConfiguration(options) {
+function showConfiguration(options: any) {
   console.log(chalk.gray('Configuration:'));
   console.log(chalk.gray(`  Max attempts: ${options.maxAttempts}`));
   console.log(chalk.gray(`  Auto-fix: ${options.autoFix ? 'Yes' : 'No'}`));
@@ -142,7 +142,7 @@ function showConfiguration(options) {
 /**
  * Show success summary
  */
-function showSuccessSummary(result) {
+function showSuccessSummary(result: any) {
   console.log();
   console.log(chalk.green('╔═══════════════════════════════════════════════════════════╗'));
   console.log(chalk.green('║  ✅ Cycle Complete!                                       ║'));
@@ -180,7 +180,7 @@ function showSuccessSummary(result) {
 /**
  * Show error summary
  */
-function showErrorSummary(error) {
+function showErrorSummary(error: any) {
   console.log();
   console.log(chalk.red('╔═══════════════════════════════════════════════════════════╗'));
   console.log(chalk.red('║  ❌ Cycle Failed                                          ║'));
@@ -234,7 +234,7 @@ function showErrorSummary(error) {
 /**
  * Format duration in human-readable format
  */
-function formatDuration(seconds) {
+function formatDuration(seconds: number) {
   if (seconds < 60) {
     return `${seconds}s`;
   } else if (seconds < 3600) {
@@ -251,7 +251,7 @@ function formatDuration(seconds) {
 /**
  * Show step progress (called by orchestrator)
  */
-function showStepProgress(stepNumber, totalSteps, stepName, status) {
+function showStepProgress(stepNumber: number, totalSteps: number, stepName: string, status: string) {
   const icons = {
     pending: '⏳',
     success: '✓',
@@ -266,8 +266,8 @@ function showStepProgress(stepNumber, totalSteps, stepName, status) {
     warning: chalk.yellow
   };
   
-  const icon = icons[status] || '○';
-  const color = colors[status] || chalk.gray;
+  const icon = (icons as Record<string, string>)[status] || '○';
+  const color = (colors as Record<string, chalk.Chalk>)[status] || chalk.gray;
   
   console.log(color(`${icon} Step ${stepNumber}/${totalSteps}: ${stepName}`));
 }
@@ -275,14 +275,14 @@ function showStepProgress(stepNumber, totalSteps, stepName, status) {
 /**
  * Show verification details
  */
-function showVerificationDetails(result) {
+function showVerificationDetails(result: any) {
   console.log();
   console.log(chalk.cyan('Verification Results:'));
   console.log(chalk.gray(`  Completeness: ${result.completeness}%`));
   
   if (result.issues && result.issues.length > 0) {
     console.log(chalk.yellow('\n  Issues found:'));
-    result.issues.forEach(issue => {
+    result.issues.forEach((issue: any) => {
       console.log(chalk.yellow(`    - ${issue}`));
     });
   }
@@ -293,7 +293,7 @@ function showVerificationDetails(result) {
 /**
  * Show fix prompt
  */
-async function showFixPrompt(fixPlanPath) {
+async function showFixPrompt(fixPlanPath: string) {
   console.log();
   console.log(chalk.cyan('🔧 Fix Plan Generated:'));
   console.log(chalk.gray(`   ${fixPlanPath}`));
@@ -306,7 +306,7 @@ async function showFixPrompt(fixPlanPath) {
   });
   
   return new Promise(resolve => {
-    rl.question(chalk.yellow('Apply fix? (Y/n): '), answer => {
+    rl.question(chalk.yellow('Apply fix? (Y/n): '), (answer: string) => {
       rl.close();
       resolve(!answer || answer.toLowerCase() !== 'n');
     });

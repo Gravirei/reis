@@ -12,7 +12,7 @@
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
-import { parseDecisionTrees, validateTree } from '../utils/decision-tree-parser.js';
+import { parseDecisionTrees, validateTree, ParsedDecisionTree } from '../utils/decision-tree-parser.js';
 import { renderDecisionTree } from '../utils/visualizer.js';
 import { exportToHTML, exportToSVG, exportToMermaid, exportAll } from '../utils/decision-tree-exporter.js';
 import { selectBranch, showDecisionSummary } from '../utils/decision-tree-interactive.js';
@@ -289,7 +289,7 @@ function diffTreeFiles(file1: string, file2: string, options: any = {}) {
   }
   
   // If multiple trees, try to match by name
-  let tree1, tree2;
+  let tree1: ParsedDecisionTree, tree2: ParsedDecisionTree;
   
   if (trees1.length === 1 && trees2.length === 1) {
     tree1 = trees1[0];

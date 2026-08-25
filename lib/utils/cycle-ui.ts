@@ -13,7 +13,7 @@ export const CYCLE_PHASES = ['PLANNING', 'REVIEWING', 'EXECUTING', 'VERIFYING', 
  * @param {string} phase - Phase name
  * @returns {string} Icon for the phase
  */
-export function getPhaseIcon(phase) {
+export function getPhaseIcon(phase: string) {
   const icons = {
     PLANNING: '📝',
     REVIEWING: '📋',    // clipboard for review
@@ -24,7 +24,7 @@ export function getPhaseIcon(phase) {
     FIXING: '🔧',
     COMPLETED: '✅'
   };
-  return icons[phase] || '❓';
+  return (icons as Record<string, string>)[phase] || '❓';
 }
 
 /**
@@ -32,7 +32,7 @@ export function getPhaseIcon(phase) {
  * @param {Object} reviewResult - Review result object
  * @returns {string} Formatted review status string
  */
-export function displayReviewStatus(reviewResult) {
+export function displayReviewStatus(reviewResult: any) {
   if (!reviewResult) return '';
   
   const icon = reviewResult.success ? '✅' : (reviewResult.hasWarnings ? '⚠️' : '❌');
@@ -47,7 +47,7 @@ export function displayReviewStatus(reviewResult) {
  * @param {Object} gateResult - Gate result object
  * @returns {string} Formatted gate status string
  */
-export function displayGateStatus(gateResult) {
+export function displayGateStatus(gateResult: any) {
   if (!gateResult) return '';
   
   const icon = gateResult.passed ? '✅' : (gateResult.hasWarnings ? '⚠️' : '❌');
@@ -61,7 +61,7 @@ export function displayGateStatus(gateResult) {
  * Show gate results in detail
  * @param {Object} gateResult - Gate result from quality gates
  */
-export function showGateResults(gateResult) {
+export function showGateResults(gateResult: any) {
   if (!gateResult) return;
   
   console.log();
@@ -79,7 +79,7 @@ export function showGateResults(gateResult) {
   if (gateResult.failedChecks && gateResult.failedChecks.length > 0) {
     console.log();
     console.log(chalk.yellow('  Failed Checks:'));
-    gateResult.failedChecks.forEach(check => {
+    gateResult.failedChecks.forEach((check: any) => {
       console.log(chalk.yellow(`    - ${check.name}: ${check.message || 'Failed'}`));
     });
   }
@@ -88,7 +88,7 @@ export function showGateResults(gateResult) {
   if (gateResult.warnings && gateResult.warnings.length > 0) {
     console.log();
     console.log(chalk.yellow('  Warnings:'));
-    gateResult.warnings.forEach(warning => {
+    gateResult.warnings.forEach((warning: any) => {
       console.log(chalk.yellow(`    - ${warning}`));
     });
   }
@@ -107,7 +107,7 @@ const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '
  * @param {number} stepNumber - Current step number
  * @param {number} total - Total number of steps
  */
-export function showStepStart(stepName, stepNumber, total) {
+export function showStepStart(stepName: string, stepNumber: number, total: number) {
   console.log();
   console.log(chalk.blue(`⏳ Step ${stepNumber}/${total}: ${stepName}`));
 }
@@ -117,7 +117,7 @@ export function showStepStart(stepName, stepNumber, total) {
  * @param {string} stepName - Name of the step
  * @param {string} details - Additional details
  */
-export function showStepSuccess(stepName, details = '') {
+export function showStepSuccess(stepName: string, details = '') {
   const message = details ? `${stepName} - ${details}` : stepName;
   console.log(chalk.green(`✓ ${message}`));
 }
@@ -137,7 +137,7 @@ export function showStepFailure(stepName: string, error: any) {
  * @param {string} stepName - Name of the step
  * @param {string} warning - Warning message
  */
-export function showStepWarning(stepName, warning) {
+export function showStepWarning(stepName: string, warning: string) {
   console.log(chalk.yellow(`⚠️  ${stepName} - ${warning}`));
 }
 
@@ -145,7 +145,7 @@ export function showStepWarning(stepName, warning) {
  * Start spinner with message
  * @param {string} message - Message to display
  */
-export function showSpinner(message) {
+export function showSpinner(message: string) {
   // Clear any existing spinner
   stopSpinner();
   
@@ -184,7 +184,7 @@ export function stopSpinner(finalMessage: string | null = null, success = true) 
  * @param {number} total - Total items
  * @param {string} label - Label for progress bar
  */
-export function showProgressBar(current, total, label = '') {
+export function showProgressBar(current: number, total: number, label = '') {
   const percentage = Math.floor((current / total) * 100);
   const barWidth = 30;
   const filled = Math.floor((current / total) * barWidth);
@@ -215,7 +215,7 @@ export function clearProgressBar() {
  * @param {number} seconds - Elapsed seconds
  * @returns {string} Formatted time
  */
-export function formatElapsedTime(seconds) {
+export function formatElapsedTime(seconds: number) {
   if (seconds < 60) {
     return `${seconds}s`;
   } else if (seconds < 3600) {
@@ -233,7 +233,7 @@ export function formatElapsedTime(seconds) {
  * Show time elapsed
  * @param {number} startTime - Start timestamp (milliseconds)
  */
-export function showElapsedTime(startTime) {
+export function showElapsedTime(startTime: number) {
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
   console.log(chalk.gray(`   Elapsed: ${formatElapsedTime(elapsed)}`));
 }
@@ -242,7 +242,7 @@ export function showElapsedTime(startTime) {
  * Show cycle summary
  * @param {Object} results - Cycle results
  */
-export function showSummary(results) {
+export function showSummary(results: any) {
   console.log();
   console.log(chalk.cyan('═══════════════════════════════════════════════════════════'));
   console.log(chalk.cyan('                    Cycle Summary'));
@@ -280,7 +280,7 @@ export function showSummary(results) {
  * Show verification results
  * @param {Object} results - Verification results
  */
-export function showVerificationResults(results) {
+export function showVerificationResults(results: any) {
   console.log();
   console.log(chalk.cyan('Verification Results:'));
   
@@ -292,7 +292,7 @@ export function showVerificationResults(results) {
   if (results.issues && results.issues.length > 0) {
     console.log();
     console.log(chalk.yellow('  Issues found:'));
-    results.issues.forEach(issue => {
+    results.issues.forEach((issue: any) => {
       console.log(chalk.yellow(`    - ${issue}`));
     });
   }
@@ -301,7 +301,7 @@ export function showVerificationResults(results) {
   if (results.missing && results.missing.length > 0) {
     console.log();
     console.log(chalk.yellow('  Missing items:'));
-    results.missing.forEach(item => {
+    results.missing.forEach((item: any) => {
       console.log(chalk.yellow(`    - ${item}`));
     });
   }
@@ -313,7 +313,7 @@ export function showVerificationResults(results) {
  * Show debug summary
  * @param {Object} debugResult - Debug result
  */
-export function showDebugSummary(debugResult) {
+export function showDebugSummary(debugResult: any) {
   console.log();
   console.log(chalk.cyan('Debug Analysis:'));
   
@@ -336,7 +336,7 @@ export function showDebugSummary(debugResult) {
  * Show section header
  * @param {string} title - Section title
  */
-export function showSectionHeader(title) {
+export function showSectionHeader(title: string) {
   console.log();
   console.log(chalk.blue.bold(`◆ ${title}`));
   console.log(chalk.blue('─'.repeat(60)));
@@ -353,7 +353,7 @@ export function showSectionFooter() {
  * Show info message
  * @param {string} message - Message to display
  */
-export function showInfo(message) {
+export function showInfo(message: string) {
   console.log(chalk.blue(`ℹ ${message}`));
 }
 
@@ -361,7 +361,7 @@ export function showInfo(message) {
  * Show success message
  * @param {string} message - Message to display
  */
-export function showSuccess(message) {
+export function showSuccess(message: string) {
   console.log(chalk.green(`✓ ${message}`));
 }
 
@@ -369,7 +369,7 @@ export function showSuccess(message) {
  * Show error message
  * @param {string} message - Message to display
  */
-export function showError(message) {
+export function showError(message: string) {
   console.log(chalk.red(`✗ ${message}`));
 }
 
@@ -377,7 +377,7 @@ export function showError(message) {
  * Show warning message
  * @param {string} message - Message to display
  */
-export function showWarning(message) {
+export function showWarning(message: string) {
   console.log(chalk.yellow(`⚠️  ${message}`));
 }
 
@@ -386,7 +386,7 @@ export function showWarning(message) {
  * @param {string} message - Message to display
  * @param {string} type - Box type: 'success', 'error', 'warning', 'info'
  */
-export function showBox(message, type = 'info') {
+export function showBox(message: string, type = 'info') {
   const colors = {
     success: chalk.green,
     error: chalk.red,
@@ -394,7 +394,7 @@ export function showBox(message, type = 'info') {
     info: chalk.blue
   };
   
-  const color = colors[type] || chalk.blue;
+  const color = (colors as Record<string, typeof chalk.blue>)[type] || chalk.blue;
   const width = 60;
   const padding = Math.max(0, width - message.length - 2);
   const leftPad = Math.floor(padding / 2);
@@ -412,7 +412,7 @@ export function showBox(message, type = 'info') {
  * @param {Array<string>} items - Items to display
  * @param {string} bullet - Bullet character
  */
-export function showList(items, bullet = '•') {
+export function showList(items: string[], bullet = '•') {
   items.forEach(item => {
     console.log(`   ${bullet} ${item}`);
   });
@@ -423,7 +423,7 @@ export function showList(items, bullet = '•') {
  * @param {Array<Array<string>>} rows - Table rows (including header)
  * @param {Array<number>} columnWidths - Width for each column
  */
-export function showTable(rows, columnWidths) {
+export function showTable(rows: string[][], columnWidths: number[]) {
   rows.forEach((row, index) => {
     const cells = row.map((cell, i) => {
       const width = columnWidths[i] || 20;

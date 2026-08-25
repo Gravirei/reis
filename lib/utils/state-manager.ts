@@ -41,7 +41,7 @@ class StateManager {
       const content = fs.readFileSync(this.statePath, 'utf8');
       return this.parseState(content);
     } catch (error) {
-      console.error('Error loading STATE.md:', error.message);
+      console.error('Error loading STATE.md:', (error as Error).message);
       return this.createInitialState();
     }
   }
@@ -182,9 +182,9 @@ class StateManager {
           wave.name = match[1];
         }
       } else if (line.includes('Status:')) {
-        wave.status = line.match(/Status: (\w+)/)?.[1] || null;
+        wave.status = (line.match(/Status: (\w+)/)?.[1] || null) as unknown as string;
       } else if (line.includes('Started:')) {
-        wave.started = line.match(/Started: (.+)/)?.[1] || null;
+        wave.started = (line.match(/Started: (.+)/)?.[1] || null) as unknown as string;
       } else if (line.includes('Items:')) {
         wave.items = parseInt(line.match(/(\d+) tasks/)?.[1] || '0');
       } else if (line.includes('Progress:')) {

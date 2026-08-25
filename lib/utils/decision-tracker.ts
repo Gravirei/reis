@@ -51,9 +51,9 @@ export function trackDecision(decision: Partial<DecisionRecord>): DecisionRecord
   // Generate unique ID
   const id = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
   
-  const record = {
+  const record: DecisionRecord = {
     id,
-    treeId: decision.treeId,
+    treeId: decision.treeId as string,
     selectedPath: decision.selectedPath || [],
     metadata: decision.metadata || {},
     context: decision.context || {},
@@ -238,7 +238,7 @@ export function exportToCSV(filters: Record<string, unknown> = {}): string {
   ]);
   
   // Escape CSV fields
-  const escapeCSV = (field) => {
+  const escapeCSV = (field: any) => {
     const str = String(field);
     if (str.includes(',') || str.includes('"') || str.includes('\n')) {
       return `"${str.replace(/"/g, '""')}"`;
@@ -319,7 +319,7 @@ function loadDecisions(): DecisionRecord[] {
     }
     return [];
   } catch (error) {
-    console.error('Error loading decisions:', error.message);
+    console.error('Error loading decisions:', (error as Error).message);
     return [];
   }
 }

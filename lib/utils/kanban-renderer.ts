@@ -131,7 +131,7 @@ export class KanbanBoard {
    * @param {Array} phases - Array of phase objects {id, name, status}
    * @returns {Array<string>} Array of formatted lines
    */
-  formatPhasesColumn(phases) {
+  formatPhasesColumn(phases: any[]) {
     const lines = [];
     const width = WIDTHS.phases - 2; // minus borders
     
@@ -143,7 +143,7 @@ export class KanbanBoard {
     // Group phases into rows of 4
     for (let i = 0; i < phases.length; i += 4) {
       const row = phases.slice(i, i + 4)
-        .map(p => `P${p.id}`)
+        .map((p: any) => `P${p.id}`)
         .join(' ');
       lines.push(row.padEnd(width));
     }
@@ -162,7 +162,7 @@ export class KanbanBoard {
    * @param {Object} currentPhase - {id, name, waves: [{id, status, tasks}], currentWave, totalWaves}
    * @returns {Array<string>} Array of formatted lines
    */
-  formatInProgressColumn(currentPhase) {
+  formatInProgressColumn(currentPhase: any) {
     const lines = [];
     const width = WIDTHS.inProgress - 2;
     
@@ -214,7 +214,7 @@ export class KanbanBoard {
       
       // Show tasks under current wave with tree structure
       if (w === currentWaveNum && currentPhase.tasks && currentPhase.tasks.length > 0) {
-        currentPhase.tasks.forEach((task, idx) => {
+        currentPhase.tasks.forEach((task: any, idx: number) => {
           if (lines.length >= 8) return;
           
           // Tree structure prefix
@@ -252,7 +252,7 @@ export class KanbanBoard {
    * @param {Object} parallelState - Parallel execution state
    * @returns {Array<string>} Array of formatted lines
    */
-  formatParallelInProgressColumn(currentPhase, parallelState) {
+  formatParallelInProgressColumn(currentPhase: any, parallelState: any) {
     const lines = [];
     const width = WIDTHS.inProgress - 2;
     
@@ -273,7 +273,7 @@ export class KanbanBoard {
     
     // Show running waves with mini progress
     if (parallelState.runningWaves && parallelState.runningWaves.length > 0) {
-      parallelState.runningWaves.slice(0, 4).forEach((wave, idx) => {
+      parallelState.runningWaves.slice(0, 4).forEach((wave: any, idx: number) => {
         const isLast = idx === Math.min(parallelState.runningWaves.length, 4) - 1;
         const prefix = isLast ? ' └' : ' ├';
         const progress = wave.progress || 0;
@@ -298,7 +298,7 @@ export class KanbanBoard {
    * @param {number} maxConcurrent - Max concurrent waves
    * @returns {Array<string>} Array of formatted lines for lanes display
    */
-  renderParallelLanes(runningWaves, maxConcurrent = 4) {
+  renderParallelLanes(runningWaves: any[], maxConcurrent = 4) {
     const lines = [];
     const laneWidth = 10;
     const waves = runningWaves || [];
@@ -366,7 +366,7 @@ export class KanbanBoard {
    * @param {Set|Array} completedWaves - Set of completed wave IDs
    * @returns {Array<string>} Formatted dependency lines
    */
-  renderDependencyInfo(dependencies, completedWaves) {
+  renderDependencyInfo(dependencies: Map<string, string[]> | null, completedWaves: Iterable<string> | null) {
     const lines = [];
     const completed = completedWaves instanceof Set ? completedWaves : new Set(completedWaves || []);
     
@@ -398,7 +398,7 @@ export class KanbanBoard {
    * @param {Object} wave - Wave object with id, progress, status
    * @returns {string} Formatted progress line
    */
-  renderWaveProgress(wave) {
+  renderWaveProgress(wave: any) {
     const progress = wave.progress || 0;
     const bar = renderProgressBar(progress, 12);
     const status = wave.status || 'running';
@@ -423,7 +423,7 @@ export class KanbanBoard {
    * @param {number} width - Column width
    * @returns {string} Formatted progress line
    */
-  formatStageProgress(percent, status, width) {
+  formatStageProgress(percent: number, status: string, width: number) {
     const bar = renderProgressBar(percent);
     let statusIcon = '';
     if (status === 'complete') {
@@ -443,7 +443,7 @@ export class KanbanBoard {
    * @param {Object} cycleState - {stage, stages: {planning, execute, verify, gate, debug}, runningTasks, waitingTasks}
    * @returns {Array<Array<string>>} Array of [label, progress] pairs
    */
-  formatCycleColumn(cycleState) {
+  formatCycleColumn(cycleState: any) {
     const labelWidth = WIDTHS.cycleLabel - 2;
     const progressWidth = WIDTHS.cycleProgress - 2;
     const lines = [];
@@ -499,7 +499,7 @@ export class KanbanBoard {
         // Show running tasks
         if (runningTasks.length > 0) {
           lines.push(['Running:'.padEnd(labelWidth), ' '.repeat(progressWidth)]);
-          runningTasks.forEach((task, idx) => {
+          runningTasks.forEach((task: any, idx: number) => {
             if (lines.length >= 8) return;
             const prefix = idx === runningTasks.length - 1 && waitingTasks.length === 0 ? ' └' : ' ├';
             const taskLabel = `${prefix} ${task.id}`.padEnd(labelWidth);
@@ -512,8 +512,8 @@ export class KanbanBoard {
         // Show waiting tasks
         if (waitingTasks.length > 0 && lines.length < 8) {
           lines.push(['Waiting:'.padEnd(labelWidth), ' '.repeat(progressWidth)]);
-          const waitList = waitingTasks.map(t => `${t.id} → ${t.dependsOn}`).join(', ');
-          lines.push([` └ ${waitingTasks.map(t => t.id).join(', ')}`.slice(0, labelWidth).padEnd(labelWidth), 
+          const waitList = waitingTasks.map((t: any) => `${t.id} → ${t.dependsOn}`).join(', ');
+          lines.push([` └ ${waitingTasks.map((t: any) => t.id).join(', ')}`.slice(0, labelWidth).padEnd(labelWidth), 
                       waitList.slice(0, progressWidth).padEnd(progressWidth)]);
         }
       }
@@ -533,7 +533,7 @@ export class KanbanBoard {
    * @param {Array} completedCycles - [{id, phase, status}]
    * @returns {Array<string>} Array of formatted lines
    */
-  formatCompletedColumn(completedCycles) {
+  formatCompletedColumn(completedCycles: any[]) {
     const lines = [];
     const width = WIDTHS.completed - 2;
     
@@ -545,7 +545,7 @@ export class KanbanBoard {
       lines.push('  completed '.slice(0, width).padEnd(width));
     } else {
       // Show completed cycles
-      completedCycles.forEach(cycle => {
+      completedCycles.forEach((cycle: any) => {
         if (lines.length >= 8) return;
         const cycleId = cycle.id !== undefined ? cycle.id : cycle.phase;
         const phaseId = cycle.phase !== undefined ? cycle.phase : cycle.id;
@@ -571,10 +571,10 @@ export class KanbanBoard {
     const lines = [];
     
     // Get column data
-    const phasesCol = this.formatPhasesColumn(this.state?.phases || []);
+    const phasesCol = this.formatPhasesColumn((this.state?.phases as any[] | undefined) || []);
     const inProgressCol = this.formatInProgressColumn(this.state?.currentPhase);
     const cycleCol = this.formatCycleColumn(this.cycleState);
-    const completedCol = this.formatCompletedColumn(this.state?.completedCycles || []);
+    const completedCol = this.formatCompletedColumn((this.state?.completedCycles as any[] | undefined) || []);
     
     // Header row
     lines.push(
@@ -751,7 +751,7 @@ export class KanbanBoard {
         const content = fs.readFileSync(roadmapPath, 'utf8');
         // Extract phases (simple regex for Phase N patterns)
         const phaseMatches = content.match(/Phase\s+(\d+)/gi) || [];
-        const phaseIds = [...new Set(phaseMatches.map(m => parseInt(m.match(/\d+/)[0])))];
+        const phaseIds = [...new Set(phaseMatches.map((m: string) => parseInt(m.match(/\d+/)![0])))];
         this.state.phases = phaseIds.sort((a, b) => a - b).map(id => ({ id }));
       }
     } catch (e) {
@@ -922,7 +922,7 @@ export function renderParallelExecutionDisplay(options: Record<string, unknown> 
   // Dependencies section
   if (state.dependencies && state.dependencies.size > 0) {
     const completedIds = new Set(state.completedWaves.map(w => w.id));
-    const depLines = board.renderDependencyInfo(state.dependencies, completedIds);
+    const depLines = board.renderDependencyInfo(state.dependencies, completedIds as Set<string>);
     depLines.forEach(line => {
       lines.push(BOX.vertical + line.padEnd(50) + BOX.vertical);
     });

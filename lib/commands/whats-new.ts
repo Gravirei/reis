@@ -34,7 +34,7 @@ function parseChangelog(version: string) {
     return { found: false, title: '', sections: [] };
   }
 
-  const startIndex = match.index;
+  const startIndex = match.index as number;
   const title = match[0];
 
   // Find the next version section (or end of file)
@@ -43,7 +43,7 @@ function parseChangelog(version: string) {
   const nextMatch = afterStart.match(nextVersionRegex);
   
   const endIndex = nextMatch 
-    ? startIndex + title.length + nextMatch.index 
+    ? startIndex + title.length + nextMatch.index! 
     : changelogContent.length;
 
   const versionContent = changelogContent.substring(startIndex + title.length, endIndex).trim();

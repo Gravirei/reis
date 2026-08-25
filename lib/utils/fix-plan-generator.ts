@@ -104,14 +104,14 @@ export class FixPlanGenerator {
 
       if (incompleteness.completedTasks && incompleteness.completedTasks.length > 0) {
         context += '**Completed Successfully:**\n';
-        incompleteness.completedTasks.forEach(task => {
+        incompleteness.completedTasks.forEach((task: any) => {
           context += `- ${task} ✅\n`;
         });
         context += '\n';
       }
 
       context += '**Missing:**\n';
-      (incompleteness.missing || []).forEach(task => {
+      (incompleteness.missing || []).forEach((task: any) => {
         context += `- ${task} ❌\n`;
       });
       context += '\n';
@@ -121,7 +121,7 @@ export class FixPlanGenerator {
 
       if (this.analysis.rootCause.evidence && this.analysis.rootCause.evidence.length > 0) {
         context += '**Evidence:**\n';
-        this.analysis.rootCause.evidence.slice(0, 3).forEach(e => {
+        this.analysis.rootCause.evidence.slice(0, 3).forEach((e: any) => {
           context += `- ${e}\n`;
         });
         context += '\n';
@@ -160,9 +160,9 @@ export class FixPlanGenerator {
       
       if (completed.length > 0) {
         const taskNumbers = completed
-          .map(t => t.match(/Task (\d+)/))
-          .filter(m => m)
-          .map(m => m[1])
+          .map((t: any) => t.match(/Task (\d+)/))
+          .filter((m: RegExpMatchArray | null): m is RegExpMatchArray => !!m)
+          .map((m: RegExpMatchArray) => m[1])
           .join(', ');
         
         constraints.push(`**DO NOT** modify completed tasks (Tasks ${taskNumbers})`);
@@ -227,7 +227,7 @@ export class FixPlanGenerator {
     wave += `**Risk:** LOW\n\n`;
     wave += '### Tasks\n\n';
 
-    missing.forEach((task, index) => {
+    missing.forEach((task: any, index: number) => {
       wave += this.generateIncompleteTask(task, index + 1);
       wave += '\n';
     });
@@ -238,7 +238,7 @@ export class FixPlanGenerator {
   /**
    * FR2.1: Generate task for missing feature
    */
-  generateIncompleteTask(taskDescription, taskNumber) {
+  generateIncompleteTask(taskDescription: string, taskNumber: number) {
     const taskName = taskDescription.replace(/^Task \d+:?\s*/i, '');
     
     let task = '<task type="auto">\n';
@@ -274,7 +274,7 @@ export class FixPlanGenerator {
   /**
    * Infer file paths from task description
    */
-  inferFiles(taskName) {
+  inferFiles(taskName: string) {
     const files = [];
     const taskLower = taskName.toLowerCase();
 
@@ -303,7 +303,7 @@ export class FixPlanGenerator {
   /**
    * Generate implementation steps
    */
-  generateImplementationSteps(taskName) {
+  generateImplementationSteps(taskName: string) {
     return `1. Create required files\n` +
            `2. Implement ${taskName} following project patterns\n` +
            `3. Add error handling\n` +
@@ -314,7 +314,7 @@ export class FixPlanGenerator {
   /**
    * Generate verification commands
    */
-  generateVerificationCommands(taskName) {
+  generateVerificationCommands(taskName: string) {
     return '```bash\n' +
            '# Verify file exists\n' +
            'test -f [new-file] && echo "✓ File created"\n\n' +
@@ -328,7 +328,7 @@ export class FixPlanGenerator {
   /**
    * Generate acceptance criteria
    */
-  generateAcceptanceCriteria(taskName) {
+  generateAcceptanceCriteria(taskName: string) {
     return `- ${taskName} implemented and working\n` +
            '- Tests pass for new feature\n' +
            '- Integration with existing code verified\n' +
@@ -373,7 +373,7 @@ export class FixPlanGenerator {
       
       const completed = incompleteness.completedTasks || [];
       if (completed.length > 0) {
-        const taskNums = completed.map(t => t.match(/Task (\d+)/)).filter(m => m).map(m => m[1]).join(', ');
+        const taskNums = completed.map((t: any) => t.match(/Task (\d+)/)).filter((m: RegExpMatchArray | null): m is RegExpMatchArray => !!m).map((m: RegExpMatchArray) => m[1]).join(', ');
         criteria += `- ✅ No impact on completed tasks (${taskNums})\n`;
       }
       
@@ -401,7 +401,7 @@ export class FixPlanGenerator {
     if (this.analysis.classification.type === 'incomplete-implementation') {
       verification += '# Verify missing items now exist\n';
       const missing = this.analysis.classification.incompleteness.missing || [];
-      missing.forEach(task => {
+      missing.forEach((task: any) => {
         const file = this.inferMainFile(task);
         verification += `test -f ${file} && echo "✓ ${task} exists"\n`;
       });
@@ -453,20 +453,20 @@ export class FixPlanGenerator {
     return this.analysis.context?.originalPlan || '[original-plan.PLAN.md]';
   }
 
-  inferMainFile(taskDescription) {
+  inferMainFile(taskDescription: string) {
     const taskLower = taskDescription.toLowerCase();
     if (taskLower.includes('password')) return 'src/api/auth/reset-password.ts';
     if (taskLower.includes('endpoint')) return 'src/api/[feature].ts';
     return 'src/[feature].ts';
   }
 
-  estimateWaveSize(taskCount) {
+  estimateWaveSize(taskCount: number) {
     if (taskCount === 1) return 'SMALL';
     if (taskCount <= 3) return 'MEDIUM';
     return 'LARGE';
   }
 
-  estimateTime(taskCount) {
+  estimateTime(taskCount: number) {
     const minutes = taskCount * 30;
     if (minutes < 60) return `${minutes} min`;
     return `${Math.round(minutes / 60)} hours`;

@@ -49,7 +49,7 @@ export async function reviewCommand(target: string | undefined, options: ReviewO
   }
 
   try {
-    let result;
+    let result: any;
     const fullPath = path.resolve(targetPath);
 
     if (fs.statSync(fullPath).isDirectory()) {

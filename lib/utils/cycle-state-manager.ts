@@ -10,6 +10,24 @@ import path from 'path';
 const STATE_DIR = '.reis';
 const STATE_FILE = path.join(STATE_DIR, 'cycle-state.json');
 
+interface CycleData {
+  phase?: number | string | null;
+  planPath?: string | null;
+  currentState?: string;
+  startTime?: string;
+  attempts?: number;
+  maxAttempts?: number;
+  options?: Record<string, unknown>;
+  history?: Array<Record<string, unknown>>;
+  lastError?: Record<string, unknown> | null;
+  completeness?: number;
+  gateResult?: Record<string, unknown> | null;
+  executionResult?: Record<string, unknown> | null;
+  verificationResult?: Record<string, unknown> | null;
+  reviewResult?: Record<string, unknown> | null;
+  [key: string]: unknown;
+}
+
 /**
  * Ensure .reis directory exists
  */
@@ -33,7 +51,7 @@ export function ensureStateDir() {
  * @param {Object|null} cycleData.lastError - Last error encountered
  * @param {number} cycleData.completeness - Verification completeness percentage
  */
-export function saveState(cycleData) {
+export function saveState(cycleData: CycleData) {
   try {
     ensureStateDir();
     
@@ -73,7 +91,7 @@ export function saveState(cycleData) {
     
     return true;
   } catch (error) {
-    console.error('Failed to save cycle state:', error.message);
+    console.error('Failed to save cycle state:', (error as Error).message);
     return false;
   }
 }
@@ -99,7 +117,7 @@ export function loadState() {
     
     return state;
   } catch (error) {
-    console.error('Failed to load cycle state:', error.message);
+    console.error('Failed to load cycle state:', (error as Error).message);
     return null;
   }
 }
@@ -157,7 +175,7 @@ export function clearState() {
     }
     return true;
   } catch (error) {
-    console.error('Failed to clear cycle state:', error.message);
+    console.error('Failed to clear cycle state:', (error as Error).message);
     return false;
   }
 }
@@ -282,7 +300,7 @@ export function updateCompleteness(completeness: number) {
  * Set execution result
  * @param {Object} result - Execution result from subagent
  */
-export function setExecutionResult(result) {
+export function setExecutionResult(result: Record<string, any>) {
   const state = loadState();
   
   if (!state) {
@@ -314,7 +332,7 @@ export function getExecutionResult() {
  * Set verification result
  * @param {Object} result - Verification result
  */
-export function setVerificationResult(result) {
+export function setVerificationResult(result: Record<string, any>) {
   const state = loadState();
   
   if (!state) {
@@ -349,7 +367,7 @@ export function getVerificationResult() {
  * Store review execution results
  * @param {Object} result - Review execution result
  */
-export function setReviewResult(result) {
+export function setReviewResult(result: Record<string, any>) {
   const state = loadState();
   
   if (!state) {
@@ -382,7 +400,7 @@ export function clearReviewResult() {
   saveState(state);
 }
 
-export function setGateResult(result) {
+export function setGateResult(result: Record<string, any>) {
   const state = loadState();
   
   if (!state) {

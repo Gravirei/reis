@@ -57,7 +57,7 @@ export class QualityGate extends BaseGate {
         details.push({
           name: check.name,
           status: 'error',
-          message: `Check failed: ${err.message}`
+          message: `Check failed: ${(err as any).message}`
         });
         hasFailure = true;
       }
@@ -138,7 +138,7 @@ export class QualityGate extends BaseGate {
 
     // Parse coverage data
     let totalCoverage = 0;
-    let coverageDetails = [];
+    let coverageDetails: { metric: string; coverage: string }[] = [];
 
     if (coverageData.total) {
       // Istanbul/NYC format
@@ -231,7 +231,7 @@ export class QualityGate extends BaseGate {
           cwd: process.cwd()
         });
       } catch (execError) {
-        output = execError.stdout || '[]';
+        output = (execError as any).stdout || '[]';
       }
 
       let results;
@@ -288,7 +288,7 @@ export class QualityGate extends BaseGate {
       return {
         name: 'Lint Errors',
         status: 'skipped',
-        message: `ESLint not available: ${error.message}`,
+        message: `ESLint not available: ${(error as any).message}`,
         details: []
       };
     }
@@ -304,11 +304,11 @@ export class QualityGate extends BaseGate {
     const maxCognitive = config.maxCognitiveComplexity || 15;
 
     // Simple complexity check by analyzing function sizes
-    const issues = [];
+    const issues: { file: string; function: string; line: number; depth: number; lines: number; issue: string }[] = [];
     const codeExtensions = ['.js', '.ts', '.jsx', '.tsx'];
     const ignoreDirs = ['node_modules', '.git', 'dist', 'build', 'coverage', '.next'];
 
-    const analyzeFile = (filePath) => {
+    const analyzeFile = (filePath: string) => {
       try {
         const content = fs.readFileSync(filePath, 'utf8');
         const relativePath = path.relative(process.cwd(), filePath);
@@ -372,7 +372,7 @@ export class QualityGate extends BaseGate {
       }
     };
 
-    const scanDir = (dir) => {
+    const scanDir = (dir: string) => {
       try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
@@ -421,9 +421,9 @@ export class QualityGate extends BaseGate {
 
     let totalFunctions = 0;
     let documentedFunctions = 0;
-    const undocumented = [];
+    const undocumented: { file: string; function: string; line: number }[] = [];
 
-    const analyzeFile = (filePath) => {
+    const analyzeFile = (filePath: string) => {
       try {
         const content = fs.readFileSync(filePath, 'utf8');
         const relativePath = path.relative(process.cwd(), filePath);
@@ -467,7 +467,7 @@ export class QualityGate extends BaseGate {
       } catch (e) {}
     };
 
-    const scanDir = (dir) => {
+    const scanDir = (dir: string) => {
       try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {

@@ -231,7 +231,7 @@ export class WaveConflictDetector {
 
     // Graph coloring - greedy approach
     const colors = new Map<any, number>(); // waveId -> color (group number)
-    const groups = []; // Array of arrays of wave IDs
+    const groups: string[][] = []; // Array of arrays of wave IDs
 
     // Sort waves by number of conflicts (most constrained first)
     const sortedWaves = [...waves].sort((a, b) => {

@@ -107,7 +107,7 @@ async function completeMilestone(args: any): Promise<number> {
       
       showSuccess('Audit passed!\n');
     } catch (error) {
-      showError(`Audit error: ${error.message}`);
+      showError(`Audit error: ${(error as Error).message}`);
       if (!force) {
         return 1;
       }

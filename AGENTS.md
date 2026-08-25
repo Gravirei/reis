@@ -592,7 +592,21 @@ reis audit milestone-1        # Integration check
 
 ---
 
-**Last Updated:** 2026-01-28  
-**Version:** 2.7.1  
-**REIS Version:** v2.7.1 (Task-level Resume & Crash Recovery)  
+**Last Updated:** 2026-08-25  
+**Version:** 2.8.0  
+**REIS Version:** v2.8.0 (Full TypeScript Migration)  
+
+### 🛠️ Build & Test Commands
+
+```bash
+npm run build        # tsc compile (lib/ + bin/, CommonJS emit)
+npm run typecheck    # tsc --noEmit (strict mode)
+npm run lint         # eslint (typescript-eslint)
+npm test             # Jest suite (unit/integration/e2e)
+npm run test:perf    # performance benchmarks
+```
+
+The codebase is 100% TypeScript (`lib/**/*.ts`, `bin/*.ts`); runtime JS is
+emitted in place by `tsconfig.build.json` and gitignored. Do not hand-edit
+emitted `.js` files.  
 **Purpose:** Ensure consistent use of REIS methodology with all 11 subagents, 40 commands, and advanced features

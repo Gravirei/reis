@@ -108,7 +108,7 @@ async function audit(args: any): Promise<number> {
     });
   } catch (error) {
     // If subagent invocation fails, continue with prompt-based approach
-    showWarning(`Subagent invocation error: ${error.message}`);
+    showWarning(`Subagent invocation error: ${(error as Error).message}`);
     showInfo('Continuing with prompt-based audit...\n');
     integrationResult = { success: false, issues: ['Subagent invocation failed'], fallback: true };
   }

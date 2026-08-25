@@ -248,10 +248,10 @@ function formatDiff(diff: TreeDiff | null, options: DiffOptions = {}): string {
 
   // Statistics
   lines.push('Summary:');
-  lines.push(`  ${colors ? chalk.green('+') : '+'} ${diff.stats.added} added`);
-  lines.push(`  ${colors ? chalk.red('-') : '-'} ${diff.stats.removed} removed`);
-  lines.push(`  ${colors ? chalk.yellow('~') : '~'} ${diff.stats.modified} modified`);
-  lines.push(`  ${colors ? chalk.gray('=') : '='} ${diff.stats.unchanged} unchanged`);
+  lines.push(`  ${colors ? chalk.green('+') : '+'} ${diff.stats!.added} added`);
+  lines.push(`  ${colors ? chalk.red('-') : '-'} ${diff.stats!.removed} removed`);
+  lines.push(`  ${colors ? chalk.yellow('~') : '~'} ${diff.stats!.modified} modified`);
+  lines.push(`  ${colors ? chalk.gray('=') : '='} ${diff.stats!.unchanged} unchanged`);
   lines.push('');
 
   // Changes
@@ -359,7 +359,7 @@ function generatePatch(diff: TreeDiff | null): Patch {
     throw new Error('Diff object is required');
   }
 
-  const patch = {
+  const patch: Patch = {
     version: '1.0',
     name: diff.name,
     rootChange: diff.rootChanged ? {
@@ -393,7 +393,7 @@ function generatePatch(diff: TreeDiff | null): Patch {
         break;
 
       case 'modified':
-        change.modifications.forEach(mod => {
+        change.modifications!.forEach(mod => {
           patch.operations.push({
             op: 'replace',
             path: `${change.path}/${mod.field}`,

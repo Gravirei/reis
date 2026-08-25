@@ -35,7 +35,7 @@ function colorizeStatus(status: string) {
   return chalk.gray(status.toUpperCase());
 }
 
-async function displayProgress(state, metrics, options) {
+async function displayProgress(state: any, metrics: any, options: any) {
   if (!options.compact) {
     console.log(chalk.bold('\n╔════════════════════════════════════════════════════════════╗'));
     console.log(chalk.bold('║              REIS v2.0 - Project Progress                  ║'));
@@ -58,7 +58,7 @@ async function displayProgress(state, metrics, options) {
   }
   if (state.nextSteps && state.nextSteps.length > 0) {
     console.log(chalk.green.bold('\nNext Steps:'));
-    state.nextSteps.forEach(step => console.log(`  → ${step}`));
+    state.nextSteps.forEach((step: any) => console.log(`  → ${step}`));
   }
   if (metrics && Object.keys(metrics).length > 0) {
     console.log(chalk.magenta.bold('\nMetrics:'));
@@ -71,7 +71,7 @@ async function displayProgress(state, metrics, options) {
   }
 }
 
-async function displayWaves(state, metrics, options) {
+async function displayWaves(state: any, metrics: any, options: any) {
   if (!options.compact) {
     console.log(chalk.bold('\n╔════════════════════════════════════════════════════════════╗'));
     console.log(chalk.bold('║                    Wave Overview                           ║'));
@@ -83,7 +83,7 @@ async function displayWaves(state, metrics, options) {
     console.log(chalk.gray('  No waves found'));
     return;
   }
-  state.waves.forEach(wave => {
+  state.waves.forEach((wave: any) => {
     const icon = wave.status === 'complete' ? chalk.green('✓') :
                  wave.status === 'failed' ? chalk.red('✗') :
                  wave.status === 'in_progress' ? chalk.yellow('⧗') : chalk.gray('○');
@@ -92,7 +92,7 @@ async function displayWaves(state, metrics, options) {
   });
 }
 
-async function displayRoadmap(state, metrics, options) {
+async function displayRoadmap(state: any, metrics: any, options: any) {
   if (!options.compact) {
     console.log(chalk.bold('\n╔════════════════════════════════════════════════════════════╗'));
     console.log(chalk.bold('║                   Project Roadmap                          ║'));
@@ -101,7 +101,7 @@ async function displayRoadmap(state, metrics, options) {
     console.log(chalk.bold('\nProject Roadmap\n'));
   }
   if (state.phases && state.phases.length > 0) {
-    state.phases.forEach(phase => {
+    state.phases.forEach((phase: any) => {
       const progress = phase.totalWaves ? 
         visualizer.createProgressBar(phase.completedWaves || 0, phase.totalWaves, { width: 30 }) : 'N/A';
       console.log(chalk.cyan.bold(`\nPhase ${phase.number}: ${phase.name || 'Unnamed'}`));
@@ -117,7 +117,7 @@ async function displayRoadmap(state, metrics, options) {
   }
 }
 
-async function displayMetrics(state, metrics, options) {
+async function displayMetrics(state: any, metrics: any, options: any) {
   if (!options.compact) {
     console.log(chalk.bold('\n╔════════════════════════════════════════════════════════════╗'));
     console.log(chalk.bold('║                   Metrics Dashboard                        ║'));
@@ -135,7 +135,7 @@ async function displayMetrics(state, metrics, options) {
   if (metrics.averageDuration !== undefined) console.log(`  Avg Wave Duration: ${metrics.averageDuration}m`);
 }
 
-async function render(type, options) {
+async function render(type: string, options: any) {
   try {
     const config = await loadConfig();
     const projectRoot = (config as any).projectRoot || process.cwd();
@@ -236,7 +236,7 @@ async function displayDependencies(options: any = {}) {
         
         if (wavesAtDepth.length > 0) {
           // Draw waves at this depth
-          const waveStr = wavesAtDepth.map(w => {
+          const waveStr = wavesAtDepth.map((w: any) => {
             const wave = parsed.waves.find(pw => pw.id === w);
             return wave ? `${w}` : w;
           }).join(' ─┬─ ');
@@ -375,7 +375,7 @@ async function displayTimeline(options: any = {}) {
 /**
  * Calculate wave depths for graph visualization
  */
-function calculateWaveDepths(waves) {
+function calculateWaveDepths(waves: any[]) {
   const depthMap = new Map();
   const depMap = new Map();
   
@@ -394,7 +394,7 @@ function calculateWaveDepths(waves) {
   // Process waves with dependencies
   let maxIterations = waves.length * 2;
   while (queue.length > 0 && maxIterations-- > 0) {
-    const { id, depth } = queue.shift();
+    const { id, depth } = queue.shift()!;
     depthMap.set(id, Math.max(depthMap.get(id) || 0, depth));
     
     // Find waves that depend on this one
@@ -483,7 +483,7 @@ async function visualizeCommand(args = []) {
   
   if (options.watch) {
     console.log(chalk.gray('Watch mode enabled. Press Ctrl+C to exit.\n'));
-    let intervalId;
+    let intervalId: ReturnType<typeof setInterval> | undefined;
     process.on('SIGINT', () => {
       if (intervalId) clearInterval(intervalId);
       console.log(chalk.gray('\n\nExiting watch mode...'));

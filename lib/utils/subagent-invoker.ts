@@ -392,7 +392,7 @@ export function loadSubagentDefinition(name: string): SubagentDefinition {
   try {
     content = fs.readFileSync(filePath, 'utf8');
   } catch (error) {
-    throw new InvalidDefinitionError(name, `Failed to read file: ${error.message}`);
+    throw new InvalidDefinitionError(name, `Failed to read file: ${(error as Error).message}`);
   }
 
   // Parse YAML frontmatter
@@ -587,7 +587,7 @@ export class SubagentInvoker extends EventEmitter {
    * @param {ExecutionContext} context
    * @returns {Promise<InvocationResult>}
    */
-  async invoke(context) {
+  async invoke(context: ExecutionContext) {
     const startTime = Date.now();
     
     // Emit start event
@@ -648,7 +648,7 @@ export class SubagentInvoker extends EventEmitter {
       this.emit('error', { error });
 
       if (this.verbose) {
-        console.log(`[SubagentInvoker] Failed after ${duration}ms: ${error.message}`);
+        console.log(`[SubagentInvoker] Failed after ${duration}ms: ${(error as Error).message}`);
       }
 
       return result;
@@ -660,7 +660,7 @@ export class SubagentInvoker extends EventEmitter {
    * @param {ExecutionContext[]} contexts
    * @returns {Promise<InvocationResult[]>}
    */
-  async invokeParallel(contexts) {
+  async invokeParallel(contexts: ExecutionContext[]) {
     if (this.verbose) {
       console.log(`[SubagentInvoker] Starting parallel invocation of ${contexts.length} subagents`);
     }
@@ -678,7 +678,7 @@ export class SubagentInvoker extends EventEmitter {
    * @returns {Promise<InvocationResult>}
    * @private
    */
-  async _executeSubagent(context) {
+  async _executeSubagent(context: ExecutionContext) {
     // Emit progress
     this.emit('progress', { message: 'Building prompt', percent: 10 });
 

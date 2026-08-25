@@ -83,7 +83,7 @@ class DebugAnalyzer {
    * Step 2: Symptom Analysis
    */
   async analyzeSymptoms() {
-    const symptoms = {
+    const symptoms: { what: string[]; where: string[]; when: string[]; how: string[] } = {
       what: [],
       where: [],
       when: [],
@@ -96,7 +96,7 @@ class DebugAnalyzer {
     // For incomplete implementations, what = missing deliverables
     if (this.analysis.classification.type === 'incomplete-implementation') {
       const incompleteness = this.analysis.classification.incompleteness;
-      symptoms.what = incompleteness.missing.map(item => `Missing: ${item}`);
+      symptoms.what = incompleteness.missing.map((item: any) => `Missing: ${item}`);
     }
 
     // Extract where (file locations)
@@ -115,7 +115,7 @@ class DebugAnalyzer {
    * Step 3: Root Cause Investigation (Standard)
    */
   async investigateRootCause() {
-    const rootCause = {
+    const rootCause: { primaryCause: string; evidence: string[]; contributingFactors: string[]; timeline: any } = {
       primaryCause: '',
       evidence: [],
       contributingFactors: [],
@@ -153,7 +153,7 @@ class DebugAnalyzer {
    * Analyze WHY features were skipped using likelihood estimation
    */
   async analyzeIncompleteImplementation() {
-    const rootCause = {
+    const rootCause: { likelyCause: string; confidence: number; evidence: string[]; contributingFactors: string[]; likelihood: { executorSkip: number; planAmbiguity: number; dependencyBlocker: number } } = {
       likelyCause: '',
       confidence: 0,
       evidence: [],
@@ -213,10 +213,10 @@ class DebugAnalyzer {
   /**
    * FR2.1: Analyze Executor Skip likelihood (70% base)
    */
-  async analyzeExecutorSkip(incompleteness) {
+  async analyzeExecutorSkip(incompleteness: any) {
     let score = 0.70;  // Base likelihood
-    const evidence = [];
-    const factors = [];
+    const evidence: string[] = [];
+    const factors: string[] = [];
 
     // Check git log for missing commits
     try {
@@ -275,10 +275,10 @@ class DebugAnalyzer {
   /**
    * FR2.1: Analyze Plan Ambiguity likelihood (20% base)
    */
-  async analyzePlanAmbiguity(incompleteness) {
+  async analyzePlanAmbiguity(incompleteness: any) {
     let score = 0.20;  // Base likelihood
-    const evidence = [];
-    const factors = [];
+    const evidence: string[] = [];
+    const factors: string[] = [];
 
     // Try to read original plan
     const planPath = this.findOriginalPlan();
@@ -297,7 +297,7 @@ class DebugAnalyzer {
         
         if (taskMatch) {
           // Found task, analyze its clarity
-          const taskSection = this.extractTaskSection(planContent, taskMatch.index);
+          const taskSection = this.extractTaskSection(planContent, taskMatch.index!);
           
           // Check for specific file paths
           if (!taskSection.includes('<files>') || taskSection.match(/<files>\s*<\/files>/)) {
@@ -352,10 +352,10 @@ class DebugAnalyzer {
   /**
    * FR2.1: Analyze Dependency Blocker likelihood (10% base)
    */
-  async analyzeDependencyBlocker(incompleteness) {
+  async analyzeDependencyBlocker(incompleteness: any) {
     let score = 0.10;  // Base likelihood
-    const evidence = [];
-    const factors = [];
+    const evidence: string[] = [];
+    const factors: string[] = [];
 
     // Check for error logs
     const logFiles = ['.planning/executor.log', 'error.log', 'npm-debug.log'];
@@ -438,7 +438,7 @@ class DebugAnalyzer {
   /**
    * Assess task complexity
    */
-  assessTaskComplexity(incompleteness) {
+  assessTaskComplexity(incompleteness: any): string {
     const missing = incompleteness.missing || [];
     
     // Simple heuristic based on task description
@@ -590,7 +590,7 @@ class DebugAnalyzer {
   /**
    * Estimate fix time for incomplete implementation
    */
-  estimateIncompleteFixTime(incompleteness) {
+  estimateIncompleteFixTime(incompleteness: any): string {
     const missing = incompleteness.missing || [];
     const baseTimePerTask = 30;  // minutes
     
@@ -607,11 +607,11 @@ class DebugAnalyzer {
    * Step 6: Select Recommended Solution
    */
   selectRecommendedSolution() {
-    const recommendedSolution = this.analysis.solutions.find(s => s.recommended);
+    const recommendedSolution = this.analysis.solutions.find((s: any) => s.recommended);
     
     if (!recommendedSolution) {
       // Fallback: select lowest risk solution
-      return this.analysis.solutions.reduce((best, current) => {
+      return this.analysis.solutions.reduce((best: any, current: any) => {
         return current.riskLevel === 'LOW' ? current : best;
       });
     }
@@ -620,8 +620,8 @@ class DebugAnalyzer {
   }
 
   // Helper methods
-  extractFailures() {
-    const failures = [];
+  extractFailures(): string[] {
+    const failures: string[] = [];
     const lines = this.input.split('\n');
     
     for (const line of lines) {
@@ -633,8 +633,8 @@ class DebugAnalyzer {
     return failures;
   }
 
-  extractLocations() {
-    const locations = [];
+  extractLocations(): string[] {
+    const locations: string[] = [];
     const filePattern = /([a-zA-Z0-9_/-]+\.(js|ts|jsx|tsx|py|java|go))/g;
     const matches = this.input.match(filePattern);
     
@@ -663,7 +663,7 @@ class DebugAnalyzer {
     return null;
   }
 
-  extractTaskSection(planContent, startIndex) {
+  extractTaskSection(planContent: string, startIndex: number): string {
     const taskStart = planContent.indexOf('<task', startIndex);
     const taskEnd = planContent.indexOf('</task>', taskStart);
     
@@ -674,7 +674,7 @@ class DebugAnalyzer {
     return '';
   }
 
-  analyzeGitHistory(gitLog) {
+  analyzeGitHistory(gitLog: string) {
     return { recentCommits: gitLog.split('\n').slice(0, 5) };
   }
 

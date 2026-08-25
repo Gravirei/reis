@@ -353,7 +353,7 @@ export class GateRunner extends EventEmitter {
 
       this.emit('gate:complete', { name, result });
     } catch (err) {
-      result.setError(`Gate execution failed: ${err.message}`, err);
+      result.setError(`Gate execution failed: ${(err as any).message}`, err as Error);
       result.duration = Date.now() - startTime;
       this.emit('gate:error', { name, error: err, result });
     }
@@ -391,7 +391,14 @@ export class GateRunner extends EventEmitter {
    * @returns {Object}
    */
   aggregateResults() {
-    const byCategory = {};
+    const byCategory: Record<string, {
+      results: GateResult[];
+      passed: number;
+      warning: number;
+      failed: number;
+      skipped: number;
+      error: number;
+    }> = {};
 
     for (const result of this.results) {
       if (!byCategory[result.category]) {
@@ -460,8 +467,8 @@ export class GateRunner extends EventEmitter {
     let totalDuration = 0;
 
     for (const result of this.results) {
-      if (counts[result.status] !== undefined) {
-        counts[result.status]++;
+      if ((counts as Record<string, number>)[result.status] !== undefined) {
+        (counts as Record<string, number>)[result.status]++;
       }
       totalDuration += result.duration || 0;
     }

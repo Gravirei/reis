@@ -105,9 +105,9 @@ export class GateReporter {
    * @returns {string}
    */
   getOverallStatus(summary: GateSummary): 'failed' | 'warning' | 'passed' {
-    if (summary.failed > 0 || summary.error > 0) {
+    if ((summary.failed || 0) > 0 || (summary.error || 0) > 0) {
       return 'failed';
-    } else if (summary.warning > 0) {
+    } else if ((summary.warning || 0) > 0) {
       return 'warning';
     }
     return 'passed';
@@ -148,7 +148,7 @@ export class GateReporter {
     const emptyLine = '│' + ' '.repeat(w - 2) + '│';
 
     // Helper to pad line
-    const padLine = (content, padChar = ' ') => {
+    const padLine = (content: string, padChar = ' ') => {
       const stripped = this.stripAnsi(content);
       const padding = w - 2 - stripped.length;
       if (padding < 0) {
@@ -224,7 +224,7 @@ export class GateReporter {
     const overallStatus = this.getOverallStatus(summary);
     const overallIcon = this.getStatusIcon(overallStatus);
     const overallText = overallStatus === 'passed' 
-      ? (summary.warning > 0 ? 'PASSED WITH WARNINGS' : 'ALL GATES PASSED')
+      ? ((summary.warning || 0) > 0 ? 'PASSED WITH WARNINGS' : 'ALL GATES PASSED')
       : (overallStatus === 'warning' ? 'PASSED WITH WARNINGS' : 'GATES FAILED');
     
     lines.push(padLine(`  Overall: ${overallIcon}  ${this.getStatusText(overallStatus)} - ${overallText}`));

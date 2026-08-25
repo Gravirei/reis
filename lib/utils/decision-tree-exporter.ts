@@ -33,8 +33,8 @@ export function exportToHTML(tree: any, outputPath?: string): string | boolean {
  * @param {Object} tree - Parsed tree structure
  * @returns {string} HTML content
  */
-function generateHTML(tree) {
-  const branchHTML = (branch, level = 0) => {
+function generateHTML(tree: any): string {
+  const branchHTML = (branch: any, level = 0): string => {
     let html = '<details open>\n';
     html += '<summary>';
     
@@ -64,7 +64,7 @@ function generateHTML(tree) {
     
     if (branch.children && branch.children.length > 0) {
       html += '<ul>\n';
-      branch.children.forEach(child => {
+      branch.children.forEach((child: any) => {
         html += '<li>\n';
         html += branchHTML(child, level + 1);
         html += '</li>\n';
@@ -267,7 +267,7 @@ function generateHTML(tree) {
         </div>
         
         <div id="tree">
-            ${tree.branches.map(b => branchHTML(b)).join('\n')}
+            ${tree.branches.map((b: any) => branchHTML(b)).join('\n')}
         </div>
         
         <div class="footer">
@@ -310,18 +310,18 @@ export function exportToSVG(tree: any, outputPath?: string): string | boolean {
  * @param {Object} tree - Parsed tree structure
  * @returns {string} SVG content
  */
-function generateSVG(tree) {
+function generateSVG(tree: any): string {
   const nodeWidth = 200;
   const nodeHeight = 60;
   const horizontalSpacing = 250;
   const verticalSpacing = 100;
   
-  const nodes = [];
-  const edges = [];
+  const nodes: any[] = [];
+  const edges: any[] = [];
   let nodeId = 0;
   
   // Build node hierarchy
-  function buildNodes(branch, x, y, parentId = null) {
+  function buildNodes(branch: any, x: number, y: number, parentId: number | null = null): void {
     const currentId = nodeId++;
     
     nodes.push({
@@ -341,7 +341,7 @@ function generateSVG(tree) {
       const childrenWidth = (branch.children.length - 1) * horizontalSpacing;
       const startX = x - childrenWidth / 2;
       
-      branch.children.forEach((child, i) => {
+      branch.children.forEach((child: any, i: number) => {
         buildNodes(child, startX + i * horizontalSpacing, y + verticalSpacing, currentId);
       });
     }
@@ -352,7 +352,7 @@ function generateSVG(tree) {
   const startX = 500;
   const startY = 100;
   
-  tree.branches.forEach((branch, i) => {
+  tree.branches.forEach((branch: any, i: number) => {
     buildNodes(branch, startX + i * horizontalSpacing - branchWidth / 2, startY);
   });
   
@@ -385,9 +385,9 @@ function generateSVG(tree) {
 `;
   
   // Draw edges
-  edges.forEach(edge => {
-    const from = nodes.find(n => n.id === edge.from);
-    const to = nodes.find(n => n.id === edge.to);
+  edges.forEach((edge: any) => {
+    const from = nodes.find((n: any) => n.id === edge.from);
+    const to = nodes.find((n: any) => n.id === edge.to);
     svg += `    <line class="edge" x1="${from.x}" y1="${from.y + nodeHeight / 2}" x2="${to.x}" y2="${to.y - nodeHeight / 2}" />\n`;
   });
   
@@ -397,7 +397,7 @@ function generateSVG(tree) {
 `;
   
   // Draw nodes
-  nodes.forEach(node => {
+  nodes.forEach((node: any) => {
     const recommended = node.metadata.recommended;
     const nodeClass = recommended ? 'node node-recommended' : 'node';
     
@@ -429,7 +429,7 @@ export function exportToMermaid(tree: any): string {
   let nodeId = 0;
   const nodeMap = new Map();
   
-  function addBranch(branch, parentId = null) {
+  function addBranch(branch: any, parentId: string | null = null): string {
     const currentId = `N${nodeId++}`;
     nodeMap.set(branch.text, currentId);
     
@@ -454,7 +454,7 @@ export function exportToMermaid(tree: any): string {
     
     // Process children
     if (branch.children && branch.children.length > 0) {
-      branch.children.forEach(child => {
+      branch.children.forEach((child: any) => {
         addBranch(child, currentId);
       });
     }
@@ -467,7 +467,7 @@ export function exportToMermaid(tree: any): string {
   mermaid += `    ${rootId}["${tree.root}"]\n`;
   
   // Add branches
-  tree.branches.forEach(branch => {
+  tree.branches.forEach((branch: any) => {
     const branchId = addBranch(branch);
     mermaid += `    ${rootId} --> ${branchId}\n`;
   });

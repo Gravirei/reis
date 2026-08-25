@@ -53,7 +53,7 @@ export class PlanReviewer {
    * @param {string} planPath - Path to the PLAN.md file
    * @returns {Promise<object>} Review results
    */
-  async reviewPlan(planPath) {
+  async reviewPlan(planPath: string) {
     const resolvedPath = path.isAbsolute(planPath) 
       ? planPath 
       : path.join(this.rootPath, planPath);
@@ -154,7 +154,7 @@ export class PlanReviewer {
    * @param {string} planDirectory - Directory containing plan files
    * @returns {Promise<object>} Combined review results
    */
-  async reviewAllPlans(planDirectory) {
+  async reviewAllPlans(planDirectory: string) {
     const resolvedDir = path.isAbsolute(planDirectory)
       ? planDirectory
       : path.join(this.rootPath, planDirectory);
@@ -171,7 +171,7 @@ export class PlanReviewer {
     const results = {
       success: true,
       directory: planDirectory,
-      plans: [],
+      plans: [] as any[],
       summary: {
         totalPlans: planFiles.length,
         totalTasks: 0,
@@ -201,8 +201,16 @@ export class PlanReviewer {
    * @param {string} content - Plan file content
    * @returns {object} Parsed plan information
    */
-  parsePlanContent(content) {
-    const info = {
+  parsePlanContent(content: string) {
+    const info: {
+      title: any;
+      objective: any;
+      phase: any;
+      plan: any;
+      dependencies: string[];
+      successCriteria: string[];
+      verification: any;
+    } = {
       title: null,
       objective: null,
       phase: null,
@@ -267,8 +275,8 @@ export class PlanReviewer {
    * @param {string} content - Plan file content
    * @returns {Array<object>} Array of task objects
    */
-  extractTasks(content) {
-    const tasks = [];
+  extractTasks(content: string) {
+    const tasks: any[] = [];
     const taskRegex = /<task(?:\s+[^>]*)?>[\s\S]*?<\/task>/gi;
     let match;
 
@@ -289,8 +297,8 @@ export class PlanReviewer {
    * @param {object} task - Task object
    * @returns {string[]} Array of file paths
    */
-  extractFiles(task) {
-    const files = [];
+  extractFiles(task: any): string[] {
+    const files: string[] = [];
     
     // From explicit files tag
     if (task.files && Array.isArray(task.files)) {
@@ -318,8 +326,8 @@ export class PlanReviewer {
    * @param {object} task - Task object
    * @returns {Array<{file: string, functions: string[]}>} Expected functions by file
    */
-  extractExpectedFunctions(task) {
-    const expectations = [];
+  extractExpectedFunctions(task: any) {
+    const expectations: { file: string; functions: string[] }[] = [];
     
     if (!task.action) return expectations;
 
@@ -330,7 +338,7 @@ export class PlanReviewer {
       /(\w+)\s*\([^)]*\)\s*(?:=>|\{)/g
     ];
 
-    const functions = new Set();
+    const functions = new Set<string>();
     for (const pattern of funcPatterns) {
       let match;
       while ((match = pattern.exec(task.action)) !== null) {
@@ -357,8 +365,8 @@ export class PlanReviewer {
    * @param {object} task - Task object
    * @returns {Array<{file: string, exports: string[]}>} Expected exports by file
    */
-  extractExpectedExports(task) {
-    const expectations = [];
+  extractExpectedExports(task: any) {
+    const expectations: { file: string; exports: string[] }[] = [];
     
     if (!task.action) return expectations;
 
@@ -369,7 +377,7 @@ export class PlanReviewer {
       /module\.exports\.(\w+)/gi
     ];
 
-    const exports = new Set();
+    const exports = new Set<string>();
     for (const pattern of exportPatterns) {
       let match;
       while ((match = pattern.exec(task.action)) !== null) {
@@ -403,8 +411,8 @@ export class PlanReviewer {
    * @param {object} task - Task object to validate
    * @returns {Promise<object>} Validation result
    */
-  async validateTask(task) {
-    const result = {
+  async validateTask(task: any) {
+    const result: { status: string; issues: any[]; suggestions: any[] } = {
       status: TaskStatus.OK,
       issues: [],
       suggestions: []
@@ -482,8 +490,8 @@ export class PlanReviewer {
    * @param {string[]} files - Array of file paths
    * @returns {object} Check result with issues and suggestions
    */
-  checkFileTargets(files) {
-    const result = {
+  checkFileTargets(files: string[]) {
+    const result: { issues: any[]; suggestions: any[] } = {
       issues: [],
       suggestions: []
     };
@@ -546,8 +554,8 @@ export class PlanReviewer {
    * @param {string[]} functions - Expected function names
    * @returns {object} Check result with issues
    */
-  checkFunctionTargets(filePath, functions) {
-    const result = {
+  checkFunctionTargets(filePath: string, functions: string[]) {
+    const result: { issues: any[]; existing: string[]; missing: string[] } = {
       issues: [],
       existing: [],
       missing: []
@@ -580,8 +588,8 @@ export class PlanReviewer {
    * @param {string[]} exports - Expected export names
    * @returns {object} Check result with issues
    */
-  checkExportTargets(filePath, exports) {
-    const result = {
+  checkExportTargets(filePath: string, exports: string[]) {
+    const result: { issues: any[]; existing: string[]; missing: string[] } = {
       issues: [],
       existing: [],
       missing: []
@@ -613,8 +621,8 @@ export class PlanReviewer {
    * @param {object} task - Task object
    * @returns {object} Check result with issues and suggestions
    */
-  checkDependencies(task) {
-    const result = {
+  checkDependencies(task: any) {
+    const result: { issues: any[]; suggestions: any[] } = {
       issues: [],
       suggestions: []
     };
@@ -688,8 +696,8 @@ export class PlanReviewer {
    * @param {object} results - Review results
    * @returns {string} Markdown formatted report
    */
-  generateReport(results) {
-    const lines = [];
+  generateReport(results: any): string {
+    const lines: string[] = [];
     const timestamp = new Date().toISOString().split('T')[0];
 
     lines.push(`# Plan Review Report`);
@@ -754,7 +762,7 @@ export class PlanReviewer {
     }
 
     // Recommendations
-    const actionableIssues = results.tasks.filter(t => 
+    const actionableIssues = results.tasks.filter((t: any) =>
       t.validation.status !== TaskStatus.OK && 
       t.validation.status !== TaskStatus.ALREADY_COMPLETE
     );
@@ -787,7 +795,7 @@ export class PlanReviewer {
    * @param {Array<object>} issues - Issues to fix
    * @returns {Promise<object>} Fix results
    */
-  async autoFixPlan(planPath, issues) {
+  async autoFixPlan(planPath: string, issues: any[]) {
     const result: {
       fixed: any[];
       skipped: any[];
@@ -874,7 +882,7 @@ export class PlanReviewer {
    * @param {string} taskContent - Task XML content
    * @returns {object|null} Parsed task object
    */
-  _parseTask(taskContent) {
+  _parseTask(taskContent: string) {
     const task: {
       name: string | null;
       type: string | null;
@@ -947,8 +955,8 @@ export class PlanReviewer {
    * @param {Array} expectedExports - Expected exports
    * @returns {Promise<object>} Completion check result
    */
-  async _checkTaskCompletion(task, files, expectedFunctions, expectedExports) {
-    const result = {
+  async _checkTaskCompletion(task: any, files: string[], expectedFunctions: any, expectedExports: any) {
+    const result: { complete: boolean; message: string; details: any[] } = {
       complete: false,
       message: '',
       details: []
@@ -964,7 +972,7 @@ export class PlanReviewer {
 
       for (const { file, functions } of expectedFunctions) {
         const existingFuncs = this.analyzer.getFunctions(file);
-        const missingFuncs = functions.filter(f => !existingFuncs.includes(f));
+        const missingFuncs = functions.filter((f: string) => !existingFuncs.includes(f));
         if (missingFuncs.length > 0) {
           allFunctionsExist = false;
         }
@@ -972,7 +980,7 @@ export class PlanReviewer {
 
       for (const { file, exports } of expectedExports) {
         const existingExps = this.analyzer.getExports(file);
-        const missingExps = exports.filter(e => !existingExps.includes(e));
+        const missingExps = exports.filter((e: string) => !existingExps.includes(e));
         if (missingExps.length > 0) {
           allExportsExist = false;
         }
@@ -1005,10 +1013,10 @@ export class PlanReviewer {
    * @param {string} dir - Directory to search
    * @returns {string[]} Array of plan file paths
    */
-  _findPlanFiles(dir) {
-    const planFiles = [];
+  _findPlanFiles(dir: string): string[] {
+    const planFiles: string[] = [];
     
-    const search = (currentDir) => {
+    const search = (currentDir: string): void => {
       try {
         const entries = fs.readdirSync(currentDir, { withFileTypes: true });
         
@@ -1038,7 +1046,7 @@ export class PlanReviewer {
    * @param {string} targetPath - Path to find similar to
    * @returns {string|null} Similar existing path or null
    */
-  _findSimilarPath(targetPath) {
+  _findSimilarPath(targetPath: string): string | null {
     const parts = targetPath.split('/').filter(p => p);
     
     // Try to find by walking up and checking variations
@@ -1075,7 +1083,7 @@ export class PlanReviewer {
    * @param {string} status - Task status
    * @returns {string} Status icon
    */
-  _getStatusIcon(status) {
+  _getStatusIcon(status: string): string {
     switch (status) {
       case TaskStatus.OK:
         return '✓';
@@ -1098,7 +1106,7 @@ export class PlanReviewer {
    * @param {string} str - String to escape
    * @returns {string} Escaped string
    */
-  _escapeRegex(str) {
+  _escapeRegex(str: string): string {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 }

@@ -105,9 +105,9 @@ async function verify(target: string, options: VerifyOptions = {}): Promise<void
     process.exit(result.passed ? 0 : 1);
 
   } catch (error) {
-    console.error(chalk.red(`❌ Verification failed: ${error.message}`));
+    console.error(chalk.red(`❌ Verification failed: ${(error as Error).message}`));
     if (options.verbose) {
-      console.error(error.stack);
+      console.error((error as Error).stack);
     }
     process.exit(1);
   }
@@ -118,7 +118,7 @@ async function verify(target: string, options: VerifyOptions = {}): Promise<void
  * @param {string} target - Phase number, name, or file path
  * @returns {string} Absolute path to PLAN.md
  */
-function resolvePlanPath(target) {
+function resolvePlanPath(target: any): string {
   // If target is a file path, use it directly
   if (target.endsWith('.PLAN.md') || target.endsWith('.md')) {
     return path.resolve(target);
@@ -273,7 +273,7 @@ async function invokeVerifier(prompt: string, planPath: string, planData: Parsed
   
   const invoker = new SubagentInvoker({ verbose: options.verbose });
   
-  invoker.on('progress', (data) => {
+  invoker.on('progress', (data: any) => {
     console.log(chalk.gray(`  ${data.message}`));
   });
   
@@ -329,7 +329,7 @@ async function invokeVerifier(prompt: string, planPath: string, planData: Parsed
   } catch (error) {
     return {
       passed: false,
-      message: `Verification error: ${error.message}`,
+      message: `Verification error: ${(error as Error).message}`,
       error
     };
   }

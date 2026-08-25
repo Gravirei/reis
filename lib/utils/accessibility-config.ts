@@ -142,7 +142,7 @@ export function applyColor(text: string, colorName: string, config: any, chalkIn
       italic: chalkInstance.bold
     };
     
-    const colorFn = highContrastMap[colorName] || chalkInstance.bold.white;
+    const colorFn = (highContrastMap as Record<string, any>)[colorName] || chalkInstance.bold.white;
     return colorFn(text);
   }
   
@@ -160,7 +160,7 @@ export function applyColor(text: string, colorName: string, config: any, chalkIn
     bold: chalkInstance.bold
   };
   
-  const colorFn = colorMap[colorName] || (t => t);
+  const colorFn = (colorMap as Record<string, any>)[colorName] || ((t: string) => t);
   return colorFn(text);
 }
 
@@ -212,7 +212,7 @@ export function renderAccessibleTree(treeData: any, config: any): string {
   lines.push('');
   
   // Render branches recursively
-  function renderBranch(branch, level, isLast, prefix) {
+  function renderBranch(branch: any, level: number, isLast: boolean, prefix: string) {
     const connector = isLast ? chars.lastBranch : chars.branch;
     const continueLine = isLast ? chars.space : chars.verticalLine + ' ';
     
@@ -255,7 +255,7 @@ export function renderAccessibleTree(treeData: any, config: any): string {
     
     // Render children
     if (branch.children && branch.children.length > 0) {
-      branch.children.forEach((child, i) => {
+      branch.children.forEach((child: any, i: number) => {
         const childIsLast = i === branch.children.length - 1;
         const childPrefix = prefix + continueLine;
         renderBranch(child, level + 1, childIsLast, childPrefix);
@@ -265,7 +265,7 @@ export function renderAccessibleTree(treeData: any, config: any): string {
   
   // Render all top-level branches
   if (treeData.branches && treeData.branches.length > 0) {
-    treeData.branches.forEach((branch, i) => {
+    treeData.branches.forEach((branch: any, i: number) => {
       const isLast = i === treeData.branches.length - 1;
       renderBranch(branch, 1, isLast, '  ');
     });

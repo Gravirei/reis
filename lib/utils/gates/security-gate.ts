@@ -56,7 +56,7 @@ export class SecurityGate extends BaseGate {
         details.push({
           name: check.name,
           status: 'error',
-          message: `Check failed: ${err.message}`
+          message: `Check failed: ${(err as Error).message}`
         });
         hasFailure = true;
       }
@@ -104,7 +104,7 @@ export class SecurityGate extends BaseGate {
         });
       } catch (execError) {
         // npm audit returns non-zero exit code when vulnerabilities found
-        output = execError.stdout || '{}';
+        output = (execError as any).stdout || '{}';
       }
 
       let audit;
@@ -139,8 +139,8 @@ export class SecurityGate extends BaseGate {
           counts = { critical: 0, high: 0, moderate: 0, low: 0 };
           for (const [pkg, vuln] of Object.entries(vulns as Record<string, { severity?: string }>)) {
             const severity = vuln.severity || 'low';
-            if (counts[severity] !== undefined) {
-              counts[severity]++;
+            if ((counts as Record<string, number>)[severity] !== undefined) {
+              (counts as Record<string, number>)[severity]++;
             }
           }
         }
@@ -182,7 +182,7 @@ export class SecurityGate extends BaseGate {
       return {
         name: 'Vulnerabilities',
         status: 'warning',
-        message: `Could not run npm audit: ${error.message}`,
+        message: `Could not run npm audit: ${(error as Error).message}`,
         details: []
       };
     }
@@ -223,11 +223,11 @@ export class SecurityGate extends BaseGate {
       { pattern: /mysql:\/\/[^:]+:[^@]+@[^\s'"]+/gi, name: 'MySQL Connection String' }
     ];
 
-    const findings = [];
+    const findings: any[] = [];
     const scannedFiles = [];
 
     // Recursive file scan
-    const scanDir = (dir, depth = 0) => {
+    const scanDir = (dir: string, depth = 0) => {
       if (depth > 10) return; // Prevent infinite recursion
 
       try {
@@ -243,7 +243,7 @@ export class SecurityGate extends BaseGate {
             }
           } else if (entry.isFile()) {
             // Skip allowed files
-            if (allowedFiles.some(af => relativePath.endsWith(af))) continue;
+            if (allowedFiles.some((af: string) => relativePath.endsWith(af))) continue;
             
             // Only scan code files
             if (!/\.(js|ts|jsx|tsx|json|yml|yaml|py|rb|php|java|go|rs|env|config|conf|sh)$/i.test(entry.name)) continue;
@@ -342,8 +342,8 @@ export class SecurityGate extends BaseGate {
       };
     }
 
-    const issues = [];
-    const checkedPackages = [];
+    const issues: any[] = [];
+    const checkedPackages: string[] = [];
 
     // Check node_modules for licenses
     const nodeModulesPath = path.join(process.cwd(), 'node_modules');
@@ -402,7 +402,7 @@ export class SecurityGate extends BaseGate {
    * Check a single package's license
    * @private
    */
-  checkPackageLicense(pkgPath, pkgName, allowed, forbidden, issues, checkedPackages) {
+  checkPackageLicense(pkgPath: string, pkgName: string, allowed: string[], forbidden: string[], issues: any[], checkedPackages: string[]) {
     if (!fs.existsSync(pkgPath)) return;
 
     try {
@@ -416,9 +416,9 @@ export class SecurityGate extends BaseGate {
 
       // Handle SPDX expressions
       if (license.includes(' OR ')) {
-        const options = license.split(' OR ').map(l => l.trim().replace(/[()]/g, ''));
+        const options = license.split(' OR ').map((l: string) => l.trim().replace(/[()]/g, ''));
         // If any allowed license is present, consider it OK
-        if (options.some(l => allowed.includes(l))) {
+        if (options.some((l: string) => allowed.includes(l))) {
           checkedPackages.push(pkgName);
           return;
         }

@@ -118,7 +118,7 @@ async function runCycle(phaseOrPlan: number | string, options: CycleOptions = {}
   } catch (error) {
     // Save error state
     stateManager.setLastError(error);
-    stateManager.updateState('FAILED', 'failure', error.message);
+    stateManager.updateState('FAILED', 'failure', (error as Error).message);
     
     throw error;
   }
@@ -298,9 +298,9 @@ async function executeResearchStep(phaseOrPlan: number | string, options: CycleO
     
     return result;
   } catch (error) {
-    stateManager.updateState('RESEARCHING', 'warning', error.message);
+    stateManager.updateState('RESEARCHING', 'warning', (error as Error).message);
     // Don't throw - research is optional, allow cycle to continue
-    console.log(chalk.yellow(`  ⚠️ Research failed: ${error.message}`));
+    console.log(chalk.yellow(`  ⚠️ Research failed: ${(error as Error).message}`));
     return { success: false, error };
   }
 }
@@ -329,7 +329,7 @@ async function executeFullResearchStep(phaseOrPlan: number | string, options: Cy
         });
         console.log(chalk.green('  ✓ Project analysis complete'));
       } catch (analystError) {
-        console.log(chalk.yellow(`  ⚠️ Project analysis failed: ${analystError.message}`));
+        console.log(chalk.yellow(`  ⚠️ Project analysis failed: ${(analystError as Error).message}`));
         // Continue with phase research even if analyst fails
       }
     } else {
@@ -343,8 +343,8 @@ async function executeFullResearchStep(phaseOrPlan: number | string, options: Cy
     stateManager.updateState('RESEARCHING', 'success', 'Full research complete');
     return { success: true };
   } catch (error) {
-    stateManager.updateState('RESEARCHING', 'warning', error.message);
-    console.log(chalk.yellow(`  ⚠️ Full research failed: ${error.message}`));
+    stateManager.updateState('RESEARCHING', 'warning', (error as Error).message);
+    console.log(chalk.yellow(`  ⚠️ Full research failed: ${(error as Error).message}`));
     return { success: false, error };
   }
 }
@@ -389,7 +389,7 @@ async function executePlanningStep(planPath: string, options: CycleOptions) {
       console.log(chalk.green('  ✓ Plan validated\n'));
     }
   } catch (error) {
-    stateManager.updateState('PLANNING', 'failure', error.message);
+    stateManager.updateState('PLANNING', 'failure', (error as Error).message);
     throw error;
   }
 }
@@ -418,7 +418,7 @@ async function executeReviewStep(planPath: string, options: CycleOptions = {}) {
       strict: options.strict
     });
     
-    let result;
+    let result: any;
     if (planPath.endsWith('.md')) {
       result = await reviewer.reviewPlan(planPath);
     } else {
@@ -428,7 +428,7 @@ async function executeReviewStep(planPath: string, options: CycleOptions = {}) {
     stateManager.setReviewResult(result);
     
     const hasIssues = result.issues && result.issues.length > 0;
-    const hasCritical = result.issues?.some(i => i.severity === 'critical');
+    const hasCritical = result.issues?.some((i: any) => i.severity === 'critical');
     
     if (hasCritical) {
       stateManager.updateState('REVIEWING', 'failure', 'Critical issues found');
@@ -441,8 +441,8 @@ async function executeReviewStep(planPath: string, options: CycleOptions = {}) {
       return { success: true, ...result };
     }
   } catch (error) {
-    stateManager.updateState('REVIEWING', 'failure', error.message);
-    return { success: false, error: error.message };
+    stateManager.updateState('REVIEWING', 'failure', (error as Error).message);
+    return { success: false, error: (error as Error).message };
   }
 }
 
@@ -493,8 +493,8 @@ async function executeExecutionStep(planPath: string, options: CycleOptions) {
     }
     
   } catch (error) {
-    stateManager.updateState('EXECUTING', 'failure', error.message);
-    const executionError: any = new Error(`Execution failed: ${error.message}`);
+    stateManager.updateState('EXECUTING', 'failure', (error as Error).message);
+    const executionError: any = new Error(`Execution failed: ${(error as Error).message}`);
     executionError.code = 'EXECUTION_FAILED';
     executionError.originalError = error;
     throw executionError;
@@ -507,7 +507,7 @@ async function executeExecutionStep(planPath: string, options: CycleOptions) {
 async function executeVerificationLoop(planPath: string, options: CycleOptions) {
   let attempt = stateManager.loadState()?.attempts || 0;
   
-  while (attempt < options.maxAttempts) {
+  while (attempt < (options.maxAttempts as number)) {
     // Run verification
     const verifyResult = await executeVerificationStep(planPath, options);
     
@@ -561,7 +561,7 @@ async function executeVerificationLoop(planPath: string, options: CycleOptions) 
     stateManager.incrementAttempts();
     
     // Check if max attempts reached
-    if (attempt >= options.maxAttempts) {
+    if (attempt >= (options.maxAttempts as number)) {
       console.log(chalk.red(`❌ Max attempts reached (${options.maxAttempts})`));
       console.log(chalk.yellow('\nOptions:'));
       console.log(chalk.gray('  1. Review verification output'));
@@ -660,8 +660,8 @@ async function executeVerificationStep(planPath: string, options: CycleOptions) 
     return result;
     
   } catch (error) {
-    stateManager.updateState('VERIFYING', 'failure', error.message);
-    const verifyError: any = new Error(`Verification failed: ${error.message}`);
+    stateManager.updateState('VERIFYING', 'failure', (error as Error).message);
+    const verifyError: any = new Error(`Verification failed: ${(error as Error).message}`);
     verifyError.code = 'VERIFICATION_FAILED';
     verifyError.originalError = error;
     throw verifyError;
@@ -719,8 +719,8 @@ async function executeDebuggingStep(planPath: string, verifyResult: any, options
     return debugResult;
     
   } catch (error) {
-    stateManager.updateState('DEBUGGING', 'failure', error.message);
-    const debugError: any = new Error(`Debugging failed: ${error.message}`);
+    stateManager.updateState('DEBUGGING', 'failure', (error as Error).message);
+    const debugError: any = new Error(`Debugging failed: ${(error as Error).message}`);
     debugError.code = 'DEBUG_FAILED';
     debugError.originalError = error;
     throw debugError;
@@ -755,7 +755,7 @@ async function executeFixingStep(planPath: string, debugResult: any, options: Cy
       });
       
       const answer: string = await new Promise(resolve => {
-        rl.question(chalk.yellow('Apply fix? (Y/n): '), answer => {
+        rl.question(chalk.yellow('Apply fix? (Y/n): '), (answer: string) => {
           rl.close();
           resolve(answer);
         });
@@ -794,15 +794,15 @@ async function executeFixingStep(planPath: string, debugResult: any, options: Cy
     }
     
   } catch (error) {
-    stateManager.updateState('FIXING', 'failure', error.message);
+    stateManager.updateState('FIXING', 'failure', (error as Error).message);
     
     // If user declined, re-throw as is
-    if (error.code === 'FIX_DECLINED') {
+    if ((error as any).code === 'FIX_DECLINED') {
       throw error;
     }
     
     // Otherwise wrap in fixing error
-    const fixError: any = new Error(`Fix failed: ${error.message}`);
+    const fixError: any = new Error(`Fix failed: ${(error as Error).message}`);
     fixError.code = 'FIX_FAILED';
     fixError.originalError = error;
     throw fixError;
@@ -869,9 +869,9 @@ async function executeGateStep(planPath: string, options: CycleOptions = {}) {
       return { success: false, ...gateResult };
     }
   } catch (error) {
-    stateManager.updateState('GATING', 'failure', error.message);
-    console.error(chalk.red(`  Gate error: ${error.message}`));
-    return { success: false, error: error.message };
+    stateManager.updateState('GATING', 'failure', (error as Error).message);
+    console.error(chalk.red(`  Gate error: ${(error as Error).message}`));
+    return { success: false, error: (error as Error).message };
   }
 }
 
@@ -881,7 +881,7 @@ async function executeGateStep(planPath: string, options: CycleOptions = {}) {
  * @returns {string[]} Array of issue strings
  */
 function formatGateIssues(gateResult: any): string[] {
-  const issues = [];
+  const issues: string[] = [];
   if (gateResult.results) {
     for (const result of gateResult.results) {
       if (result.status === 'failed' || result.status === 'error') {
@@ -1050,7 +1050,7 @@ async function showDecisionTreesAtTransition(planPath: string, transition: strin
     });
     
     const answer: string = await new Promise(resolve => {
-      rl.question('', answer => {
+      rl.question('', (answer: string) => {
         rl.close();
         resolve(answer);
       });
@@ -1066,7 +1066,7 @@ async function showDecisionTreesAtTransition(planPath: string, transition: strin
   } catch (error) {
     // Silently ignore errors - trees are optional
     if (options.verbose) {
-      console.log(chalk.gray(`  Note: Could not parse decision trees: ${error.message}`));
+      console.log(chalk.gray(`  Note: Could not parse decision trees: ${(error as Error).message}`));
     }
   }
 }

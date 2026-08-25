@@ -50,7 +50,7 @@ export class AccessibilityGate extends BaseGate {
         details.push({
           name: check.name,
           status: 'error',
-          message: `Check failed: ${err.message}`
+          message: `Check failed: ${(err as Error).message}`
         });
       }
     }
@@ -71,11 +71,11 @@ export class AccessibilityGate extends BaseGate {
    * @returns {string[]}
    */
   getSourceFiles() {
-    const files = [];
+    const files: string[] = [];
     const extensions = ['.jsx', '.tsx', '.html', '.vue', '.svelte'];
     const ignoreDirs = ['node_modules', '.git', 'dist', 'build', 'coverage'];
 
-    const scanDir = (dir) => {
+    const scanDir = (dir: string) => {
       try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
@@ -196,7 +196,7 @@ export class AccessibilityGate extends BaseGate {
 
         // Extract heading levels
         const headings = content.match(/<h([1-6])[^>]*>/gi) || [];
-        const levels = headings.map(h => parseInt(h.match(/<h([1-6])/i)[1]));
+        const levels = headings.map(h => parseInt(h.match(/<h([1-6])/i)![1]));
 
         // Check for skipped levels
         let skipped = false;
@@ -282,8 +282,8 @@ export class AccessibilityGate extends BaseGate {
     const files = this.getSourceFiles();
     
     // Also check CSS files
-    const cssFiles = [];
-    const scanDir = (dir) => {
+    const cssFiles: string[] = [];
+    const scanDir = (dir: string) => {
       try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {

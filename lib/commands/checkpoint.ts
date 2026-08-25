@@ -42,7 +42,7 @@ function generateCheckpointName() {
 /**
  * Validate checkpoint name
  */
-function isValidCheckpointName(name) {
+function isValidCheckpointName(name: string) {
   // Allow alphanumeric, dash, underscore
   return /^[a-zA-Z0-9_-]+$/.test(name);
 }
@@ -114,7 +114,7 @@ async function createCheckpoint(options: any = {}) {
       const commitMessage = options.message || `Checkpoint: ${checkpointName}`;
       const result = GitIntegration.commitCheckpoint(
         checkpointName,
-        stateManager.state.currentPhase,
+        stateManager.state.currentPhase as string,
         {
           projectRoot,
           details: [commitMessage]
@@ -126,7 +126,7 @@ async function createCheckpoint(options: any = {}) {
         console.log(`✓ Git commit created: ${result.shortHash}`);
       }
     } catch (error) {
-      console.warn(`⚠️  Warning: Git commit failed: ${error.message}`);
+      console.warn(`⚠️  Warning: Git commit failed: ${(error as Error).message}`);
       console.warn('   Checkpoint will be created without git commit.');
     }
   }
@@ -189,7 +189,7 @@ async function listCheckpoints(options: any = {}) {
 /**
  * Show checkpoint details
  */
-async function showCheckpoint(name, options: any = {}) {
+async function showCheckpoint(name: string, options: any = {}) {
   const projectRoot = process.cwd();
   const planningDir = path.join(projectRoot, '.planning');
 
@@ -243,7 +243,7 @@ async function showCheckpoint(name, options: any = {}) {
         
         if (stats) {
           console.log(`\nChanges:`);
-          stats.split('\n').forEach(line => {
+          stats.split('\n').forEach((line: string) => {
             if (line.trim()) {
               console.log(`  ${line}`);
             }
@@ -265,7 +265,7 @@ async function showCheckpoint(name, options: any = {}) {
 /**
  * Delete a checkpoint
  */
-async function deleteCheckpoint(name, options: any = {}) {
+async function deleteCheckpoint(name: string, options: any = {}) {
   const projectRoot = process.cwd();
   const planningDir = path.join(projectRoot, '.planning');
 
@@ -332,7 +332,7 @@ async function checkpoint(options: any = {}) {
         break;
     }
   } catch (error) {
-    console.error(`❌ Error: ${error.message}`);
+    console.error(`❌ Error: ${(error as Error).message}`);
     process.exit(1);
   }
 }

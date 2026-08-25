@@ -46,7 +46,7 @@ export class WaveDependencyGraph {
       });
     } else if (wave !== null) {
       // Update wave data if provided
-      this.nodes.get(waveId).wave = wave;
+      this.nodes.get(waveId)!.wave = wave;
     }
     return this;
   }
@@ -63,8 +63,8 @@ export class WaveDependencyGraph {
     this.addWave(dependsOnWaveId);
 
     // Add dependency relationship
-    this.nodes.get(waveId).dependencies.add(dependsOnWaveId);
-    this.nodes.get(dependsOnWaveId).dependents.add(waveId);
+    this.nodes.get(waveId)!.dependencies.add(dependsOnWaveId);
+    this.nodes.get(dependsOnWaveId)!.dependents.add(waveId);
 
     return this;
   }
@@ -197,7 +197,7 @@ export class WaveDependencyGraph {
   detectCycles(): string[][] {
     const colors = new Map<string, number>();
     const parent = new Map<string, string | null>();
-    const cycles = [];
+    const cycles: string[][] = [];
 
     // Initialize all nodes as WHITE (unvisited)
     for (const waveId of this.nodes.keys()) {
@@ -260,8 +260,8 @@ export class WaveDependencyGraph {
     }
 
     const inDegree = new Map<string, number>();
-    const queue = [];
-    const result = [];
+    const queue: string[] = [];
+    const result: string[] = [];
 
     // Calculate in-degree for each node (number of dependencies)
     for (const [waveId, node] of this.nodes) {
@@ -275,13 +275,13 @@ export class WaveDependencyGraph {
     while (queue.length > 0) {
       // Sort queue for deterministic order
       queue.sort();
-      const current = queue.shift();
+      const current = queue.shift()!;
       result.push(current);
 
       // Reduce in-degree for all dependents
-      const node = this.nodes.get(current);
+      const node = this.nodes.get(current)!;
       for (const dependentId of node.dependents) {
-        const newDegree = inDegree.get(dependentId) - 1;
+        const newDegree = inDegree.get(dependentId)! - 1;
         inDegree.set(dependentId, newDegree);
         if (newDegree === 0) {
           queue.push(dependentId);

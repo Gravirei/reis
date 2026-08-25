@@ -110,7 +110,7 @@ export function isWorkingTreeClean(projectRoot: string = process.cwd()): boolean
  * @param {string} summary - Commit summary
  * @param {Object} options - Additional options
  */
-export function createStructuredCommit(phase: string, waveName: string, summary: string, options: any = {}) {
+export function createStructuredCommit(phase: string, waveName: string | null, summary: string, options: any = {}) {
   const {
     projectRoot = process.cwd(),
     prefix = '[REIS v2.0]',
@@ -142,7 +142,7 @@ export function createStructuredCommit(phase: string, waveName: string, summary:
   
   if (details.length > 0) {
     message += `\nChanges:\n`;
-    details.forEach(detail => {
+    details.forEach((detail: string) => {
       message += `- ${detail}\n`;
     });
   }
@@ -175,7 +175,7 @@ export function createStructuredCommit(phase: string, waveName: string, summary:
       message: message
     };
   } catch (error) {
-    throw new Error(`Failed to create commit: ${error.message}`);
+    throw new Error(`Failed to create commit: ${(error as Error).message}`);
   }
 }
 
@@ -216,7 +216,7 @@ export function createMilestoneTag(milestone: string, message: string, projectRo
     console.log(`✓ Created tag: ${tagName}`);
     return tagName;
   } catch (error) {
-    throw new Error(`Failed to create tag: ${error.message}`);
+    throw new Error(`Failed to create tag: ${(error as Error).message}`);
   }
 }
 
@@ -260,7 +260,7 @@ export function ensureBranch(branchName: string, projectRoot: string = process.c
 
     return branchName;
   } catch (error) {
-    throw new Error(`Failed to ensure branch: ${error.message}`);
+    throw new Error(`Failed to ensure branch: ${(error as Error).message}`);
   }
 }
 
@@ -331,7 +331,7 @@ export function rollbackToCommit(commitHash: string, mode: string = 'mixed', pro
     console.log(`✓ Rolled back to commit: ${commitHash} (mode: ${mode})`);
     return true;
   } catch (error) {
-    throw new Error(`Failed to rollback: ${error.message}`);
+    throw new Error(`Failed to rollback: ${(error as Error).message}`);
   }
 }
 
@@ -358,7 +358,7 @@ export function stashChanges(message: string = 'REIS auto-stash', projectRoot: s
     console.log('✓ Changes stashed');
     return message;
   } catch (error) {
-    throw new Error(`Failed to stash changes: ${error.message}`);
+    throw new Error(`Failed to stash changes: ${(error as Error).message}`);
   }
 }
 
@@ -379,7 +379,7 @@ export function popStash(projectRoot: string = process.cwd()): boolean {
     console.log('✓ Stashed changes restored');
     return true;
   } catch (error) {
-    throw new Error(`Failed to pop stash: ${error.message}`);
+    throw new Error(`Failed to pop stash: ${(error as Error).message}`);
   }
 }
 

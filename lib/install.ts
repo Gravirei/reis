@@ -92,7 +92,7 @@ async function install() {
     }
     
   } catch (error) {
-    console.error(chalk.red('\n✗ Installation failed:'), error.message);
+    console.error(chalk.red('\n✗ Installation failed:'), (error as any).message);
     // Don't exit with error code - allow npm install to continue
     console.log(chalk.yellow('Installation had issues but package is available.'));
   }
@@ -161,7 +161,7 @@ async function performInstallation(overwrite = false, silent = false, target = '
             fs.writeFileSync(dest, content);
             fileCount++;
           } catch (e) {
-            console.log(chalk.yellow(`  ⚠ Failed to process ${file}: ${e.message}`));
+            console.log(chalk.yellow(`  ⚠ Failed to process ${file}: ${(e as any).message}`));
           }
         } else {
           if (copyFile(src, dest, true)) {
@@ -181,18 +181,18 @@ async function performInstallation(overwrite = false, silent = false, target = '
 }
 
 // Ensure directory exists
-function ensureDir(dir) {
+function ensureDir(dir: string) {
   try {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
   } catch (error) {
-    throw new Error(`Failed to create directory ${dir}: ${error.message}`);
+    throw new Error(`Failed to create directory ${dir}: ${(error as any).message}`);
   }
 }
 
 // Copy a single file
-function copyFile(src, dest, overwrite = false) {
+function copyFile(src: string, dest: string, overwrite = false) {
   try {
     // Check if source exists
     if (!fs.existsSync(src)) {
@@ -219,13 +219,13 @@ function copyFile(src, dest, overwrite = false) {
     return true;
     
   } catch (error) {
-    console.log(chalk.yellow(`  ⚠ Failed to copy ${src}: ${error.message}`));
+    console.log(chalk.yellow(`  ⚠ Failed to copy ${src}: ${(error as any).message}`));
     return false;
   }
 }
 
 // Copy a directory recursively
-function copyDirectory(srcDir, destDir, overwrite = false) {
+function copyDirectory(srcDir: string, destDir: string, overwrite = false) {
   let count = 0;
   
   try {
@@ -259,13 +259,13 @@ function copyDirectory(srcDir, destDir, overwrite = false) {
     return count;
     
   } catch (error) {
-    console.log(chalk.yellow(`  ⚠ Failed to copy directory ${srcDir}: ${error.message}`));
+    console.log(chalk.yellow(`  ⚠ Failed to copy directory ${srcDir}: ${(error as any).message}`));
     return count;
   }
 }
 
 // Show success message with next steps
-function showSuccessMessage(fileCount, platform) {
+function showSuccessMessage(fileCount: number, platform: string) {
   const isGemini = platform === 'gemini';
   const dirName = isGemini ? '.gemini' : '.rovodev';
   const clientName = isGemini ? 'Gemini CLI' : 'Atlassian Rovo Dev';

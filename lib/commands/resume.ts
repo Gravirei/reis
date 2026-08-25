@@ -58,7 +58,7 @@ async function resume(args: ResumeArgs, options: ResumeOptions = {}): Promise<nu
 
     // Resume from specific checkpoint
     if (args.checkpoint || args.c) {
-      return await resumeFromCheckpoint(args.checkpoint || args.c, stateManager, config, args);
+      return await resumeFromCheckpoint((args.checkpoint || args.c) as string, stateManager, config, args);
     }
 
     // Continue active wave
@@ -70,9 +70,9 @@ async function resume(args: ResumeArgs, options: ResumeOptions = {}): Promise<nu
     return await smartResume(stateManager, config, args);
 
   } catch (error) {
-    showError(`Resume failed: ${error.message}`);
+    showError(`Resume failed: ${(error as Error).message}`);
     if (args.debug) {
-      console.error('\nStack trace:', error.stack);
+      console.error('\nStack trace:', (error as Error).stack);
     }
     return 1;
   }
@@ -272,7 +272,7 @@ async function resumeFromCheckpoint(checkpointName: string, stateManager: StateM
       const projectRoot = process.cwd();
       const status = getGitStatus(projectRoot);
       
-      if (status.hasChanges) {
+      if (status!.hasChanges) {
         console.log('\n⚠️  Warning: You have uncommitted changes');
         console.log('   Current working directory has modifications since checkpoint');
       }

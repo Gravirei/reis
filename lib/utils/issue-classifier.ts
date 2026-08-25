@@ -198,8 +198,8 @@ export class IssueClassifier {
    * Main classification method
    * FR2.1: Checks for incomplete implementations FIRST (different handling)
    */
-  classify(debugInput) {
-    const result = {
+  classify(debugInput: string) {
+    const result: { type: string; severity: string; scope: string; confidence: number; evidence: string[]; incompleteness: any } = {
       type: 'unknown',
       severity: 'minor',
       scope: 'isolated',
@@ -250,8 +250,8 @@ export class IssueClassifier {
    * FR2.1: Detect incomplete implementations
    * Returns null if not incomplete, object with details if incomplete
    */
-  detectIncompleteness(input) {
-    const evidence = [];
+  detectIncompleteness(input: string) {
+    const evidence: string[] = [];
     
     // Check for task completion percentage
     const taskMatch = input.match(/Tasks:\s*(\d+)\/(\d+)\s+complete/i);
@@ -350,8 +350,8 @@ export class IssueClassifier {
   /**
    * Extract missing tasks from input
    */
-  extractMissingTasks(input) {
-    const missing = [];
+  extractMissingTasks(input: string): string[] {
+    const missing: string[] = [];
     
     // Look for "Missing:" section
     const missingSection = input.match(/Missing:?\s*\n([\s\S]+?)(?=\n\n|Completed:|Evidence:|$)/i);
@@ -382,8 +382,8 @@ export class IssueClassifier {
   /**
    * Extract completed tasks from input
    */
-  extractCompletedTasks(input) {
-    const completed = [];
+  extractCompletedTasks(input: string): string[] {
+    const completed: string[] = [];
     
     // Look for "Completed:" section
     const completedSection = input.match(/Completed:?\s*\n([\s\S]+?)(?=\n\n|Missing:|Evidence:|$)/i);
@@ -406,13 +406,13 @@ export class IssueClassifier {
   /**
    * Score a specific issue type against input
    */
-  scoreType(type, pattern, input) {
+  scoreType(type: string, pattern: any, input: string): number {
     let score = 0;
     const inputLower = input.toLowerCase();
 
     // Keyword matching
     let keywordMatches = 0;
-    pattern.keywords.forEach(keyword => {
+    pattern.keywords.forEach((keyword: string) => {
       const regex = new RegExp(keyword, 'i');
       if (regex.test(input)) {
         keywordMatches++;
@@ -434,7 +434,7 @@ export class IssueClassifier {
 
     // Indicator matching
     let indicatorMatches = 0;
-    pattern.indicators.forEach(indicator => {
+    pattern.indicators.forEach((indicator: string) => {
       const regex = new RegExp(indicator, 'i');
       if (regex.test(input)) {
         indicatorMatches++;
@@ -451,7 +451,7 @@ export class IssueClassifier {
   /**
    * Classify severity based on type and input
    */
-  classifySeverity(type, input) {
+  classifySeverity(type: string, input: string): string {
     const pattern = this.patterns[type];
     if (!pattern || !pattern.severity) return 'minor';
 
@@ -478,7 +478,7 @@ export class IssueClassifier {
    * Classify scope of issue
    * FR2.1: For incomplete implementations, scope based on how many tasks missing
    */
-  classifyScope(input, incompleteness = null) {
+  classifyScope(input: string, incompleteness: any = null): string {
     // FR2.1: Incomplete implementation scope
     if (incompleteness) {
       if (incompleteness.completeness === 0) return 'widespread';
@@ -507,12 +507,12 @@ export class IssueClassifier {
   /**
    * Extract evidence for classification
    */
-  extractEvidence(type, input) {
-    const evidence = [];
+  extractEvidence(type: string, input: string): string[] {
+    const evidence: string[] = [];
     const pattern = this.patterns[type];
 
     // Extract matching keywords
-    pattern.keywords.forEach(keyword => {
+    pattern.keywords.forEach((keyword: string) => {
       const regex = new RegExp(`(.{0,50}${keyword}.{0,50})`, 'gi');
       const matches = input.match(regex);
       if (matches) {

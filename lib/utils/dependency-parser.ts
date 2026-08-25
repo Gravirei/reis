@@ -60,7 +60,7 @@ export class DependencyParser {
    * @param {string} filePath - Path to PLAN.md file
    * @returns {ParsedPlan} - Parsed plan data
    */
-  parseFile(filePath) {
+  parseFile(filePath: string): ParsedPlan {
     if (!fs.existsSync(filePath)) {
       throw new Error(`File not found: ${filePath}`);
     }
@@ -74,16 +74,16 @@ export class DependencyParser {
    * @param {string} content - Plan content
    * @returns {ParsedPlan} - Parsed plan data
    */
-  parseContent(content) {
+  parseContent(content: string): ParsedPlan {
     const lines = content.split('\n');
-    const waves = [];
-    const dependencies = new Map();
-    const groups = new Map();
-    const errors = [];
-    const warnings = [];
+    const waves: ParsedWave[] = [];
+    const dependencies = new Map<string, string[]>();
+    const groups = new Map<string, string>();
+    const errors: string[] = [];
+    const warnings: string[] = [];
 
-    let currentWave = null;
-    let pendingDependencies = [];
+    let currentWave: ParsedWave | null = null;
+    let pendingDependencies: string[] = [];
     let pendingGroup = null;
 
     for (let i = 0; i < lines.length; i++) {
@@ -185,7 +185,7 @@ export class DependencyParser {
    * @param {string} line - Line to parse
    * @returns {object|null} - Parsed wave data or null
    */
-  parseWaveHeader(line) {
+  parseWaveHeader(line: string) {
     const trimmed = line.trim();
     const match = trimmed.match(this.wavePattern);
 
@@ -206,7 +206,7 @@ export class DependencyParser {
    * @param {string} content - Content to parse
    * @returns {Map<string, string[]>} - Map of waveId to dependencies
    */
-  parseDependencies(content) {
+  parseDependencies(content: string) {
     const parsed = this.parseContent(content);
     return parsed.dependencies;
   }
@@ -216,7 +216,7 @@ export class DependencyParser {
    * @param {string} content - Content to parse
    * @returns {Map<string, string>} - Map of waveId to group name
    */
-  parseParallelGroups(content) {
+  parseParallelGroups(content: string) {
     const parsed = this.parseContent(content);
     return parsed.groups;
   }
@@ -226,7 +226,7 @@ export class DependencyParser {
    * @param {ParsedPlan} parsedData - Parsed plan data
    * @returns {WaveDependencyGraph} - Dependency graph
    */
-  buildGraph(parsedData) {
+  buildGraph(parsedData: ParsedPlan): WaveDependencyGraph {
     const graph = new WaveDependencyGraph();
 
     // Add all waves to the graph
@@ -255,9 +255,9 @@ export class DependencyParser {
    * @param {WaveDependencyGraph} graph - Graph to validate
    * @returns {object} - Validation result with errors and warnings
    */
-  validateDependencies(graph) {
-    const errors = [];
-    const warnings = [];
+  validateDependencies(graph: WaveDependencyGraph) {
+    const errors: string[] = [];
+    const warnings: string[] = [];
     const waveIds = new Set(graph.getAllWaveIds());
 
     // Check for missing wave references
@@ -309,7 +309,7 @@ export class DependencyParser {
    * @param {string} filePath - Path to PLAN.md file
    * @returns {object} - Result with graph, parsedData, and validation
    */
-  parseAndBuildGraph(filePath) {
+  parseAndBuildGraph(filePath: string) {
     const parsedData = this.parseFile(filePath);
     const graph = this.buildGraph(parsedData);
     const validation = this.validateDependencies(graph);
@@ -328,7 +328,7 @@ export class DependencyParser {
    * @param {string} line - Line to check
    * @returns {string[]|null} - Array of dependency wave IDs, or null if no match
    */
-  _matchDependency(line) {
+  _matchDependency(line: string): string[] | null {
     // Reset regex lastIndex
     this.dependencyPattern.lastIndex = 0;
     
@@ -345,7 +345,7 @@ export class DependencyParser {
     }
 
     // Extract wave references
-    const deps = [];
+    const deps: string[] = [];
     this.waveRefPattern.lastIndex = 0;
     let waveMatch;
     while ((waveMatch = this.waveRefPattern.exec(match[1])) !== null) {
@@ -361,7 +361,7 @@ export class DependencyParser {
    * @param {string} line - Line to check
    * @returns {string|null} - Group name or null
    */
-  _matchGroup(line) {
+  _matchGroup(line: string): string | null {
     // Reset regex lastIndex
     this.groupPattern.lastIndex = 0;
     
@@ -379,7 +379,7 @@ export class DependencyParser {
    * @param {string[]} errors - Error array to populate
    * @param {string[]} warnings - Warning array to populate
    */
-  _validateParsedData(waves, errors, warnings) {
+  _validateParsedData(waves: ParsedWave[], errors: string[], warnings: string[]): void {
     const waveNumbers = new Set<number>();
     const waveIds = new Set();
 
@@ -421,15 +421,15 @@ export class DependencyParser {
    * @param {ParsedPlan} parsedData - Parsed plan data
    * @returns {Map<string, string[]>} - Map of group name to wave IDs
    */
-  getGroupsMap(parsedData) {
-    const groupsMap = new Map();
+  getGroupsMap(parsedData: ParsedPlan): Map<string, string[]> {
+    const groupsMap = new Map<string, string[]>();
 
     for (const wave of parsedData.waves) {
       if (wave.parallelGroup) {
         if (!groupsMap.has(wave.parallelGroup)) {
           groupsMap.set(wave.parallelGroup, []);
         }
-        groupsMap.get(wave.parallelGroup).push(wave.id);
+        groupsMap.get(wave.parallelGroup)!.push(wave.id);
       }
     }
 
@@ -441,7 +441,7 @@ export class DependencyParser {
    * @param {ParsedPlan} parsedData - Parsed plan data
    * @returns {object} - Summary object
    */
-  getSummary(parsedData) {
+  getSummary(parsedData: ParsedPlan) {
     const groupsMap = this.getGroupsMap(parsedData);
     
     return {

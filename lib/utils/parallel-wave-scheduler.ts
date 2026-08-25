@@ -323,7 +323,7 @@ export class ParallelWaveScheduler {
       let batchDuration = 0;
       for (const waveId of batch.waves) {
         const waveDuration = durations.get(waveId) || 
-                            this.graph.nodes.get(waveId)?.estimatedMinutes || 
+                            this.graph!.nodes.get(waveId)?.estimatedMinutes || 
                             30;
         batchDuration = Math.max(batchDuration, waveDuration);
       }
@@ -416,12 +416,12 @@ export class ParallelWaveScheduler {
    * @param {string[]} waves - Ready wave IDs
    * @returns {string[]} Sorted wave IDs
    */
-  _applyGroupStrategy(waves) {
+  _applyGroupStrategy(waves: string[]): string[] {
     // Group waves by their parallel-group metadata
     const groups = new Map();
 
     for (const waveId of waves) {
-      const meta = this.graph.nodes.get(waveId);
+      const meta = this.graph!.nodes.get(waveId);
       const group = meta?.parallelGroup || 'default';
 
       if (!groups.has(group)) {
@@ -445,10 +445,10 @@ export class ParallelWaveScheduler {
    * @param {string[]} waves - Ready wave IDs
    * @returns {string[]} Sorted wave IDs
    */
-  _applyAutoStrategy(waves) {
+  _applyAutoStrategy(waves: string[]): string[] {
     // Check if waves have parallel-group metadata
     const hasGroups = waves.some(waveId => {
-      const meta = this.graph.nodes.get(waveId);
+      const meta = this.graph!.nodes.get(waveId);
       return meta?.parallelGroup && meta.parallelGroup !== 'default';
     });
 
@@ -458,8 +458,8 @@ export class ParallelWaveScheduler {
 
     // Default: sort by estimated duration (shortest first for better throughput)
     return [...waves].sort((a, b) => {
-      const metaA = this.graph.nodes.get(a);
-      const metaB = this.graph.nodes.get(b);
+      const metaA = this.graph!.nodes.get(a);
+      const metaB = this.graph!.nodes.get(b);
       const durationA = metaA?.estimatedMinutes || 30;
       const durationB = metaB?.estimatedMinutes || 30;
       return durationA - durationB;

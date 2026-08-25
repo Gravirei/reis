@@ -66,7 +66,7 @@ async function executePlan(args: ExecutePlanArgs): Promise<number> {
   try {
     sanitizedPlanPath = sanitizePath(planPath);
   } catch (error) {
-    showError(`Invalid plan path: ${error.message}`);
+    showError(`Invalid plan path: ${(error as Error).message}`);
     process.exit(1);
   }
   
@@ -142,7 +142,7 @@ async function executePlan(args: ExecutePlanArgs): Promise<number> {
     // Check git status
     try {
       const gitStatus = getGitStatus(projectRoot);
-      if (gitStatus.hasChanges) {
+      if (gitStatus && gitStatus.hasChanges) {
         console.log('⚠️  Warning: You have uncommitted changes in your working directory.');
         console.log('   This is okay, but consider committing them first.\n');
       }
@@ -216,7 +216,7 @@ async function executePlan(args: ExecutePlanArgs): Promise<number> {
               console.log(`   Auto-commit: ${commitResult.message}`);
             }
           } catch (error) {
-            console.warn(`   Warning: Auto-commit failed: ${error.message}`);
+            console.warn(`   Warning: Auto-commit failed: ${(error as Error).message}`);
           }
         }
         
@@ -224,14 +224,14 @@ async function executePlan(args: ExecutePlanArgs): Promise<number> {
         stateManager.updateWaveCompletion(sanitizedPlanPath, waveNumber, waves.length);
         
       } catch (error) {
-        console.error(`\n❌ Wave ${waveNumber} failed: ${error.message}`);
+        console.error(`\n❌ Wave ${waveNumber} failed: ${(error as Error).message}`);
         console.error('\nExecution stopped. State has been saved.');
         console.error(`\nTo resume: reis resume ${sanitizedPlanPath}`);
         
         // Save error state
         stateManager.saveErrorState(sanitizedPlanPath, {
           wave: waveNumber,
-          error: error.message,
+          error: (error as Error).message,
           timestamp: new Date().toISOString()
         });
         
@@ -255,14 +255,14 @@ async function executePlan(args: ExecutePlanArgs): Promise<number> {
     return 0;
     
   } catch (error) {
-    if (error.name === 'PlanParseError') {
-      showError(`Failed to parse plan: ${error.message}`);
+    if ((error as Error).name === 'PlanParseError') {
+      showError(`Failed to parse plan: ${(error as Error).message}`);
       console.error('\nPlease check the plan format and syntax.');
       return 1;
     }
     
-    showError(`Execution error: ${error.message}`);
-    console.error('\nStack trace:', error.stack);
+    showError(`Execution error: ${(error as Error).message}`);
+    console.error('\nStack trace:', (error as Error).stack);
     return 1;
   }
 }
@@ -319,7 +319,7 @@ function parsePlanFile(content: string): ParsedWave[] {
           status: 'pending'
         });
       }
-      waves.get(task.wave).tasks.push(task);
+      waves.get(task.wave)!.tasks.push(task);
     });
     
     return Array.from(waves.values()).sort((a, b) => a.id - b.id);
@@ -327,7 +327,7 @@ function parsePlanFile(content: string): ParsedWave[] {
   
   // Fallback: Try markdown wave format
   const waveRegex = /^#{2,3}\s+Wave\s+(\d+):?\s+(.+)/gm;
-  let currentWave = null;
+  let currentWave: ParsedWave | null = null;
   
   const lines = content.split('\n');
   

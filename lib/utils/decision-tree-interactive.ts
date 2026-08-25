@@ -64,7 +64,7 @@ export async function selectBranch(tree: any, options: any = {}): Promise<any> {
     }
 
     // Prepare choices
-    const choices = currentBranches.map(branch => {
+    const choices = currentBranches.map((branch: any) => {
       let name = branch.text;
       
       // Add metadata badges
@@ -78,7 +78,7 @@ export async function selectBranch(tree: any, options: any = {}): Promise<any> {
         }
         if (branch.metadata.risk) {
           const riskColors = { high: chalk.red, medium: chalk.yellow, low: chalk.green };
-          const colorFn = riskColors[branch.metadata.risk] || chalk.gray;
+          const colorFn = (riskColors as Record<string, any>)[branch.metadata.risk] || chalk.gray;
           badges.push(colorFn(`R:${branch.metadata.risk}`));
         }
         
@@ -109,7 +109,7 @@ export async function selectBranch(tree: any, options: any = {}): Promise<any> {
     }
 
     // Prompt for selection
-    const answer = await inquirer.prompt([
+    const answer: any = await inquirer.prompt([
       {
         type: 'list',
         name: 'branch',
@@ -341,7 +341,7 @@ export function showDecisionSummary(selection: any): void {
   console.log('');
   
   console.log(chalk.bold('Selected Path:'));
-  selection.path.forEach((step, i) => {
+  selection.path.forEach((step: any, i: any) => {
     const prefix = i === selection.path.length - 1 ? '  └─' : '  ├─';
     console.log(`${prefix} ${step}`);
   });

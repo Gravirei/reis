@@ -101,7 +101,7 @@ export class ExecutionCoordinator extends EventEmitter {
     this.aborted = false;
     this.results = new Map();
 
-    const totalWaves = this.scheduler.graph.nodes.size;
+    const totalWaves = this.scheduler!.graph!.nodes.size;
     this.emit('start', { 
       totalWaves,
       timestamp: new Date().toISOString()
@@ -190,7 +190,7 @@ export class ExecutionCoordinator extends EventEmitter {
       : this.waveExecutors;
 
     // Mark all waves as started
-    waveIds.forEach(id => this.scheduler.startWave(id));
+    waveIds.forEach(id => this.scheduler!.startWave(id));
 
     // Execute all waves in parallel with individual error handling
     const promises = waveIds.map(waveId => this.executeWave(waveId, executors));
@@ -225,12 +225,12 @@ export class ExecutionCoordinator extends EventEmitter {
       }
 
       // Mark as completed
-      this.scheduler.completeWave(waveId);
-      const waveResult = { 
-        waveId, 
-        success: true, 
+      this.scheduler!.completeWave(waveId);
+      const waveResult = {
+        waveId,
+        success: true,
         result,
-        duration: Date.now() - this.startTime
+        duration: Date.now() - this.startTime!
       };
       this.results.set(waveId, waveResult);
 
@@ -241,12 +241,12 @@ export class ExecutionCoordinator extends EventEmitter {
 
     } catch (error: any) {
       // Mark as failed
-      this.scheduler.markFailed(waveId, error.message);
-      const waveResult = { 
-        waveId, 
-        success: false, 
+      this.scheduler!.markFailed(waveId, error.message);
+      const waveResult = {
+        waveId,
+        success: false,
         error: error.message,
-        duration: Date.now() - this.startTime
+        duration: Date.now() - this.startTime!
       };
       this.results.set(waveId, waveResult);
 

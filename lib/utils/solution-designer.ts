@@ -14,8 +14,8 @@ export class SolutionDesigner {
   /**
    * Enhance solutions with scoring and recommendations
    */
-  enhanceSolutions(solutions) {
-    const enhanced = solutions.map(solution => {
+  enhanceSolutions(solutions: any[]) {
+    const enhanced = solutions.map((solution: any) => {
       const scored = this.scoreSolution(solution);
       const tradeoffs = this.analyzeTradeoffs(scored);
       const optimized = this.optimizeSolution(scored);
@@ -30,7 +30,7 @@ export class SolutionDesigner {
     });
 
     // Sort by score (descending)
-    enhanced.sort((a, b) => b.score - a.score);
+    enhanced.sort((a: any, b: any) => b.score - a.score);
 
     return enhanced;
   }
@@ -38,7 +38,7 @@ export class SolutionDesigner {
   /**
    * Score a solution on multiple dimensions
    */
-  scoreSolution(solution) {
+  scoreSolution(solution: any) {
     const scores = {
       feasibility: this.scoreFeasibility(solution),
       risk: this.scoreRisk(solution),
@@ -78,7 +78,7 @@ export class SolutionDesigner {
   /**
    * Score feasibility (0-1, higher is better)
    */
-  scoreFeasibility(solution) {
+  scoreFeasibility(solution: any) {
     let score = 0.5;  // Baseline
 
     // Complexity factor
@@ -105,7 +105,7 @@ export class SolutionDesigner {
   /**
    * Score risk (0-1, higher score = lower risk)
    */
-  scoreRisk(solution) {
+  scoreRisk(solution: any) {
     const riskMap = {
       'LOW': 0.9,
       'MEDIUM': 0.5,
@@ -113,7 +113,7 @@ export class SolutionDesigner {
       'CRITICAL': 0.1
     };
 
-    let score = riskMap[solution.riskLevel] || 0.5;
+    let score = (riskMap as Record<string, number>)[solution.riskLevel] || 0.5;
 
     // FR2.1: Targeted re-execution has minimal risk (no touching completed work)
     if (solution.name === 'Targeted Re-execution') {
@@ -131,7 +131,7 @@ export class SolutionDesigner {
   /**
    * Score impact (0-1, higher is better)
    */
-  scoreImpact(solution) {
+  scoreImpact(solution: any) {
     let score = 0.5;
 
     // Scope consideration
@@ -157,7 +157,7 @@ export class SolutionDesigner {
   /**
    * Score time efficiency (0-1, higher is better = faster)
    */
-  scoreTime(solution) {
+  scoreTime(solution: any) {
     let score = 0.5;
 
     if (!solution.timeEstimate) return score;
@@ -191,7 +191,7 @@ export class SolutionDesigner {
   /**
    * Analyze trade-offs for a solution
    */
-  analyzeTradeoffs(solution) {
+  analyzeTradeoffs(solution: any) {
     const tradeoffs = {
       speedVsQuality: this.analyzeSpeedVsQuality(solution),
       riskVsBenefit: this.analyzeRiskVsBenefit(solution),
@@ -204,7 +204,7 @@ export class SolutionDesigner {
   /**
    * Speed vs Quality trade-off
    */
-  analyzeSpeedVsQuality(solution) {
+  analyzeSpeedVsQuality(solution: any) {
     const speed = solution.scores.time;
     const quality = solution.scores.feasibility;
 
@@ -222,7 +222,7 @@ export class SolutionDesigner {
   /**
    * Risk vs Benefit trade-off
    */
-  analyzeRiskVsBenefit(solution) {
+  analyzeRiskVsBenefit(solution: any) {
     const risk = 1.0 - solution.scores.risk;  // Invert to get risk level
     const benefit = solution.scores.impact;
 
@@ -240,7 +240,7 @@ export class SolutionDesigner {
   /**
    * FR2.1: Effort vs Completeness trade-off (for incomplete implementations)
    */
-  analyzeEffortVsCompleteness(solution) {
+  analyzeEffortVsCompleteness(solution: any) {
     if (this.analysis.classification.type !== 'incomplete-implementation') {
       return 'N/A';
     }
@@ -266,7 +266,7 @@ export class SolutionDesigner {
   /**
    * FR2.1: Optimize solution for incomplete implementations
    */
-  optimizeSolution(solution) {
+  optimizeSolution(solution: any) {
     if (this.analysis.classification.type !== 'incomplete-implementation') {
       return { optimized: false };
     }
@@ -300,11 +300,11 @@ export class SolutionDesigner {
   /**
    * FR2.1: Generate task breakdown for targeted re-execution
    */
-  generateTaskBreakdown(incompleteness) {
-    const breakdown = [];
+  generateTaskBreakdown(incompleteness: any) {
+    const breakdown: any[] = [];
     const missing = incompleteness.missing || [];
 
-    missing.forEach((task, index) => {
+    missing.forEach((task: any, index: number) => {
       // Simple task naming
       const taskName = task.replace(/^Task \d+:?\s*/i, '');
       
@@ -324,7 +324,7 @@ export class SolutionDesigner {
   /**
    * Infer likely deliverables from task name
    */
-  inferDeliverables(taskName) {
+  inferDeliverables(taskName: string) {
     const deliverables = [];
     const taskLower = taskName.toLowerCase();
 
@@ -356,9 +356,13 @@ export class SolutionDesigner {
   /**
    * Generate solution comparison matrix
    */
-  generateComparisonMatrix(enhancedSolutions) {
-    const matrix = {
-      solutions: enhancedSolutions.map(s => s.name),
+  generateComparisonMatrix(enhancedSolutions: any[]) {
+    const matrix: {
+      solutions: any[];
+      dimensions: string[];
+      scores: Record<string, any>;
+    } = {
+      solutions: enhancedSolutions.map((s: any) => s.name),
       dimensions: ['Feasibility', 'Risk', 'Impact', 'Time', 'Overall'],
       scores: {}
     };

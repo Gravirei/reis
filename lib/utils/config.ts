@@ -145,7 +145,7 @@ export function loadConfig(projectRoot: string = process.cwd()): ReisConfig {
         console.log(`✓ Loaded config from ${configPath}`);
       }
     } catch (error) {
-      console.error(`Error loading config from ${configPath}:`, error.message);
+      console.error(`Error loading config from ${configPath}:`, (error as Error).message);
       console.log('Using default configuration');
     }
   }
@@ -163,18 +163,19 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
   const output = Object.assign({}, target) as T & Record<string, unknown>;
 
   if (isObject(target) && isObject(source)) {
-    Object.keys(source).forEach(key => {
-      if (isObject(source[key])) {
+    const src = source as Record<string, unknown>;
+    Object.keys(src).forEach(key => {
+      if (isObject(src[key])) {
         if (!(key in target)) {
-          Object.assign(output, { [key]: source[key] });
+          Object.assign(output, { [key]: src[key] });
         } else {
           (output as Record<string, unknown>)[key] = deepMerge(
             (target as Record<string, unknown>)[key],
-            source[key]
+            src[key]
           );
         }
       } else {
-        Object.assign(output, { [key]: source[key] });
+        Object.assign(output, { [key]: src[key] });
       }
     });
   }
@@ -188,7 +189,7 @@ function deepMerge<T>(target: T, source: Partial<T>): T {
  * @returns {boolean} True if object
  */
 function isObject(item: unknown): item is Record<string, unknown> {
-  return item && typeof item === 'object' && !Array.isArray(item);
+  return (item && typeof item === 'object' && !Array.isArray(item)) as boolean;
 }
 
 /**
@@ -298,7 +299,7 @@ export function validateConfig(config: ReisConfig): ConfigValidationResult {
     // Validate wave size definitions
     if (config.waves.sizes) {
       validSizes.forEach(size => {
-        const sizeConfig = config.waves.sizes[size];
+        const sizeConfig = config.waves.sizes[size as WaveSize];
         if (sizeConfig) {
           if (typeof sizeConfig.maxTasks !== 'number' || sizeConfig.maxTasks < 1) {
             errors.push(`Invalid maxTasks for ${size}: must be a positive number`);

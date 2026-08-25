@@ -264,9 +264,9 @@ function parseBranchLine(line: string): DecisionBranch | null {
  * @returns {Object} Validation result with errors and warnings
  */
 function validateTree(tree: ParsedDecisionTree | null): TreeValidationResult {
-  const errors = [];
-  const warnings = [];
-  const suggestions = [];
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  const suggestions: string[] = [];
   
   if (!tree || !tree.root) {
     errors.push('Tree must have a root question');
@@ -373,7 +373,7 @@ function detectCycles(tree: ParsedDecisionTree): boolean {
  */
 function findOrphanedBranches(tree: ParsedDecisionTree): DecisionBranch[] {
   // Check if any branches have inconsistent level jumps that indicate orphaning
-  const orphans = [];
+  const orphans: DecisionBranch[] = [];
   
   function checkBranches(branches: DecisionBranch[], parentLevel = 0): void {
     for (const branch of branches) {
@@ -427,7 +427,7 @@ function checkTreeBalance(tree: ParsedDecisionTree): { maxDepth: number; minDept
  * @returns {Array} List of incomplete conditionals
  */
 function findIncompleteConditionals(tree: ParsedDecisionTree): string[] {
-  const incomplete = [];
+  const incomplete: string[] = [];
   
   function checkBranches(branches: DecisionBranch[], parentText: string): void {
     let hasIf = false;
@@ -461,8 +461,8 @@ function findIncompleteConditionals(tree: ParsedDecisionTree): string[] {
  * @returns {Array} List of validation errors and warnings
  */
 function validateMetadata(tree: ParsedDecisionTree): { errors: string[]; warnings: string[] } {
-  const errors = [];
-  const warnings = [];
+  const errors: string[] = [];
+  const warnings: string[] = [];
   
   function checkBranch(branch: DecisionBranch): void {
     if (branch.metadata) {
@@ -502,7 +502,7 @@ function validateMetadata(tree: ParsedDecisionTree): { errors: string[]; warning
  * @returns {Array} List of branches with invalid conditions
  */
 function validateConditionalSyntax(tree: ParsedDecisionTree): DecisionBranch[] {
-  const invalid = [];
+  const invalid: DecisionBranch[] = [];
   
   function checkBranch(branch: DecisionBranch): void {
     if (branch.condition && branch.condition !== 'ELSE') {

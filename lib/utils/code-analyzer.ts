@@ -32,7 +32,7 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to the file (relative or absolute)
    * @returns {boolean} True if file exists
    */
-  fileExists(filePath) {
+  fileExists(filePath: string) {
     const resolved = this._resolvePath(filePath);
     try {
       const stat = fs.statSync(resolved);
@@ -47,7 +47,7 @@ export class CodeAnalyzer {
    * @param {string} dirPath - Path to the directory (relative or absolute)
    * @returns {boolean} True if directory exists
    */
-  directoryExists(dirPath) {
+  directoryExists(dirPath: string) {
     const resolved = this._resolvePath(dirPath);
     try {
       const stat = fs.statSync(resolved);
@@ -62,7 +62,7 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to resolve
    * @returns {string|null} Absolute path or null if not found
    */
-  resolveFilePath(filePath) {
+  resolveFilePath(filePath: string): string | null {
     const resolved = this._resolvePath(filePath);
     return this.fileExists(filePath) ? resolved : null;
   }
@@ -73,8 +73,8 @@ export class CodeAnalyzer {
    * @param {string} pattern - Glob pattern to match
    * @returns {string[]} Array of matching file paths (relative to baseDir)
    */
-  findFiles(pattern) {
-    const results = [];
+  findFiles(pattern: string): string[] {
+    const results: string[] = [];
     const isRecursive = pattern.includes('**');
     
     // Parse the pattern
@@ -105,7 +105,7 @@ export class CodeAnalyzer {
    * @param {string[]} filePaths - Array of file paths to check
    * @returns {{found: string[], missing: string[]}} Object with found and missing arrays
    */
-  checkFilesExist(filePaths) {
+  checkFilesExist(filePaths: string[]) {
     const found = [];
     const missing = [];
     
@@ -125,7 +125,7 @@ export class CodeAnalyzer {
    * @param {string[]} dirPaths - Array of directory paths to check
    * @returns {{found: string[], missing: string[]}} Object with found and missing arrays
    */
-  checkDirectoriesExist(dirPaths) {
+  checkDirectoriesExist(dirPaths: string[]) {
     const found = [];
     const missing = [];
     
@@ -150,7 +150,7 @@ export class CodeAnalyzer {
    * @param {string} functionName - Name of the function to find
    * @returns {boolean} True if function exists
    */
-  functionExists(filePath, functionName) {
+  functionExists(filePath: string, functionName: string) {
     const functions = this.getFunctions(filePath);
     return functions.includes(functionName);
   }
@@ -160,13 +160,13 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to the file
    * @returns {string[]} Array of function names
    */
-  getFunctions(filePath) {
+  getFunctions(filePath: string): string[] {
     const content = this._readFile(filePath);
     if (!content) return [];
     
     // Remove comments to avoid false positives
     const cleanContent = this._removeComments(content);
-    const functions = new Set();
+    const functions = new Set<string>();
     let match;
     
     // Match function declarations: function name(
@@ -205,7 +205,7 @@ export class CodeAnalyzer {
    * @param {string} exportName - Name of the export to find
    * @returns {boolean} True if export exists
    */
-  exportExists(filePath, exportName) {
+  exportExists(filePath: string, exportName: string) {
     const exports = this.getExports(filePath);
     return exports.includes(exportName);
   }
@@ -215,13 +215,13 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to the file
    * @returns {string[]} Array of export names
    */
-  getExports(filePath) {
+  getExports(filePath: string): string[] {
     const content = this._readFile(filePath);
     if (!content) return [];
     
     // Remove comments to avoid false positives
     const cleanContent = this._removeComments(content);
-    const exports = new Set();
+    const exports = new Set<string>();
     let match;
     
     // Match: module.exports = { name1, name2 }
@@ -288,7 +288,7 @@ export class CodeAnalyzer {
    * @param {string[]} expectedParams - Expected parameter names
    * @returns {{exists: boolean, params: string[], matches: boolean}} Signature check result
    */
-  checkFunctionSignature(filePath, functionName, expectedParams) {
+  checkFunctionSignature(filePath: string, functionName: string, expectedParams: string[]) {
     const content = this._readFile(filePath);
     if (!content) {
       return { exists: false, params: [], matches: false };
@@ -341,7 +341,7 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to the file
    * @returns {Array<{module: string, isLocal: boolean, resolvedPath: string|null}>} Array of import info
    */
-  getImports(filePath) {
+  getImports(filePath: string) {
     const content = this._readFile(filePath);
     if (!content) return [];
     
@@ -404,7 +404,7 @@ export class CodeAnalyzer {
    * @param {string} packageName - Name of the package
    * @returns {{exists: boolean, version: string|null, isDev: boolean}} Dependency info
    */
-  checkNpmDependency(packageName) {
+  checkNpmDependency(packageName: string) {
     const pkg = this._getPackageJson() as Record<string, Record<string, string>> | null;
     if (!pkg) {
       return { exists: false, version: null, isDev: false };
@@ -454,7 +454,7 @@ export class CodeAnalyzer {
    * @param {string[]} packageNames - Array of package names to check
    * @returns {string[]} Array of missing package names
    */
-  getMissingDependencies(packageNames) {
+  getMissingDependencies(packageNames: string[]): string[] {
     const missing = [];
     
     for (const packageName of packageNames) {
@@ -473,7 +473,7 @@ export class CodeAnalyzer {
    * @param {string} fromFile - The file containing the import
    * @returns {string|null} Absolute path or null if not found
    */
-  resolveImport(importPath, fromFile) {
+  resolveImport(importPath: string, fromFile: string): string | null {
     const fromDir = path.dirname(this._resolvePath(fromFile));
     const basePath = path.resolve(fromDir, importPath);
     
@@ -514,7 +514,7 @@ export class CodeAnalyzer {
    * @param {string} content - File content
    * @returns {string} Content with comments removed
    */
-  _removeComments(content) {
+  _removeComments(content: string) {
     // Remove single-line comments (but not URLs like http://)
     let result = content.replace(/(?<!:)\/\/.*$/gm, '');
     // Remove multi-line comments (including JSDoc)
@@ -528,7 +528,7 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to resolve
    * @returns {string} Absolute path
    */
-  _resolvePath(filePath) {
+  _resolvePath(filePath: string) {
     if (path.isAbsolute(filePath)) {
       return filePath;
     }
@@ -541,7 +541,7 @@ export class CodeAnalyzer {
    * @param {string} filePath - Path to the file
    * @returns {string|null} File contents or null if error
    */
-  _readFile(filePath) {
+  _readFile(filePath: string): string | null {
     try {
       const resolved = this._resolvePath(filePath);
       return fs.readFileSync(resolved, 'utf8');
@@ -574,7 +574,7 @@ export class CodeAnalyzer {
    * @param {string} pattern - Glob pattern (e.g., *.js)
    * @returns {RegExp} Regular expression
    */
-  _globToRegex(pattern) {
+  _globToRegex(pattern: string): RegExp {
     const escaped = pattern
       .replace(/[.+^${}()|[\]\\]/g, '\\$&')
       .replace(/\*/g, '.*')
@@ -591,7 +591,7 @@ export class CodeAnalyzer {
    * @param {string[]} results - Array to collect results
    * @param {string} baseDir - Base directory for relative paths
    */
-  _searchFiles(dir, pattern, recursive, results, baseDir) {
+  _searchFiles(dir: string, pattern: RegExp, recursive: boolean, results: string[], baseDir: string): void {
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
       
