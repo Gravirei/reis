@@ -7,11 +7,12 @@
     "reis": "bin/reis.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json && node -e \"const fs=require('fs');for(const f of ['src/index.js','src/types/index.js','src/types/config.js','src/types/state.js','src/types/plan.js','src/types/cycle.js','src/types/gates.js','src/types/debug.js','src/types/parallel.js']) fs.rmSync(f,{force:true})\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "dev": "tsc --watch -p tsconfig.json",
     "lint": "eslint .",
     "test": "mocha test/**/*.test.js --timeout 5000",
+    "pretest": "npm run build",
     "test:watch": "mocha test/**/*.test.js --watch",
     "postinstall": "node lib/install.js --silent"
   },

@@ -3,14 +3,26 @@
  * Enhanced STATE.md with wave tracking and checkpoints
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+import type {
+  ActiveWaveInfo,
+  CheckpointEntry,
+  CompletedWaveEntry,
+  ReisState
+} from '../../src/types/state.js';
 
 /**
  * State structure for REIS v2.0
  */
 class StateManager {
-  constructor(projectRoot = process.cwd()) {
+  projectRoot: string;
+  planningDir: string;
+  statePath: string;
+  state: ReisState;
+
+  constructor(projectRoot: string = process.cwd()) {
     this.projectRoot = projectRoot;
     this.planningDir = path.join(projectRoot, '.planning');
     this.statePath = path.join(this.planningDir, 'STATE.md');
@@ -20,7 +32,7 @@ class StateManager {
   /**
    * Load current state from STATE.md
    */
-  loadState() {
+  loadState(): ReisState {
     if (!fs.existsSync(this.statePath)) {
       return this.createInitialState();
     }
@@ -37,12 +49,12 @@ class StateManager {
   /**
    * Create initial state structure
    */
-  createInitialState() {
+  createInitialState(): ReisState {
     return {
       currentPhase: null,
-      activeWave: null,
+      activeWave: null as ActiveWaveInfo | null,
       waves: {
-        current: null,
+        current: null as string | null,
         completed: [],
         total: 0
       },
@@ -63,11 +75,11 @@ class StateManager {
   /**
    * Parse STATE.md content into structured data
    */
-  parseState(content) {
+  parseState(content: string): ReisState {
     const state = this.createInitialState();
     const lines = content.split('\n');
 
-    let currentSection = null;
+    let currentSection: string | null = null;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -106,7 +118,7 @@ class StateManager {
         // Parse checkpoint with timestamp
         const cpMatch = line.match(/\*\*(.+?)\*\*\s*\((.+?)\)/);
         if (cpMatch) {
-          const checkpoint = { 
+          const checkpoint: CheckpointEntry = { 
             name: cpMatch[1], 
             timestamp: cpMatch[2],
             commit: null,
@@ -153,14 +165,14 @@ class StateManager {
   /**
    * Parse wave block
    */
-  parseWaveBlock(lines) {
+  parseWaveBlock(lines: string[]): ActiveWaveInfo {
     const wave = {
       name: null,
       status: null,
       started: null,
       items: 0,
       progress: { completed: 0, total: 0 }
-    };
+    } as unknown as ActiveWaveInfo;
 
     for (const line of lines) {
       if (line.startsWith('**')) {
@@ -190,7 +202,7 @@ class StateManager {
   /**
    * Save state to STATE.md
    */
-  saveState() {
+  saveState(): void {
     const content = this.generateStateMarkdown();
     
     // Ensure .planning directory exists
@@ -204,7 +216,7 @@ class StateManager {
   /**
    * Generate STATE.md markdown content
    */
-  generateStateMarkdown() {
+  generateStateMarkdown(): string {
     const s = this.state;
     const timestamp = new Date().toISOString().split('T')[0];
 
@@ -310,7 +322,7 @@ class StateManager {
   /**
    * Start a new wave
    */
-  startWave(waveName, items = 0) {
+  startWave(waveName: string, items: number = 0): void {
     this.state.activeWave = {
       name: waveName,
       status: 'IN_PROGRESS',
@@ -326,7 +338,7 @@ class StateManager {
   /**
    * Complete current wave
    */
-  completeWave(commitHash = null) {
+  completeWave(commitHash: string | null = null): CompletedWaveEntry {
     if (!this.state.activeWave) {
       throw new Error('No active wave to complete');
     }
@@ -352,7 +364,7 @@ class StateManager {
   /**
    * Create a checkpoint
    */
-  createCheckpoint(name, commitHash = null) {
+  createCheckpoint(name: string, commitHash: string | null = null): CheckpointEntry {
     const checkpoint = {
       name: name,
       timestamp: new Date().toISOString(),
@@ -376,7 +388,7 @@ class StateManager {
   /**
    * Update wave progress
    */
-  updateWaveProgress(completed) {
+  updateWaveProgress(completed: number): void {
     if (!this.state.activeWave) {
       throw new Error('No active wave to update');
     }
@@ -388,7 +400,7 @@ class StateManager {
   /**
    * Add activity entry
    */
-  addActivity(message) {
+  addActivity(message: string): void {
     const timestamp = new Date().toISOString().split('T')[0] + ' ' + 
                      new Date().toTimeString().split(' ')[0].slice(0, 5);
     this.state.recentActivity.push(`${timestamp}: ${message}`);
@@ -402,10 +414,10 @@ class StateManager {
   /**
    * Calculate duration between two dates
    */
-  calculateDuration(startDate) {
+  calculateDuration(startDate: string): string {
     const start = new Date(startDate);
     const end = new Date();
-    const diffMs = end - start;
+    const diffMs = end.getTime() - start.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     
@@ -421,7 +433,7 @@ class StateManager {
   /**
    * Update metrics
    */
-  updateMetrics() {
+  updateMetrics(): void {
     const completed = this.state.waves.completed;
     if (completed.length > 0) {
       const total = completed.length;
@@ -432,7 +444,7 @@ class StateManager {
   /**
    * Set next steps
    */
-  setNextSteps(steps) {
+  setNextSteps(steps: string[]): void {
     this.state.nextSteps = steps;
     this.saveState();
   }
@@ -440,7 +452,7 @@ class StateManager {
   /**
    * Add blocker
    */
-  addBlocker(blocker) {
+  addBlocker(blocker: string): void {
     this.state.blockers.push(blocker);
     this.saveState();
   }
@@ -448,7 +460,7 @@ class StateManager {
   /**
    * Remove blocker
    */
-  removeBlocker(blocker) {
+  removeBlocker(blocker: string): void {
     this.state.blockers = this.state.blockers.filter(b => b !== blocker);
     this.saveState();
   }
@@ -456,10 +468,10 @@ class StateManager {
   /**
    * Add note
    */
-  addNote(note) {
+  addNote(note: string): void {
     this.state.notes.push(note);
     this.saveState();
   }
 }
 
-module.exports = StateManager;
+export = StateManager;

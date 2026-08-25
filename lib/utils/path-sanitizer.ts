@@ -1,5 +1,5 @@
-const path = require('path');
-const fs = require('fs');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Path Sanitization Utility
@@ -14,7 +14,7 @@ const fs = require('fs');
  * @returns {string} The resolved, sanitized absolute path
  * @throws {Error} If path traversal is detected
  */
-function sanitizePath(userPath, baseDir = process.cwd()) {
+export function sanitizePath(userPath: string, baseDir: string = process.cwd()): string {
   if (!userPath || typeof userPath !== 'string') {
     throw new Error('Invalid path: path must be a non-empty string');
   }
@@ -38,7 +38,7 @@ function sanitizePath(userPath, baseDir = process.cwd()) {
  * @returns {string} The resolved, sanitized absolute path
  * @throws {Error} If path traversal is detected or file doesn't exist
  */
-function sanitizeExistingPath(userPath, baseDir = process.cwd()) {
+export function sanitizeExistingPath(userPath: string, baseDir: string = process.cwd()): string {
   const sanitized = sanitizePath(userPath, baseDir);
   
   if (!fs.existsSync(sanitized)) {
@@ -55,7 +55,7 @@ function sanitizeExistingPath(userPath, baseDir = process.cwd()) {
  * @returns {string} The resolved, sanitized absolute path
  * @throws {Error} If path traversal is detected, doesn't exist, or is a directory
  */
-function sanitizeFilePath(userPath, baseDir = process.cwd()) {
+export function sanitizeFilePath(userPath: string, baseDir: string = process.cwd()): string {
   const sanitized = sanitizeExistingPath(userPath, baseDir);
   
   const stats = fs.statSync(sanitized);
@@ -73,7 +73,7 @@ function sanitizeFilePath(userPath, baseDir = process.cwd()) {
  * @returns {string} The resolved, sanitized absolute path
  * @throws {Error} If path traversal is detected, doesn't exist, or is a file
  */
-function sanitizeDirPath(userPath, baseDir = process.cwd()) {
+export function sanitizeDirPath(userPath: string, baseDir: string = process.cwd()): string {
   const sanitized = sanitizeExistingPath(userPath, baseDir);
   
   const stats = fs.statSync(sanitized);
@@ -91,7 +91,7 @@ function sanitizeDirPath(userPath, baseDir = process.cwd()) {
  * @returns {string} The resolved, sanitized absolute path
  * @throws {Error} If path traversal is detected or parent directory doesn't exist
  */
-function sanitizeNewFilePath(userPath, baseDir = process.cwd()) {
+export function sanitizeNewFilePath(userPath: string, baseDir: string = process.cwd()): string {
   const sanitized = sanitizePath(userPath, baseDir);
   const parentDir = path.dirname(sanitized);
   
@@ -108,7 +108,7 @@ function sanitizeNewFilePath(userPath, baseDir = process.cwd()) {
  * @param {string} [baseDir] - Base directory
  * @returns {boolean} True if path is safe, false otherwise
  */
-function isPathSafe(userPath, baseDir = process.cwd()) {
+export function isPathSafe(userPath: string, baseDir: string = process.cwd()): boolean {
   try {
     sanitizePath(userPath, baseDir);
     return true;
@@ -124,17 +124,7 @@ function isPathSafe(userPath, baseDir = process.cwd()) {
  * @returns {string} The resolved, sanitized path
  * @throws {Error} If resulting path escapes boundary
  */
-function safeJoin(baseDir, ...paths) {
+export function safeJoin(baseDir: string, ...paths: string[]): string {
   const joined = path.join(...paths);
   return sanitizePath(joined, baseDir);
 }
-
-module.exports = {
-  sanitizePath,
-  sanitizeExistingPath,
-  sanitizeFilePath,
-  sanitizeDirPath,
-  sanitizeNewFilePath,
-  isPathSafe,
-  safeJoin
-};

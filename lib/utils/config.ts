@@ -4,13 +4,20 @@
  * Inspired by GSD's config system
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+import type {
+  ConfigValidationResult,
+  ReisConfig,
+  WaveSize,
+  WaveSizeDefinition
+} from '../../src/types/config.js';
 
 /**
  * Default configuration
  */
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG: ReisConfig = {
   // Wave execution settings
   waves: {
     defaultSize: 'medium', // 'small' | 'medium' | 'large'
@@ -116,7 +123,7 @@ const DEFAULT_CONFIG = {
  * @param {string} projectRoot - Project root directory
  * @returns {Object} Merged config (defaults + user config)
  */
-function loadConfig(projectRoot = process.cwd()) {
+export function loadConfig(projectRoot: string = process.cwd()): ReisConfig {
   const configPath = path.join(projectRoot, 'reis.config.js');
   
   // Start with defaults
@@ -125,7 +132,7 @@ function loadConfig(projectRoot = process.cwd()) {
   // Try to load user config
   if (fs.existsSync(configPath)) {
     try {
-      const userConfig = require(configPath);
+      const userConfig = require(configPath) as Partial<ReisConfig>;
       config = deepMerge(config, userConfig);
       
       // Validate the merged config
@@ -152,16 +159,19 @@ function loadConfig(projectRoot = process.cwd()) {
  * @param {Object} source - Source object
  * @returns {Object} Merged object
  */
-function deepMerge(target, source) {
-  const output = Object.assign({}, target);
-  
+function deepMerge<T>(target: T, source: Partial<T>): T {
+  const output = Object.assign({}, target) as T & Record<string, unknown>;
+
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
       if (isObject(source[key])) {
         if (!(key in target)) {
           Object.assign(output, { [key]: source[key] });
         } else {
-          output[key] = deepMerge(target[key], source[key]);
+          (output as Record<string, unknown>)[key] = deepMerge(
+            (target as Record<string, unknown>)[key],
+            source[key]
+          );
         }
       } else {
         Object.assign(output, { [key]: source[key] });
@@ -177,7 +187,7 @@ function deepMerge(target, source) {
  * @param {*} item - Value to check
  * @returns {boolean} True if object
  */
-function isObject(item) {
+function isObject(item: unknown): item is Record<string, unknown> {
   return item && typeof item === 'object' && !Array.isArray(item);
 }
 
@@ -186,7 +196,7 @@ function isObject(item) {
  * @param {Object} config - Config to validate
  * @returns {Object} Validation result {valid: boolean, errors: string[], warnings: string[]}
  */
-function validateGateCycleConfig(config) {
+export function validateGateCycleConfig(config: Partial<ReisConfig>): Required<Pick<ConfigValidationResult, 'errors' | 'warnings'>> & ConfigValidationResult {
   const errors = [];
   const warnings = [];
   
@@ -234,7 +244,7 @@ function validateGateCycleConfig(config) {
  * @param {Object} config - Config to validate
  * @returns {Object} Validation result {valid: boolean, errors: string[], warnings: string[]}
  */
-function validateReviewConfig(config) {
+export function validateReviewConfig(config: Partial<ReisConfig>): Required<Pick<ConfigValidationResult, 'errors' | 'warnings'>> & ConfigValidationResult {
   const errors = [];
   const warnings = [];
   
@@ -275,7 +285,7 @@ function validateReviewConfig(config) {
  * @param {Object} config - Config to validate
  * @returns {Object} Validation result {valid: boolean, errors: string[]}
  */
-function validateConfig(config) {
+export function validateConfig(config: ReisConfig): ConfigValidationResult {
   const errors = [];
   
   // Validate wave sizes
@@ -374,7 +384,7 @@ function validateConfig(config) {
  * @param {string} size - Wave size ('small' | 'medium' | 'large')
  * @returns {Object} Wave size config
  */
-function getWaveSize(config, size) {
+export function getWaveSize(config: ReisConfig, size?: WaveSize): WaveSizeDefinition {
   const waveSize = size || config.waves.defaultSize;
   return config.waves.sizes[waveSize] || config.waves.sizes.medium;
 }
@@ -383,7 +393,7 @@ function getWaveSize(config, size) {
  * Create a sample config file
  * @param {string} targetPath - Path to create config file
  */
-function createSampleConfig(targetPath) {
+export function createSampleConfig(targetPath: string): void {
   const sampleConfig = `/**
  * REIS v2.0 Configuration
  * Customize your REIS workflow
@@ -416,13 +426,3 @@ module.exports = {
   fs.writeFileSync(targetPath, sampleConfig, 'utf8');
   console.log(`✓ Created sample config at ${targetPath}`);
 }
-
-module.exports = {
-  loadConfig,
-  validateConfig,
-  validateGateCycleConfig,
-  validateReviewConfig,
-  getWaveSize,
-  createSampleConfig,
-  DEFAULT_CONFIG
-};

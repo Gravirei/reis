@@ -46,3 +46,8 @@ tmp_rovodev_*
 
 # Cycle state (temporary runtime state)
 .reis/cycle-state.json
+
+# TypeScript emit artifacts during JS->TS migration (generated from .ts sources)
+lib/utils/path-sanitizer.js
+lib/utils/config.js
+lib/utils/state-manager.js
