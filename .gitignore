@@ -133,3 +133,10 @@ lib/utils/decision-tree-exporter.js
 lib/utils/decision-tree-interactive.js
 lib/utils/visualizer.js
 lib/utils/accessibility-config.js
+
+# Local reference checkout
+temp_reference/
+lib/install.js
+lib/uninstall.js
+lib/*.d.ts
+bin/reis.js

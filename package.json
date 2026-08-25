@@ -1,8 +1,8 @@
 {
   "name": "@gravirei/reis",
-  "version": "2.8.0",
+  "version": "3.0.0",
   "description": "Roadmap Execution & Implementation System v2.0 - Wave-based execution with checkpoints, metrics, and visualization for Atlassian Rovo Dev",
-  "main": "lib/index.js",
+  "main": "lib/install.js",
   "bin": {
     "reis": "bin/reis.js"
   },
@@ -53,11 +53,16 @@
   },
   "preferGlobal": true,
   "files": [
-    "bin",
-    "lib",
-    "docs",
+    "bin/reis.js",
+    "lib/install.js",
+    "lib/install.d.ts",
+    "lib/uninstall.js",
+    "lib/uninstall.d.ts",
+    "commands",
+    "reis",
+    "hooks",
+    "agents",
     "templates",
-    "subagents",
     "examples",
     "README.md",
     "LICENSE",
@@ -65,8 +70,7 @@
   ],
   "dependencies": {
     "chalk": "^4.1.2",
-    "commander": "^11.1.0",
-    "inquirer": "^8.2.6"
+    "inquirer": "^8.2.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -593,8 +593,8 @@ reis audit milestone-1        # Integration check
 ---
 
 **Last Updated:** 2026-08-25  
-**Version:** 2.8.0  
-**REIS Version:** v2.8.0 (Full TypeScript Migration)  
+**Version:** 3.0.0  
+**REIS Version:** v3.0.0 (Agent-Native Pivot)  
 
 ### 🛠️ Build & Test Commands
 
