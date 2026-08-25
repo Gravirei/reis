@@ -3,7 +3,7 @@
  * Provides ASCII chart rendering, progress bars, and timeline visualization
  */
 
-const chalk = require('chalk');
+import chalk from 'chalk';
 
 /**
  * Create a horizontal bar chart
@@ -16,7 +16,7 @@ const chalk = require('chalk');
  * @param {string} [options.barChar='█'] - Character to use for bars
  * @returns {string} Formatted bar chart
  */
-function createBarChart(data, options = {}) {
+export function createBarChart(data: Array<{ label: string; value: number }>, options: any = {}): string {
   const {
     width = 50,
     showValues = true,
@@ -72,7 +72,7 @@ function createBarChart(data, options = {}) {
  * @param {boolean} [options.colors=true] - Enable color coding
  * @returns {string} Formatted timeline
  */
-function createTimeline(events, options = {}) {
+export function createTimeline(events: any[], options: any = {}): string {
   const {
     width = 60,
     showDates = true,
@@ -111,7 +111,7 @@ function createTimeline(events, options = {}) {
  * @param {number} [options.eta] - Estimated time to completion in ms
  * @returns {string} Formatted progress bar
  */
-function createProgressBar(current, total, options = {}) {
+export function createProgressBar(current: number, total: number, options: any = {}): string {
   const {
     width = 40,
     showPercent = true,
@@ -163,7 +163,7 @@ function createProgressBar(current, total, options = {}) {
  * @param {boolean} [options.colors=true] - Enable color coding
  * @returns {string} Formatted distribution chart
  */
-function createDistribution(data, options = {}) {
+export function createDistribution(data: number[], options: any = {}): string {
   const {
     bins = 10,
     width = 50,
@@ -224,7 +224,7 @@ function createDistribution(data, options = {}) {
  * @param {boolean} [options.colors=true] - Enable color coding for headers
  * @returns {string} Formatted table
  */
-function createTable(headers, rows, options = {}) {
+export function createTable(headers: string[], rows: any[][], options: any = {}): string {
   const {
     alignments = [],
     borders = true,
@@ -294,7 +294,7 @@ function createTable(headers, rows, options = {}) {
  * @param {number} ms - Duration in milliseconds
  * @returns {string} Formatted duration (e.g., "2h 15m", "45s")
  */
-function formatDuration(ms) {
+export function formatDuration(ms: number): string {
   if (ms < 0) return '0s';
   
   const seconds = Math.floor(ms / 1000);
@@ -323,8 +323,8 @@ function formatDuration(ms) {
  * @param {string} [format='datetime'] - Format type: 'datetime', 'date', 'time'
  * @returns {string} Formatted timestamp
  */
-function formatTimestamp(date, format = 'datetime') {
-  if (!(date instanceof Date) || isNaN(date)) {
+export function formatTimestamp(date: Date, format = 'datetime'): string {
+  if (!(date instanceof Date) || isNaN((date as unknown as number))) {
     return 'Invalid Date';
   }
 
@@ -351,7 +351,7 @@ function formatTimestamp(date, format = 'datetime') {
  * @param {number} maxLength - Maximum length
  * @returns {string} Truncated text
  */
-function truncateText(text, maxLength) {
+export function truncateText(text: string | undefined, maxLength: number): string {
   if (!text || text.length <= maxLength) {
     return text || '';
   }
@@ -364,7 +364,7 @@ function truncateText(text, maxLength) {
  * @param {boolean} [colors=true] - Enable colors
  * @returns {string} Colored status icon
  */
-function colorizeStatus(status, colors = true) {
+export function colorizeStatus(status: string | undefined, colors = true): string {
   const statusLower = (status || '').toLowerCase();
   
   let icon, color;
@@ -396,7 +396,7 @@ function colorizeStatus(status, colors = true) {
  * @param {Array<number>} values - Array of numeric values
  * @returns {Object} Statistics object with mean, median, stdDev, min, max
  */
-function calculateStats(values) {
+export function calculateStats(values: number[]): any {
   if (!values || values.length === 0) {
     return { mean: 0, median: 0, stdDev: 0, min: 0, max: 0 };
   }
@@ -430,7 +430,7 @@ function calculateStats(values) {
  * @param {Object} treeData - Tree data with branches
  * @returns {number} Total number of nodes
  */
-function countNodes(treeData) {
+export function countNodes(treeData: any): number {
   if (!treeData || !treeData.branches) return 0;
   
   let count = 0;
@@ -462,7 +462,7 @@ function countNodes(treeData) {
  * @param {boolean} [options.asciiOnly=false] - Use ASCII characters only (accessibility)
  * @returns {string} Formatted tree for terminal display
  */
-function renderDecisionTree(treeData, options = {}) {
+export function renderDecisionTree(treeData: any, options: any = {}): string {
   let {
     depth = null,
     expandAll = null,
@@ -681,7 +681,7 @@ function renderDecisionTree(treeData, options = {}) {
  * @param {Object} treeData - Parsed tree structure
  * @returns {string} Compact one-line summary
  */
-function renderTreeInline(treeData) {
+export function renderTreeInline(treeData: any): string {
   if (!treeData || !treeData.branches) {
     return '';
   }
@@ -704,7 +704,7 @@ function renderTreeInline(treeData) {
  * @param {Object} options - Rendering options
  * @returns {string} Formatted branch
  */
-function renderTreeBranch(branch, level, options = {}) {
+export function renderTreeBranch(branch: any, level: number, options: any = {}): string {
   const { showMetadata = true, indent = '  ' } = options;
   
   const prefix = indent.repeat(level);
@@ -728,19 +728,3 @@ function renderTreeBranch(branch, level, options = {}) {
   return prefix + text;
 }
 
-module.exports = {
-  createBarChart,
-  createTimeline,
-  createProgressBar,
-  createDistribution,
-  createTable,
-  formatDuration,
-  formatTimestamp,
-  truncateText,
-  colorizeStatus,
-  calculateStats,
-  countNodes,
-  renderDecisionTree,
-  renderTreeInline,
-  renderTreeBranch
-};

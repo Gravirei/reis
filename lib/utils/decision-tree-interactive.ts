@@ -8,8 +8,8 @@
  * - Breadcrumb path display
  */
 
-const inquirer = require('inquirer');
-const chalk = require('chalk');
+import inquirer from 'inquirer';
+import chalk from 'chalk';
 
 /**
  * Interactive branch selection with arrow keys
@@ -20,7 +20,7 @@ const chalk = require('chalk');
  * @param {boolean} [options.showMetadata=true] - Show metadata during selection
  * @returns {Promise<Object>} Selected branch with full path
  */
-async function selectBranch(tree, options = {}) {
+export async function selectBranch(tree: any, options: any = {}): Promise<any> {
   const {
     context = {},
     autoSelect = false,
@@ -177,7 +177,7 @@ async function selectBranch(tree, options = {}) {
  * @param {Object} tree - Parsed tree structure
  * @returns {Promise<Object>} Navigation result
  */
-async function navigateTree(tree) {
+export async function navigateTree(tree: any): Promise<any> {
   // For now, use selectBranch
   // Future: implement more advanced navigation with expand/collapse
   return selectBranch(tree);
@@ -189,7 +189,7 @@ async function navigateTree(tree) {
  * @param {Array<string>} path - Selection path
  * @returns {Promise<boolean>} True if confirmed
  */
-async function confirmSelection(branch, path) {
+export async function confirmSelection(branch: any, path: string[]): Promise<boolean> {
   console.log('');
   console.log(chalk.bold.green('✓ Selected:'));
   console.log(chalk.cyan('  ' + path.join(' → ')));
@@ -233,7 +233,7 @@ async function confirmSelection(branch, path) {
  * @param {Object} context - Additional context
  * @returns {Object} Decision record
  */
-function recordDecision(treeName, selectedBranch, context = {}) {
+export function recordDecision(treeName: string, selectedBranch: any, context: any = {}) {
   const decisionTracker = require('./decision-tracker');
   
   const decision = {
@@ -264,7 +264,7 @@ function recordDecision(treeName, selectedBranch, context = {}) {
  * @param {Array} branches - Array of branches
  * @returns {Object|null} Recommended branch or null
  */
-function findRecommendedBranch(branches) {
+export function findRecommendedBranch(branches: any[]): any {
   for (const branch of branches) {
     if (branch.metadata && branch.metadata.recommended) {
       return branch;
@@ -286,7 +286,7 @@ function findRecommendedBranch(branches) {
  * @param {Object} options - Selection options
  * @returns {Promise<Object>} Selected tree and branch
  */
-async function selectFromMultipleTrees(trees, options = {}) {
+export async function selectFromMultipleTrees(trees: any[], options: any = {}): Promise<any> {
   if (!trees || trees.length === 0) {
     throw new Error('No trees provided');
   }
@@ -333,7 +333,7 @@ async function selectFromMultipleTrees(trees, options = {}) {
  * Show decision summary after selection
  * @param {Object} selection - Selection result from selectBranch
  */
-function showDecisionSummary(selection) {
+export function showDecisionSummary(selection: any): void {
   console.log('');
   console.log(chalk.bold.green('═'.repeat(60)));
   console.log(chalk.bold.green('Decision Summary'));
@@ -365,12 +365,3 @@ function showDecisionSummary(selection) {
   console.log('');
 }
 
-module.exports = {
-  selectBranch,
-  navigateTree,
-  confirmSelection,
-  recordDecision,
-  findRecommendedBranch,
-  selectFromMultipleTrees,
-  showDecisionSummary
-};

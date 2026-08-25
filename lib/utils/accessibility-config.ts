@@ -9,7 +9,7 @@
  * @param {Object} cliFlags - Command-line flags object
  * @returns {Object} Accessibility configuration
  */
-function getAccessibilityConfig(cliFlags = {}) {
+export function getAccessibilityConfig(cliFlags: any = {}) {
   return {
     // Disable all colors (screen reader friendly)
     noColor: cliFlags.noColor || 
@@ -35,7 +35,7 @@ function getAccessibilityConfig(cliFlags = {}) {
  * @param {Object} config - Accessibility configuration
  * @returns {Object} Character set for drawing
  */
-function getBoxChars(config) {
+export function getBoxChars(config: any) {
   if (config.asciiOnly) {
     return {
       horizontal: '-',
@@ -83,7 +83,7 @@ function getBoxChars(config) {
  * @param {Object} config - Accessibility configuration
  * @returns {Object} Status icon set
  */
-function getStatusIcons(config) {
+export function getStatusIcons(config: any) {
   if (config.asciiOnly) {
     return {
       success: '[✓]',
@@ -122,7 +122,7 @@ function getStatusIcons(config) {
  * @param {Function} chalkInstance - Chalk instance
  * @returns {string} Colored or plain text
  */
-function applyColor(text, colorName, config, chalkInstance) {
+export function applyColor(text: string, colorName: string, config: any, chalkInstance: any): string {
   // No color mode
   if (config.noColor) {
     return text;
@@ -171,12 +171,12 @@ function applyColor(text, colorName, config, chalkInstance) {
  * @param {string} semanticLabel - Semantic label (heading, list-item, etc.)
  * @returns {string} Screen reader formatted text
  */
-function formatForScreenReader(text, semanticLabel = '') {
+export function formatForScreenReader(text: string, semanticLabel = ''): string {
   // Remove ANSI color codes
   const plainText = text.replace(/\x1b\[[0-9;]*m/g, '');
   
   // Add semantic labels
-  const labels = {
+  const labels: Record<string, string> = {
     heading: 'HEADING: ',
     'list-item': 'ITEM: ',
     success: 'SUCCESS: ',
@@ -195,7 +195,7 @@ function formatForScreenReader(text, semanticLabel = '') {
  * @param {Object} config - Accessibility configuration
  * @returns {string} Accessible tree rendering
  */
-function renderAccessibleTree(treeData, config) {
+export function renderAccessibleTree(treeData: any, config: any): string {
   const chars = getBoxChars(config);
   const icons = getStatusIcons(config);
   
@@ -278,7 +278,7 @@ function renderAccessibleTree(treeData, config) {
  * Get WCAG compliance notes
  * @returns {string} WCAG compliance documentation
  */
-function getWCAGNotes() {
+export function getWCAGNotes(): string {
   return `
 WCAG 2.1 Level AA Compliance Notes:
 
@@ -316,12 +316,3 @@ Command Flags:
 `;
 }
 
-module.exports = {
-  getAccessibilityConfig,
-  getBoxChars,
-  getStatusIcons,
-  applyColor,
-  formatForScreenReader,
-  renderAccessibleTree,
-  getWCAGNotes
-};

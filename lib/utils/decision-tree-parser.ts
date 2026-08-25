@@ -8,15 +8,51 @@
  * - Context evaluation
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+export interface BranchMetadata {
+  weight?: number;
+  priority?: string;
+  risk?: string;
+  complexity?: string;
+  cost?: string;
+  recommended?: boolean;
+  [key: string]: any;
+}
+
+export interface DecisionBranch {
+  text: string;
+  level?: number;
+  children?: DecisionBranch[];
+  condition?: string | null;
+  metadata?: BranchMetadata;
+  outcome?: string | null;
+}
+
+export interface ParsedDecisionTree {
+  name: string;
+  root: string;
+  branches: DecisionBranch[];
+}
+
+export interface ProjectContext {
+  [key: string]: boolean;
+}
+
+export interface TreeValidationResult {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  suggestions: string[];
+}
 
 /**
  * Parse all decision trees from markdown content
  * @param {string} markdownContent - The markdown file content
  * @returns {Array} Array of parsed tree objects
  */
-function parseDecisionTrees(markdownContent) {
+function parseDecisionTrees(markdownContent: string): ParsedDecisionTree[] {
   const trees = [];
   const lines = markdownContent.split('\n');
   
@@ -64,7 +100,7 @@ function parseDecisionTrees(markdownContent) {
  * @param {Array} lines - Lines of tree content
  * @returns {Object} Parsed tree structure
  */
-function parseTreeContent(name, lines) {
+function parseTreeContent(name: string, lines: string[]): ParsedDecisionTree | null {
   if (lines.length === 0) return null;
   
   const root = lines[0].trim();
@@ -120,7 +156,7 @@ function parseTreeContent(name, lines) {
  * @param {string} line - Branch line
  * @returns {Object|null} Parsed branch or null
  */
-function parseBranchLine(line) {
+function parseBranchLine(line: string): DecisionBranch | null {
   // Calculate indentation level
   const indent = line.search(/\S/);
   if (indent === -1) return null;
@@ -153,7 +189,7 @@ function parseBranchLine(line) {
   }
   
   // Extract metadata
-  const metadata = {};
+  const metadata: BranchMetadata = {};
   
   // Weight
   const weightMatch = content.match(/\[weight:\s*(\d+)\]/i);
@@ -209,7 +245,7 @@ function parseBranchLine(line) {
   
   // For branches with only conditions and no text, use an empty string
   // This handles cases like "├─ [IF: has_database]" which acts as a conditional parent
-  const branch = {
+  const branch: DecisionBranch = {
     text: content || '',
     level,
     children: []
@@ -227,7 +263,7 @@ function parseBranchLine(line) {
  * @param {Object} tree - Parsed tree object
  * @returns {Object} Validation result with errors and warnings
  */
-function validateTree(tree) {
+function validateTree(tree: ParsedDecisionTree | null): TreeValidationResult {
   const errors = [];
   const warnings = [];
   const suggestions = [];
@@ -294,10 +330,10 @@ function validateTree(tree) {
  * @param {Object} tree - Tree object
  * @returns {boolean} True if cycles detected
  */
-function detectCycles(tree) {
+function detectCycles(tree: ParsedDecisionTree): boolean {
   const visited = new Set();
   
-  function dfs(branch, path) {
+  function dfs(branch: DecisionBranch, path: Set<string>): boolean {
     const id = branch.text;
     
     if (path.has(id)) {
@@ -335,11 +371,11 @@ function detectCycles(tree) {
  * @param {Object} tree - Tree object
  * @returns {Array} List of orphaned branches
  */
-function findOrphanedBranches(tree) {
+function findOrphanedBranches(tree: ParsedDecisionTree): DecisionBranch[] {
   // Check if any branches have inconsistent level jumps that indicate orphaning
   const orphans = [];
   
-  function checkBranches(branches, parentLevel = 0) {
+  function checkBranches(branches: DecisionBranch[], parentLevel = 0): void {
     for (const branch of branches) {
       // Check if branch level is more than 1 greater than parent level
       if (branch.level !== undefined && branch.level > parentLevel + 1) {
@@ -361,11 +397,11 @@ function findOrphanedBranches(tree) {
  * @param {Object} tree - Tree object
  * @returns {Object} Balance information
  */
-function checkTreeBalance(tree) {
+function checkTreeBalance(tree: ParsedDecisionTree): { maxDepth: number; minDepth: number; unbalanced: boolean } {
   let maxDepth = 0;
   let minDepth = Infinity;
   
-  function measureDepth(branches, depth = 1) {
+  function measureDepth(branches: DecisionBranch[], depth = 1): void {
     for (const branch of branches) {
       if (!branch.children || branch.children.length === 0) {
         maxDepth = Math.max(maxDepth, depth);
@@ -390,10 +426,10 @@ function checkTreeBalance(tree) {
  * @param {Object} tree - Tree object
  * @returns {Array} List of incomplete conditionals
  */
-function findIncompleteConditionals(tree) {
+function findIncompleteConditionals(tree: ParsedDecisionTree): string[] {
   const incomplete = [];
   
-  function checkBranches(branches, parentText) {
+  function checkBranches(branches: DecisionBranch[], parentText: string): void {
     let hasIf = false;
     let hasElse = false;
     
@@ -424,11 +460,11 @@ function findIncompleteConditionals(tree) {
  * @param {Object} tree - Tree object
  * @returns {Array} List of validation errors and warnings
  */
-function validateMetadata(tree) {
+function validateMetadata(tree: ParsedDecisionTree): { errors: string[]; warnings: string[] } {
   const errors = [];
   const warnings = [];
   
-  function checkBranch(branch) {
+  function checkBranch(branch: DecisionBranch): void {
     if (branch.metadata) {
       const { weight, priority, risk, complexity, cost } = branch.metadata;
       
@@ -465,10 +501,10 @@ function validateMetadata(tree) {
  * @param {Object} tree - Tree object
  * @returns {Array} List of branches with invalid conditions
  */
-function validateConditionalSyntax(tree) {
+function validateConditionalSyntax(tree: ParsedDecisionTree): DecisionBranch[] {
   const invalid = [];
   
-  function checkBranch(branch) {
+  function checkBranch(branch: DecisionBranch): void {
     if (branch.condition && branch.condition !== 'ELSE') {
       // Check for obviously invalid syntax
       // Valid conditions should be alphanumeric with underscores, or boolean expressions
@@ -495,8 +531,8 @@ function validateConditionalSyntax(tree) {
  * @param {Object} tree - Tree object
  * @returns {boolean} True if recommendation exists
  */
-function hasRecommendation(tree) {
-  function checkBranch(branch) {
+function hasRecommendation(tree: ParsedDecisionTree): boolean {
+  function checkBranch(branch: DecisionBranch): boolean {
     if (branch.metadata && branch.metadata.recommended) {
       return true;
     }
@@ -515,7 +551,7 @@ function hasRecommendation(tree) {
  * @param {Object} context - Project context
  * @returns {boolean} True if condition is met
  */
-function evaluateCondition(condition, context = {}) {
+function evaluateCondition(condition: string, context: ProjectContext = {}): boolean {
   // Handle null or undefined context
   if (!context || typeof context !== 'object') {
     return false;
@@ -575,8 +611,8 @@ function evaluateCondition(condition, context = {}) {
  * @param {string} projectRoot - Project root directory
  * @returns {Object} Context object
  */
-function loadProjectContext(projectRoot = '.') {
-  const context = {};
+function loadProjectContext(projectRoot = '.'): ProjectContext {
+  const context: ProjectContext = {};
   
   // Read PROJECT.md
   const projectMdPath = path.join(projectRoot, '.planning', 'PROJECT.md');
@@ -611,7 +647,7 @@ function loadProjectContext(projectRoot = '.') {
   return context;
 }
 
-module.exports = {
+export {
   parseDecisionTrees,
   validateTree,
   detectCycles,

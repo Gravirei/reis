@@ -3,14 +3,27 @@
  * Provides semantic validation and linting for decision trees
  */
 
-const chalk = require('chalk');
+import chalk from 'chalk';
+import type { ParsedDecisionTree, DecisionBranch } from './decision-tree-parser.js';
+
+export interface LintResults {
+  valid: boolean;
+  errors: string[];
+  warnings: string[];
+  suggestions: string[];
+}
+
+export interface LintOptions {
+  colors?: boolean;
+  showSuggestions?: boolean;
+}
 
 /**
  * Lint a decision tree with semantic validation rules
  * @param {Object} tree - Parsed tree structure
  * @returns {Object} Lint results with errors, warnings, and suggestions
  */
-function lintTree(tree) {
+function lintTree(tree: ParsedDecisionTree | null): LintResults {
   if (!tree || !tree.branches) {
     return {
       valid: false,
@@ -20,7 +33,7 @@ function lintTree(tree) {
     };
   }
 
-  const results = {
+  const results: LintResults = {
     valid: true,
     errors: [],
     warnings: [],
@@ -46,11 +59,11 @@ function lintTree(tree) {
  * @param {Object} tree - Tree structure
  * @param {Object} results - Results object to populate
  */
-function checkCircularReferences(tree, results) {
+function checkCircularReferences(tree: ParsedDecisionTree, results: LintResults): void {
   const visited = new Set();
   const stack = new Set();
 
-  const detectCycle = (branch, path) => {
+  const detectCycle = (branch: DecisionBranch, path: string[]): boolean => {
     const branchId = getBranchIdentifier(branch);
     
     if (stack.has(branchId)) {
@@ -92,7 +105,7 @@ function checkCircularReferences(tree, results) {
  * @param {Object} branch - Branch object
  * @returns {string} Unique identifier
  */
-function getBranchIdentifier(branch) {
+function getBranchIdentifier(branch: DecisionBranch): string {
   return `${branch.text}|${branch.outcome || ''}|${branch.condition || ''}`;
 }
 
@@ -101,12 +114,12 @@ function getBranchIdentifier(branch) {
  * @param {Object} tree - Tree structure
  * @param {Object} results - Results object to populate
  */
-function checkOrphanBranches(tree, results) {
+function checkOrphanBranches(tree: ParsedDecisionTree, results: LintResults): void {
   // For now, we assume all branches are reachable from root
   // In a more complex implementation, we would track conditional paths
   
   const allBranches = [];
-  const collectBranches = (branches) => {
+  const collectBranches = (branches: DecisionBranch[]): void => {
     branches.forEach(branch => {
       allBranches.push(branch);
       if (branch.children && branch.children.length > 0) {
@@ -131,7 +144,7 @@ function checkOrphanBranches(tree, results) {
           .map(b => b.condition);
         
         // Simple check: warn if multiple branches have same condition
-        const conditionCounts = {};
+        const conditionCounts: Record<string, number> = {};
         ifConditions.forEach(cond => {
           conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
         });
@@ -154,10 +167,10 @@ function checkOrphanBranches(tree, results) {
  * @param {Object} targetBranch - Branch to find parent for
  * @returns {Object|null} Parent branch or null
  */
-function findParent(tree, targetBranch) {
+function findParent(tree: ParsedDecisionTree, targetBranch: DecisionBranch): DecisionBranch | null {
   let parent = null;
 
-  const search = (branches) => {
+  const search = (branches: DecisionBranch[]): boolean => {
     for (const branch of branches) {
       if (branch.children && branch.children.includes(targetBranch)) {
         parent = branch;
@@ -182,10 +195,10 @@ function findParent(tree, targetBranch) {
  * @param {Object} tree - Tree structure
  * @param {Object} results - Results object to populate
  */
-function checkUnbalancedTree(tree, results) {
+function checkUnbalancedTree(tree: ParsedDecisionTree, results: LintResults): void {
   const depths = [];
 
-  const getDepth = (branch, currentDepth = 0) => {
+  const getDepth = (branch: DecisionBranch, currentDepth = 0): void => {
     if (!branch.children || branch.children.length === 0) {
       depths.push(currentDepth);
       return;
@@ -226,7 +239,7 @@ function checkUnbalancedTree(tree, results) {
  * @param {Object} tree - Tree structure
  * @param {Object} results - Results object to populate
  */
-function checkMissingCommonOptions(tree, results) {
+function checkMissingCommonOptions(tree: ParsedDecisionTree, results: LintResults): void {
   if (!tree.branches || tree.branches.length === 0) return;
 
   const topLevelTexts = tree.branches.map(b => b.text.toLowerCase());
@@ -263,9 +276,9 @@ function checkMissingCommonOptions(tree, results) {
  * @param {Object} tree - Tree structure
  * @param {Object} results - Results object to populate
  */
-function checkMetadataConsistency(tree, results) {
+function checkMetadataConsistency(tree: ParsedDecisionTree, results: LintResults): void {
   const allBranches = [];
-  const collectBranches = (branches) => {
+  const collectBranches = (branches: DecisionBranch[]): void => {
     branches.forEach(branch => {
       allBranches.push(branch);
       if (branch.children && branch.children.length > 0) {
@@ -326,9 +339,9 @@ function checkMetadataConsistency(tree, results) {
  * @param {Object} tree - Tree structure
  * @param {Object} results - Results object to populate
  */
-function validateConditionalSyntax(tree, results) {
+function validateConditionalSyntax(tree: ParsedDecisionTree, results: LintResults): void {
   const allBranches = [];
-  const collectBranches = (branches) => {
+  const collectBranches = (branches: DecisionBranch[]): void => {
     branches.forEach(branch => {
       allBranches.push(branch);
       if (branch.children && branch.children.length > 0) {
@@ -383,10 +396,10 @@ function validateConditionalSyntax(tree, results) {
  * @param {Object} tree - Tree structure
  * @returns {Map} Map of level to branches at that level
  */
-function groupBranchesByLevel(tree) {
+function groupBranchesByLevel(tree: ParsedDecisionTree): Map<number, DecisionBranch[]> {
   const groups = new Map();
 
-  const traverse = (branches, level) => {
+  const traverse = (branches: DecisionBranch[], level: number): void => {
     if (!groups.has(level)) {
       groups.set(level, []);
     }
@@ -414,7 +427,7 @@ function groupBranchesByLevel(tree) {
  * @param {boolean} [options.showSuggestions=true] - Show suggestions
  * @returns {string} Formatted lint results
  */
-function formatLintResults(results, options = {}) {
+function formatLintResults(results: LintResults | null, options: LintOptions = {}): string {
   const { colors = true, showSuggestions = true } = options;
 
   if (!results) {
@@ -484,7 +497,7 @@ function formatLintResults(results, options = {}) {
  * @param {Object} result - Individual lint result
  * @returns {string} Severity level: 'error', 'warning', or 'info'
  */
-function getLintSeverity(result) {
+function getLintSeverity(result: any): string {
   if (!result) return 'info';
 
   // Determine severity based on message content
@@ -507,7 +520,7 @@ function getLintSeverity(result) {
   return 'info';
 }
 
-module.exports = {
+export {
   lintTree,
   formatLintResults,
   getLintSeverity

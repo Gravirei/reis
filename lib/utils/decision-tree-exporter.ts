@@ -8,8 +8,8 @@
  * - JSON (already in parser)
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Export tree to standalone HTML file
@@ -17,7 +17,7 @@ const path = require('path');
  * @param {string} [outputPath] - Output file path (optional, returns HTML if not provided)
  * @returns {string|boolean} HTML string if no outputPath, true if file written
  */
-function exportToHTML(tree, outputPath) {
+export function exportToHTML(tree: any, outputPath?: string): string | boolean {
   const html = generateHTML(tree);
   
   if (!outputPath) {
@@ -294,7 +294,7 @@ function generateHTML(tree) {
  * @param {string} [outputPath] - Output file path (optional, returns SVG if not provided)
  * @returns {string|boolean} SVG string if no outputPath, true if file written
  */
-function exportToSVG(tree, outputPath) {
+export function exportToSVG(tree: any, outputPath?: string): string | boolean {
   const svg = generateSVG(tree);
   
   if (!outputPath) {
@@ -424,7 +424,7 @@ function generateSVG(tree) {
  * @param {Object} tree - Parsed tree structure
  * @returns {string} Mermaid syntax
  */
-function exportToMermaid(tree) {
+export function exportToMermaid(tree: any): string {
   let mermaid = 'flowchart TD\n';
   let nodeId = 0;
   const nodeMap = new Map();
@@ -481,7 +481,7 @@ function exportToMermaid(tree) {
  * @param {string} basePath - Base path for output files (without extension)
  * @returns {Object} Object with paths to created files
  */
-function exportAll(tree, basePath) {
+export function exportAll(tree: any, basePath: string) {
   const paths = {
     html: basePath + '.html',
     svg: basePath + '.svg',
@@ -502,7 +502,7 @@ function exportAll(tree, basePath) {
  * @param {string} text - Text to escape
  * @returns {string} Escaped text
  */
-function escapeHTML(text) {
+function escapeHTML(text: string): string {
   if (!text) return '';
   return text
     .replace(/&/g, '&amp;')
@@ -518,14 +518,7 @@ function escapeHTML(text) {
  * @param {number} maxLength - Maximum length
  * @returns {string} Truncated text
  */
-function truncate(text, maxLength) {
-  if (!text || text.length <= maxLength) return text;
+export function truncate(text: string | undefined, maxLength: number): string {
+  if (!text || text.length <= maxLength) return text as string;
   return text.substring(0, maxLength - 3) + '...';
 }
-
-module.exports = {
-  exportToHTML,
-  exportToSVG,
-  exportToMermaid,
-  exportAll
-};

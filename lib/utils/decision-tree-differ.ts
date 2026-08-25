@@ -3,7 +3,54 @@
  * Provides tree comparison and diffing capabilities
  */
 
-const chalk = require('chalk');
+import chalk from 'chalk';
+import type { ParsedDecisionTree, DecisionBranch, BranchMetadata } from './decision-tree-parser.js';
+
+interface MappedBranch extends DecisionBranch {
+  _path: string;
+  _index: number;
+}
+
+export interface BranchModification {
+  field: string;
+  oldValue: any;
+  newValue: any;
+}
+
+export interface TreeChange {
+  type: 'added' | 'removed' | 'modified';
+  path: string;
+  branch: MappedBranch;
+  oldBranch?: DecisionBranch;
+  modifications?: BranchModification[];
+  text: string;
+}
+
+export interface TreeDiff {
+  name: any;
+  rootChanged: boolean;
+  oldRoot: string;
+  newRoot: string;
+  changes: TreeChange[];
+  stats?: {
+    added: number;
+    removed: number;
+    modified: number;
+    unchanged: number;
+  };
+}
+
+export interface DiffOptions {
+  verbose?: boolean;
+  colors?: boolean;
+}
+
+export interface Patch {
+  version: string;
+  name: any;
+  rootChange: { from: any; to: any } | null;
+  operations: any[];
+}
 
 /**
  * Compare two decision trees and generate a diff
@@ -11,12 +58,12 @@ const chalk = require('chalk');
  * @param {Object} tree2 - Second tree (new version)
  * @returns {Object} Diff object with changes
  */
-function diffTrees(tree1, tree2) {
+function diffTrees(tree1: ParsedDecisionTree | null, tree2: ParsedDecisionTree | null): TreeDiff {
   if (!tree1 || !tree2) {
     throw new Error('Both trees are required for comparison');
   }
 
-  const diff = {
+  const diff: TreeDiff = {
     name: tree2.name || tree1.name,
     rootChanged: tree1.root !== tree2.root,
     oldRoot: tree1.root,
@@ -89,7 +136,7 @@ function diffTrees(tree1, tree2) {
  * @param {string} prefix - Path prefix for nested branches
  * @returns {Map} Map of branch paths to branch objects
  */
-function createBranchMap(branches, prefix = '') {
+function createBranchMap(branches: DecisionBranch[], prefix = ''): Map<string, MappedBranch> {
   const map = new Map();
 
   branches.forEach((branch, index) => {
@@ -111,7 +158,7 @@ function createBranchMap(branches, prefix = '') {
  * @param {Object} branch - Branch object with _path property
  * @returns {string} Full path
  */
-function getBranchPath(branch) {
+function getBranchPath(branch: MappedBranch): string {
   return branch._path || branch.text;
 }
 
@@ -121,7 +168,7 @@ function getBranchPath(branch) {
  * @param {Object} branch2 - New branch
  * @returns {Array} List of modifications
  */
-function compareBranches(branch1, branch2) {
+function compareBranches(branch1: DecisionBranch, branch2: DecisionBranch): BranchModification[] {
   const modifications = [];
 
   // Compare text
@@ -157,11 +204,11 @@ function compareBranches(branch1, branch2) {
   const metadataKeys = new Set([...Object.keys(metadata1), ...Object.keys(metadata2)]);
 
   for (const key of metadataKeys) {
-    if (metadata1[key] !== metadata2[key]) {
+    if ((metadata1 as Record<string, any>)[key] !== (metadata2 as Record<string, any>)[key]) {
       modifications.push({
         field: `metadata.${key}`,
-        oldValue: metadata1[key],
-        newValue: metadata2[key]
+        oldValue: (metadata1 as Record<string, any>)[key],
+        newValue: (metadata2 as Record<string, any>)[key]
       });
     }
   }
@@ -177,7 +224,7 @@ function compareBranches(branch1, branch2) {
  * @param {boolean} [options.colors=true] - Enable color coding
  * @returns {string} Formatted diff output
  */
-function formatDiff(diff, options = {}) {
+function formatDiff(diff: TreeDiff | null, options: DiffOptions = {}): string {
   const { verbose = false, colors = true } = options;
 
   if (!diff) {
@@ -283,7 +330,7 @@ function formatDiff(diff, options = {}) {
  * @param {boolean} colors - Enable colors
  * @returns {string} Formatted metadata string
  */
-function formatMetadata(metadata, colors = true) {
+function formatMetadata(metadata: BranchMetadata, colors = true): string {
   const parts = [];
 
   if (metadata.recommended) {
@@ -307,7 +354,7 @@ function formatMetadata(metadata, colors = true) {
  * @param {Object} diff - Diff object from diffTrees()
  * @returns {Object} Patch object with operations
  */
-function generatePatch(diff) {
+function generatePatch(diff: TreeDiff | null): Patch {
   if (!diff) {
     throw new Error('Diff object is required');
   }
@@ -367,7 +414,7 @@ function generatePatch(diff) {
  * @param {Object} patch - Patch object from generatePatch()
  * @returns {Object} Patched tree
  */
-function applyPatch(tree, patch) {
+function applyPatch(tree: ParsedDecisionTree | null, patch: Patch | null): any {
   if (!tree || !patch) {
     throw new Error('Both tree and patch are required');
   }
@@ -390,7 +437,7 @@ function applyPatch(tree, patch) {
   return patchedTree;
 }
 
-module.exports = {
+export {
   diffTrees,
   formatDiff,
   generatePatch,

@@ -5,14 +5,31 @@
  * @module lib/utils/execution-coordinator
  */
 
-const EventEmitter = require('events');
-const { ParallelWaveScheduler } = require('./parallel-wave-scheduler');
+import { EventEmitter } from 'events';
+import { ParallelWaveScheduler } from './parallel-wave-scheduler.js';
 
 /**
  * Execution Coordinator
  * Handles HOW waves run in parallel: async execution, events, error handling
  */
-class ExecutionCoordinator extends EventEmitter {
+export class ExecutionCoordinator extends EventEmitter {
+  scheduler: ParallelWaveScheduler | null;
+  waveExecutors: Map<string, Function>;
+  results: Map<string, any>;
+  aborted: boolean;
+  startTime: number | null;
+  endTime: number | null;
+  options: {
+    timeout: number;
+    retryCount: number;
+    retryDelay: number;
+    stopOnFirstFailure: boolean | any;
+    onWaveStart: Function;
+    onWaveComplete: Function;
+    onWaveError: Function;
+    onBatchComplete: Function;
+  };
+
   /**
    * Create a new ExecutionCoordinator
    * @param {Object} options - Coordinator options
@@ -25,7 +42,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {Function} [options.onWaveError] - Callback when wave fails
    * @param {Function} [options.onBatchComplete] - Callback when batch completes
    */
-  constructor(options = {}) {
+  constructor(options: Record<string, any> = {}) {
     super();
     this.scheduler = null;
     this.waveExecutors = new Map(); // waveId -> executor function
@@ -51,7 +68,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {ParallelWaveScheduler} scheduler - The scheduler instance
    * @param {Object|Map} waveExecutors - Map of waveId -> async executor function
    */
-  initialize(scheduler, waveExecutors) {
+  initialize(scheduler: ParallelWaveScheduler, waveExecutors: Record<string, Function> | Map<string, Function>) {
     if (!scheduler) {
       throw new Error('Must provide a ParallelWaveScheduler instance');
     }
@@ -68,7 +85,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {Object|Map} [waveExecutor] - Optional executor map (overrides initialized executors)
    * @returns {Promise<Object>} Execution result with success status and details
    */
-  async executeAll(waveExecutor = null) {
+  async executeAll(waveExecutor: Record<string, Function> | Map<string, Function> | null = null) {
     if (!this.scheduler) {
       throw new Error('Coordinator not initialized. Call initialize() first.');
     }
@@ -167,7 +184,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {Object|Map} [waveExecutor] - Optional executor map
    * @returns {Promise<Object[]>} Array of execution results
    */
-  async executeBatch(waveIds, waveExecutor = null) {
+  async executeBatch(waveIds: string[], waveExecutor: Record<string, Function> | Map<string, Function> | null = null) {
     const executors = waveExecutor 
       ? (waveExecutor instanceof Map ? waveExecutor : new Map(Object.entries(waveExecutor)))
       : this.waveExecutors;
@@ -187,7 +204,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {Map} [executors] - Optional executor map
    * @returns {Promise<Object>} Execution result for this wave
    */
-  async executeWave(waveId, executors = null) {
+  async executeWave(waveId: string, executors: Map<string, Function> | null = null) {
     const waveExecutors = executors || this.waveExecutors;
     
     try {
@@ -222,7 +239,7 @@ class ExecutionCoordinator extends EventEmitter {
 
       return waveResult;
 
-    } catch (error) {
+    } catch (error: any) {
       // Mark as failed
       this.scheduler.markFailed(waveId, error.message);
       const waveResult = { 
@@ -247,7 +264,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {number} timeout - Timeout in milliseconds
    * @returns {Promise<any>} Executor result
    */
-  async executeWithTimeout(executor, waveId, timeout) {
+  async executeWithTimeout(executor: Function, waveId: string, timeout: number): Promise<any> {
     let timeoutId;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(
@@ -273,7 +290,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {number} maxRetries - Maximum retry attempts
    * @returns {Promise<any>} Executor result
    */
-  async executeWithRetry(executor, waveId, maxRetries) {
+  async executeWithRetry(executor: Function, waveId: string, maxRetries: number): Promise<any> {
     let lastError;
     
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
@@ -292,7 +309,7 @@ class ExecutionCoordinator extends EventEmitter {
 
         return await this.executeWithTimeout(executor, waveId, this.options.timeout);
 
-      } catch (error) {
+      } catch (error: any) {
         lastError = error;
         if (attempt < maxRetries) {
           this.emit('waveRetryFailed', { 
@@ -363,7 +380,7 @@ class ExecutionCoordinator extends EventEmitter {
    * Recover from a saved checkpoint
    * @param {Object} checkpoint - Previously saved checkpoint
    */
-  recoverFromCheckpoint(checkpoint) {
+  recoverFromCheckpoint(checkpoint: Record<string, any>) {
     if (!this.scheduler || !checkpoint) {
       throw new Error('Scheduler must be initialized and checkpoint must be provided');
     }
@@ -423,9 +440,7 @@ class ExecutionCoordinator extends EventEmitter {
    * @param {number} ms - Milliseconds to sleep
    * @returns {Promise<void>}
    */
-  _sleep(ms) {
+  _sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
-
-module.exports = { ExecutionCoordinator };

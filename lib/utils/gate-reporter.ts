@@ -20,7 +20,21 @@ interface GateResultLike {
   toJSON?(): SerializedGateResult;
 }
 
-type GateSummary = Record<string, number>;
+interface GateSummary {
+  total?: number;
+  passed?: number;
+  warning?: number;
+  failed?: number;
+  skipped?: number;
+  error?: number;
+  duration?: number;
+  hasPassed?: boolean;
+  hasWarnings?: boolean;
+  hasFailed?: boolean;
+  overallStatus?: string;
+  byCategory?: Record<string, unknown>;
+  [key: string]: unknown;
+}
 
 export interface GateReporterOptions {
   format?: 'ascii' | 'json' | 'markdown';

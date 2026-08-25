@@ -3,19 +3,30 @@
  * @module lib/utils/gate-runner
  */
 
-const chalk = require('chalk');
-const { EventEmitter } = require('events');
+import chalk from 'chalk';
+import { EventEmitter } from 'events';
+
+export type GateStatus = 'pending' | 'running' | 'passed' | 'warning' | 'failed' | 'skipped' | 'error';
 
 /**
  * Gate result structure
  */
-class GateResult {
+export class GateResult {
+  gateName: string;
+  category: string;
+  status: GateStatus;
+  message: string;
+  details: unknown[];
+  duration: number;
+  timestamp: string | null;
+  errorDetails: string | null;
+
   /**
    * Create a gate result
    * @param {string} gateName - Name of the gate
    * @param {string} category - Category (security, quality, performance, accessibility)
    */
-  constructor(gateName, category) {
+  constructor(gateName: string, category: string) {
     this.gateName = gateName;
     this.category = category;
     this.status = 'pending'; // 'pending' | 'running' | 'passed' | 'warning' | 'failed' | 'skipped' | 'error'
@@ -31,7 +42,7 @@ class GateResult {
    * @param {string} message - Success message
    * @param {Array} details - Detail items
    */
-  pass(message, details = []) {
+  pass(message: string, details: unknown[] = []) {
     this.status = 'passed';
     this.message = message;
     this.details = details;
@@ -44,7 +55,7 @@ class GateResult {
    * @param {string} message - Warning message
    * @param {Array} details - Detail items
    */
-  warn(message, details = []) {
+  warn(message: string, details: unknown[] = []) {
     this.status = 'warning';
     this.message = message;
     this.details = details;
@@ -57,7 +68,7 @@ class GateResult {
    * @param {string} message - Failure message
    * @param {Array} details - Detail items
    */
-  fail(message, details = []) {
+  fail(message: string, details: unknown[] = []) {
     this.status = 'failed';
     this.message = message;
     this.details = details;
@@ -69,7 +80,7 @@ class GateResult {
    * Mark gate as skipped
    * @param {string} message - Skip reason
    */
-  skip(message) {
+  skip(message: string) {
     this.status = 'skipped';
     this.message = message;
     this.timestamp = new Date().toISOString();
@@ -81,7 +92,7 @@ class GateResult {
    * @param {string} message - Error message
    * @param {Error} err - Error object
    */
-  setError(message, err = null) {
+  setError(message: string, err: Error | null = null) {
     this.status = 'error';
     this.message = message;
     this.errorDetails = err ? err.message : null;
@@ -110,14 +121,19 @@ class GateResult {
 /**
  * Base gate class - extend this for custom gates
  */
-class BaseGate {
+export class BaseGate {
+  name: string;
+  category: string;
+  config: Record<string, unknown>;
+  enabled: boolean;
+
   /**
    * Create a base gate
    * @param {string} name - Gate name
    * @param {string} category - Gate category
    * @param {Object} config - Gate configuration
    */
-  constructor(name, category, config = {}) {
+  constructor(name: string, category: string, config: Record<string, unknown> = {}) {
     this.name = name;
     this.category = category;
     this.config = config;
@@ -157,12 +173,19 @@ class BaseGate {
 /**
  * Gate Runner - executes and manages quality gates
  */
-class GateRunner extends EventEmitter {
+export class GateRunner extends EventEmitter {
+  config: Record<string, unknown>;
+  gates: Map<string, BaseGate>;
+  results: GateResult[];
+  timeout: number;
+  isRunning: boolean;
+  aborted: boolean;
+
   /**
    * Create a gate runner
    * @param {Object} config - Runner configuration
    */
-  constructor(config = {}) {
+  constructor(config: Record<string, any> = {}) {
     super();
     this.config = config;
     this.gates = new Map(); // gateName -> gateInstance
@@ -177,7 +200,7 @@ class GateRunner extends EventEmitter {
    * @param {string} name - Gate name
    * @param {BaseGate} gate - Gate instance
    */
-  registerGate(name, gate) {
+  registerGate(name: string, gate: BaseGate) {
     if (!(gate instanceof BaseGate)) {
       throw new Error(`Gate must extend BaseGate: ${name}`);
     }
@@ -190,7 +213,7 @@ class GateRunner extends EventEmitter {
    * Unregister a gate
    * @param {string} name - Gate name
    */
-  unregisterGate(name) {
+  unregisterGate(name: string) {
     const removed = this.gates.delete(name);
     if (removed) {
       this.emit('gate:unregistered', { name });
@@ -203,7 +226,7 @@ class GateRunner extends EventEmitter {
    * @param {string} name - Gate name
    * @returns {BaseGate|undefined}
    */
-  getGate(name) {
+  getGate(name: string): BaseGate | undefined {
     return this.gates.get(name);
   }
 
@@ -220,7 +243,7 @@ class GateRunner extends EventEmitter {
    * @param {Object} options - Run options
    * @returns {Promise<Array<GateResult>>}
    */
-  async runAll(options = {}) {
+  async runAll(options: Record<string, any> = {}) {
     this.reset();
     this.isRunning = true;
     this.emit('run:start', { total: this.gates.size });
@@ -260,7 +283,7 @@ class GateRunner extends EventEmitter {
    * @param {Object} options - Run options
    * @returns {Promise<Array<GateResult>>}
    */
-  async runCategory(category, options = {}) {
+  async runCategory(category: string, options: Record<string, any> = {}) {
     this.reset();
     this.isRunning = true;
 
@@ -304,11 +327,11 @@ class GateRunner extends EventEmitter {
    * @param {Object} options - Run options
    * @returns {Promise<GateResult>}
    */
-  async runGate(name, options = {}) {
+  async runGate(name: string, options: Record<string, any> = {}) {
     const gate = this.gates.get(name);
     if (!gate) {
       const result = new GateResult(name, 'unknown');
-      result.error(`Gate not found: ${name}`);
+      (result as any).error(`Gate not found: ${name}`);
       return result;
     }
 
@@ -344,7 +367,7 @@ class GateRunner extends EventEmitter {
    * @param {number} timeout - Timeout in milliseconds
    * @returns {Promise<GateResult>}
    */
-  async executeWithTimeout(gate, timeout) {
+  async executeWithTimeout(gate: BaseGate, timeout: number): Promise<GateResult> {
     let timeoutId;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(
@@ -356,7 +379,7 @@ class GateRunner extends EventEmitter {
     try {
       const result = await Promise.race([gate.run(), timeoutPromise]);
       clearTimeout(timeoutId);
-      return result;
+      return result as GateResult;
     } catch (error) {
       clearTimeout(timeoutId);
       throw error;
@@ -470,5 +493,3 @@ class GateRunner extends EventEmitter {
     this.aborted = false;
   }
 }
-
-module.exports = { GateRunner, GateResult, BaseGate };

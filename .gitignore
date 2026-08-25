@@ -124,3 +124,12 @@ lib/utils/command-helpers.js
 bin/reis.js
 lib/install.js
 lib/index.js
+lib/utils/gate-runner.js
+lib/utils/execution-coordinator.js
+lib/utils/decision-tree-parser.js
+lib/utils/decision-tree-linter.js
+lib/utils/decision-tree-differ.js
+lib/utils/decision-tree-exporter.js
+lib/utils/decision-tree-interactive.js
+lib/utils/visualizer.js
+lib/utils/accessibility-config.js
