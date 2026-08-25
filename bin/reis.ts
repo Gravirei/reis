@@ -25,34 +25,30 @@ function showBanner() {
 
 // Check if REIS is already installed
 function checkExistingInstallation() {
-  const targets = [];
-  const rovodevDir = path.join(os.homedir(), '.rovodev', 'reis');
-  const geminiDir = path.join(os.homedir(), '.gemini', 'reis');
-  
-  if (fs.existsSync(rovodevDir)) {
+  const targets: string[] = [];
+  const platformDirs: Record<string, string> = {
+    rovodev: '.rovodev',
+    gemini: '.gemini',
+    claude: '.claude',
+    codex: '.codex',
+    copilot: '.copilot'
+  };
+
+  for (const [key, dirName] of Object.entries(platformDirs)) {
+    const reisDir = path.join(os.homedir(), dirName, 'reis');
     try {
-      const files = fs.readdirSync(rovodevDir);
-      // If directory has files (not just .first-run-done), it's installed
-      if (files.some(f => f !== '.first-run-done' && f !== '.installed')) {
-        targets.push('rovodev');
+      if (fs.existsSync(reisDir)) {
+        const files = fs.readdirSync(reisDir);
+        // If directory has files (not just .first-run-done), it's installed
+        if (files.some(f => f !== '.first-run-done' && f !== '.installed')) {
+          targets.push(key);
+        }
       }
     } catch (err) {
       // Ignore
     }
   }
-  
-  if (fs.existsSync(geminiDir)) {
-    try {
-      const files = fs.readdirSync(geminiDir);
-      // If directory has files (not just .first-run-done), it's installed
-      if (files.some(f => f !== '.first-run-done' && f !== '.installed')) {
-        targets.push('gemini');
-      }
-    } catch (err) {
-      // Ignore
-    }
-  }
-  
+
   return targets;
 }
 
@@ -542,24 +538,27 @@ program.action(async () => {
       if (reinstall) {
         const { target } = await inquirer.prompt([
           {
-            type: 'list',
+            type: 'checkbox',
             name: 'target',
-            message: 'Where would you like to reinstall REIS?',
+            message: 'Which AI CLI tools should REIS be reinstalled for?',
             choices: [
-              { name: 'Both (Atlassian Rovo Dev & Gemini CLI)', value: 'both' },
               { name: 'Atlassian Rovo Dev (~/.rovodev)', value: 'rovodev' },
-              { name: 'Gemini CLI (~/.gemini)', value: 'gemini' }
+              { name: 'Gemini CLI (~/.gemini)', value: 'gemini' },
+              { name: 'Claude Code (~/.claude)', value: 'claude' },
+              { name: 'OpenAI Codex (~/.codex, TOML agents)', value: 'codex' },
+              { name: 'GitHub Copilot CLI (~/.copilot, .agent.md)', value: 'copilot' }
             ],
-            default: 'both'
+            default: ['rovodev', 'gemini'],
+            validate: (answers: string[]) => answers.length > 0 || 'Select at least one target.'
           }
         ]);
-        
+
         // Perform installation directly with overwrite
         const { performInstallation } = require('../lib/install.js');
-        await performInstallation(true, true, target); // overwrite=true, silent=true
-        
+        await performInstallation(true, true, target.join(',')); // overwrite=true, silent=true
+
         console.log(chalk.green('  ✓ REIS reinstalled successfully'));
-        console.log(chalk.gray(`  Location: ${target === 'both' ? '~/.rovodev/reis/ and ~/.gemini/reis/' : '~/.' + target + '/reis/'}`));
+        console.log(chalk.gray(`  Locations: ${target.map((t: string) => '~/.' + t + '/reis/').join(', ')}`));
         console.log(chalk.white(`  Open your CLI and run ${chalk.cyan('reis help')} to get started\n`));
       } else {
         console.log(chalk.cyan('  Keeping existing installation\n'));

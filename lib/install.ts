@@ -26,6 +26,125 @@ const isSudo = process.getuid && process.getuid() === 0;
 const hasInteractiveStdin = process.stdin.isTTY && !process.stdin.destroyed && typeof process.stdin.read === 'function';
 const isInteractive = !isCIEnvironment && !isSudo && hasInteractiveStdin;
 
+// Supported installation platforms
+interface PlatformConfig {
+  key: string;
+  baseDir: string;
+  agentsDirName: string;
+  agentExtension: string;
+  transform: 'rovodev' | 'strip-tools' | 'codex-toml';
+  clientName: string;
+}
+
+const PLATFORMS: Record<string, PlatformConfig> = {
+  rovodev: {
+    key: 'rovodev',
+    baseDir: '.rovodev',
+    agentsDirName: 'subagents',
+    agentExtension: '.md',
+    transform: 'rovodev',
+    clientName: 'Atlassian Rovo Dev'
+  },
+  gemini: {
+    key: 'gemini',
+    baseDir: '.gemini',
+    agentsDirName: 'agents',
+    agentExtension: '.md',
+    transform: 'strip-tools',
+    clientName: 'Gemini CLI'
+  },
+  claude: {
+    key: 'claude',
+    baseDir: '.claude',
+    agentsDirName: 'agents',
+    agentExtension: '.md',
+    transform: 'strip-tools',
+    clientName: 'Claude Code'
+  },
+  codex: {
+    key: 'codex',
+    baseDir: '.codex',
+    agentsDirName: 'agents',
+    agentExtension: '.toml',
+    transform: 'codex-toml',
+    clientName: 'OpenAI Codex'
+  },
+  copilot: {
+    key: 'copilot',
+    baseDir: '.copilot',
+    agentsDirName: 'agents',
+    agentExtension: '.agent.md',
+    transform: 'strip-tools',
+    clientName: 'GitHub Copilot CLI'
+  }
+};
+
+const ALL_PLATFORM_KEYS = Object.keys(PLATFORMS);
+
+function resolvePlatforms(target: string): PlatformConfig[] {
+  if (target === 'all') {
+    return ALL_PLATFORM_KEYS.map(k => PLATFORMS[k]);
+  }
+  if (target === 'both') {
+    return [PLATFORMS.rovodev, PLATFORMS.gemini];
+  }
+  return target
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => PLATFORMS[t])
+    .map(t => PLATFORMS[t]);
+}
+
+// Parse YAML frontmatter from a subagent markdown file
+function parseFrontmatter(content: string): { fields: Record<string, string>; body: string } | null {
+  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!match) {
+    return null;
+  }
+  const fields: Record<string, string> = {};
+  let currentKey = '';
+  const lines = match[1].split('\n');
+  for (const line of lines) {
+    const kv = line.match(/^([a-zA-Z_-]+):\s*(.*)$/);
+    if (kv && !line.startsWith(' ')) {
+      currentKey = kv[1];
+      fields[currentKey] = kv[2].trim();
+    } else if (currentKey && line.startsWith('- ')) {
+      // list item - keep only the first for scalar use
+      if (!(currentKey in fields)) {
+        fields[currentKey] = line.substring(2).trim();
+      }
+    }
+  }
+  return { fields, body: match[2].trim() };
+}
+
+// Convert a subagent markdown file to Codex TOML format
+function toCodexTOML(content: string, fileName: string): string | null {
+  const parsed = parseFrontmatter(content);
+  if (!parsed) {
+    console.log(chalk.yellow(`  ⚠ Skipping ${fileName}: no frontmatter found`));
+    return null;
+  }
+  const name = parsed.fields.name || fileName.replace(/\.md$/, '');
+  const description = (parsed.fields.description || '').replace(/"/g, '\\"');
+  // Literal multiline string ('''): no escape processing; guard the delimiter
+  const instructions = parsed.body.replace(/'''/g, "''\\''");
+  return [
+    `name = "${name}"`,
+    `description = "${description}"`,
+    `developer_instructions = '''`,
+    instructions,
+    `'''`,
+    ''
+  ].join('\n');
+}
+
+// Strip the tools array from frontmatter (for CLIs that don't support it)
+function stripToolsBlock(content: string): string {
+  return content.replace(/^tools:\n(?:- .*\n)+/m, '');
+}
+
 // Main installation function
 async function install() {
   try {
@@ -53,7 +172,7 @@ async function install() {
     
     // Interactive mode - show prompt
     if (!isSilentMode) {
-      console.log(chalk.white('This will install REIS files to ~/.rovodev/reis/ and/or ~/.gemini/reis/\n'));
+      console.log(chalk.white('This will install REIS files for your AI CLI tools:\n  ~/.rovodev  ~/.gemini  ~/.claude  ~/.codex  ~/.copilot\n'));
     }
     
     // Double-check we can actually prompt
@@ -69,20 +188,23 @@ async function install() {
       // Prompt for installation target
       const { target } = await inquirer.prompt([
         {
-          type: 'list',
+          type: 'checkbox',
           name: 'target',
-          message: 'Where would you like to install REIS?',
+          message: 'Which AI CLI tools should REIS be installed for?',
           choices: [
-            { name: 'Both (Atlassian Rovo Dev & Gemini CLI)', value: 'both' },
             { name: 'Atlassian Rovo Dev (~/.rovodev)', value: 'rovodev' },
-            { name: 'Gemini CLI (~/.gemini)', value: 'gemini' }
+            { name: 'Gemini CLI (~/.gemini)', value: 'gemini' },
+            { name: 'Claude Code (~/.claude)', value: 'claude' },
+            { name: 'OpenAI Codex (~/.codex, TOML agents)', value: 'codex' },
+            { name: 'GitHub Copilot CLI (~/.copilot, .agent.md)', value: 'copilot' }
           ],
-          default: 'both'
+          default: ['rovodev', 'gemini'],
+          validate: (answers: string[]) => answers.length > 0 || 'Select at least one target.'
         }
       ]);
-      
+
       console.log('');
-      await performInstallation(false, false, target);
+      await performInstallation(false, false, target.join(','));
     } catch (promptError) {
       // inquirer failed, install anyway
       if (!isSilentMode) {
@@ -99,31 +221,28 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'both') {
+async function performInstallation(overwrite = false, silent = false, target = 'all') {
   const homeDir = os.homedir();
-  
-  const platforms = target === 'both' ? ['rovodev', 'gemini'] : [target];
+  const platforms = resolvePlatforms(target);
   let totalFiles = 0;
-  
+
   for (const platform of platforms) {
-    const baseDirName = platform === 'gemini' ? '.gemini' : '.rovodev';
-    const baseDir = path.join(homeDir, baseDirName);
-    
+    const baseDir = path.join(homeDir, platform.baseDir);
+
     // Define target directories
     const reisDir = path.join(baseDir, 'reis');
     const templatesDir = path.join(reisDir, 'templates');
-    const agentsDirName = platform === 'gemini' ? 'agents' : 'subagents';
-    const subagentsDir = path.join(baseDir, agentsDirName);
-    
+    const subagentsDir = path.join(baseDir, platform.agentsDirName);
+
     // Create directories
     ensureDir(reisDir);
     ensureDir(templatesDir);
     ensureDir(subagentsDir);
-    
+
     // Copy files
     const packageDir = path.join(__dirname, '..');
     let fileCount = 0;
-    
+
     // Copy documentation files from docs/ to ~/<baseDir>/reis/
     const docsDir = path.join(packageDir, 'docs');
     if (fs.existsSync(docsDir)) {
@@ -136,43 +255,55 @@ async function performInstallation(overwrite = false, silent = false, target = '
         }
       });
     }
-    
+
     // Copy templates from templates/ to ~/<baseDir>/reis/templates/
     const templatesSourceDir = path.join(packageDir, 'templates');
     if (fs.existsSync(templatesSourceDir)) {
       const count = copyDirectory(templatesSourceDir, templatesDir, overwrite);
       fileCount += count;
     }
-    
-    // Copy subagents from subagents/ to ~/<baseDir>/subagents/
+
+    // Copy subagents from subagents/ to the platform agents directory
     // ALWAYS overwrite subagents - they should stay up-to-date with package version
     const subagentsSourceDir = path.join(packageDir, 'subagents');
     if (fs.existsSync(subagentsSourceDir)) {
       const subagentFiles = fs.readdirSync(subagentsSourceDir);
       subagentFiles.forEach(file => {
+        if (!file.endsWith('.md')) {
+          return;
+        }
         const src = path.join(subagentsSourceDir, file);
-        const dest = path.join(subagentsDir, file);
-        // Always overwrite subagent files to ensure they're up-to-date
-        if (platform === 'gemini' && file.endsWith('.md')) {
-          try {
-            let content = fs.readFileSync(src, 'utf8');
-            // Remove the tools array from YAML frontmatter for Gemini CLI
-            content = content.replace(/^tools:\n(?:- .*\n)+/m, '');
-            fs.writeFileSync(dest, content);
-            fileCount++;
-          } catch (e) {
-            console.log(chalk.yellow(`  ⚠ Failed to process ${file}: ${(e as any).message}`));
+        try {
+          const content = fs.readFileSync(src, 'utf8');
+
+          if (platform.transform === 'codex-toml') {
+            const toml = toCodexTOML(content, file);
+            if (toml) {
+              const parsed = parseFrontmatter(content);
+              const name = (parsed && parsed.fields.name) || file.replace(/\.md$/, '');
+              const dest = path.join(subagentsDir, `${name}.toml`);
+              fs.writeFileSync(dest, toml);
+              fileCount++;
+            }
+            return;
           }
-        } else {
-          if (copyFile(src, dest, true)) {
-            fileCount++;
-          }
+
+          const outContent = platform.transform === 'strip-tools'
+            ? stripToolsBlock(content)
+            : content;
+          const parsed = parseFrontmatter(content);
+          const name = (parsed && parsed.fields.name) || file.replace(/\.md$/, '');
+          const dest = path.join(subagentsDir, `${name}${platform.agentExtension}`);
+          fs.writeFileSync(dest, outContent);
+          fileCount++;
+        } catch (e) {
+          console.log(chalk.yellow(`  ⚠ Failed to process ${file}: ${(e as any).message}`));
         }
       });
     }
-    
+
     totalFiles += fileCount;
-    
+
     // Success message and next steps (only when called standalone)
     if (!silent) {
       showSuccessMessage(fileCount, platform);
@@ -265,15 +396,11 @@ function copyDirectory(srcDir: string, destDir: string, overwrite = false) {
 }
 
 // Show success message with next steps
-function showSuccessMessage(fileCount: number, platform: string) {
-  const isGemini = platform === 'gemini';
-  const dirName = isGemini ? '.gemini' : '.rovodev';
-  const clientName = isGemini ? 'Gemini CLI' : 'Atlassian Rovo Dev';
-  
-  console.log(chalk.green(`\n✓ Installation complete for ${clientName}\n`));
-  console.log(chalk.gray(`  Location: ~/${dirName}/reis/`));
+function showSuccessMessage(fileCount: number, platform: PlatformConfig) {
+  console.log(chalk.green(`\n✓ Installation complete for ${platform.clientName}\n`));
+  console.log(chalk.gray(`  Location: ~/${platform.baseDir}/reis/`));
   console.log(chalk.white(`  Installed ${fileCount} files`));
-  console.log(chalk.white(`  Open ${clientName} and run ${chalk.cyan('reis help')} to get started\n`));
+  console.log(chalk.white(`  Open ${platform.clientName} and run ${chalk.cyan('reis help')} to get started\n`));
 }
 
 // Run installation if called directly
