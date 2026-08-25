@@ -99,6 +99,12 @@ All commands run inside your AI tool via its invocation syntax above.
 | `milestone` | Manage milestone lifecycle |
 | `roadmap-edit` | Add / insert / remove roadmap phases |
 | `config` | Manage REIS configuration |
+| `autonomous` | Run all remaining phases hands-off with per-phase reporting |
+| `ship` | Create a PR from verified work using verification evidence |
+| `stats` | Aggregate project metrics: coverage, completion, timeline |
+| `extract-learnings` | Mine decisions/patterns/surprises into LEARNINGS.md |
+| `ingest-docs` | Bootstrap `.planning/` from existing ADRs/PRDs/specs |
+| `forensics` | Post-mortem audit when a REIS workflow itself fails |
 
 ## Subagents
 
