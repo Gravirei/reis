@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { PatternMatcher } from '../../pattern-matcher.js';
-import { testPatterns } from '../fixtures/test-issues.js';
+import { PatternMatcher } from '../../../../lib/utils/pattern-matcher.js';
+import { testPatterns } from '../integration/fixtures/test-issues.js';
 import type { IssueClassification, DebugPattern } from '../../types.js';
 import { mkdirSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';

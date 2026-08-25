@@ -14,7 +14,6 @@ const { loadConfig } = require('../../lib/utils/config');
 const { createBarChart, createProgressBar } = require('../../lib/utils/visualizer');
 
 describe('Phase 4 E2E Workflow Tests', function() {
-  this.timeout(20000);
   
   let testRoot;
   let originalCwd;

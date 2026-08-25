@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { IssueClassifier } from '../../issue-classifier.js';
-import { testIssues } from '../fixtures/test-issues.js';
+import { IssueClassifier } from '../../../../lib/utils/issue-classifier.js';
+import { testIssues } from '../integration/fixtures/test-issues.js';
 
 describe('IssueClassifier', () => {
   let classifier: IssueClassifier;

@@ -5,39 +5,26 @@ const os = require('os');
 
 // Mock the command-helpers module
 let mockPlanningDir = true;
-let capturedPrompt = null;
-let capturedError = null;
-let capturedSuccess = null;
-let capturedInfo = null;
+let mockCapturedPrompt = null;
+let mockCapturedError = null;
+let mockCapturedSuccess = null;
+let mockCapturedInfo = null;
 
-const mockHelpers = {
+jest.mock('../../lib/utils/command-helpers', () => ({
   checkPlanningDir: () => mockPlanningDir,
-  showPrompt: (prompt) => { capturedPrompt = prompt; },
-  showError: (msg) => { capturedError = msg; },
-  showSuccess: (msg) => { capturedSuccess = msg; },
+  showPrompt: (prompt) => { mockCapturedPrompt = prompt; },
+  showError: (msg) => { mockCapturedError = msg; },
+  showSuccess: (msg) => { mockCapturedSuccess = msg; },
   showWarning: (msg) => {},
-  showInfo: (msg) => { capturedInfo = msg; }
-};
+  showInfo: (msg) => { mockCapturedInfo = msg; }
+}));
 
 // Mock subagent-invoker
-const mockInvokeSubagent = async (name, args) => {
-  return { success: true, issues: [] };
-};
-
-// Override require cache
-require.cache[require.resolve('../../lib/utils/command-helpers')] = {
-  id: require.resolve('../../lib/utils/command-helpers'),
-  filename: require.resolve('../../lib/utils/command-helpers'),
-  loaded: true,
-  exports: mockHelpers
-};
-
-require.cache[require.resolve('../../lib/utils/subagent-invoker')] = {
-  id: require.resolve('../../lib/utils/subagent-invoker'),
-  filename: require.resolve('../../lib/utils/subagent-invoker'),
-  loaded: true,
-  exports: { invokeSubagent: mockInvokeSubagent }
-};
+jest.mock('../../lib/utils/subagent-invoker', () => ({
+  invokeSubagent: async (name, args) => {
+    return { success: true, issues: [] };
+  }
+}));
 
 const audit = require('../../lib/commands/audit');
 
@@ -45,7 +32,7 @@ describe('Audit Command', () => {
   const testDir = path.join(os.tmpdir(), 'reis-audit-test-' + Date.now());
   const planningDir = path.join(testDir, '.planning');
   
-  before(() => {
+  beforeAll(() => {
     // Create test directory structure
     fs.mkdirSync(planningDir, { recursive: true });
     fs.mkdirSync(path.join(planningDir, 'phases'), { recursive: true });
@@ -74,17 +61,17 @@ Phase 2
 `);
   });
   
-  after(() => {
+  afterAll(() => {
     // Cleanup
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   beforeEach(() => {
     mockPlanningDir = true;
-    capturedPrompt = null;
-    capturedError = null;
-    capturedSuccess = null;
-    capturedInfo = null;
+    mockCapturedPrompt = null;
+    mockCapturedError = null;
+    mockCapturedSuccess = null;
+    mockCapturedInfo = null;
   });
 
   describe('Validation', () => {
@@ -92,7 +79,7 @@ Phase 2
       mockPlanningDir = false;
       const result = await audit({ milestone: 'v1.0' });
       assert.strictEqual(result, 1);
-      assert.ok(capturedError.includes('Not a REIS project'));
+      assert.ok(mockCapturedError.includes('Not a REIS project'));
     });
   });
 
@@ -101,14 +88,14 @@ Phase 2
       const result = await audit({ milestone: 'v1.0' });
       assert.strictEqual(result, 0);
       // Info message should contain the milestone
-      assert.ok(capturedInfo && capturedInfo.includes('v1.0'));
+      assert.ok(mockCapturedInfo && mockCapturedInfo.includes('v1.0'));
     });
 
     it('should audit all phases when no milestone specified', async () => {
       const result = await audit({});
       assert.strictEqual(result, 0);
       // Should mention auditing all phases
-      assert.ok(capturedInfo && capturedInfo.includes('all'));
+      assert.ok(mockCapturedInfo && mockCapturedInfo.includes('all'));
     });
 
     it('should return success for valid audit', async () => {

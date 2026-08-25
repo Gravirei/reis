@@ -6,6 +6,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { execSync } = require('child_process');
 const { loadConfig } = require('../../lib/utils/config');
 const StateManager = require('../../lib/utils/state-manager');
@@ -13,7 +14,7 @@ const { WaveExecutor } = require('../../lib/utils/wave-executor');
 const { isGitRepo, getGitInfo } = require('../../lib/utils/git-integration');
 
 describe('Phase 1 Integration Tests', () => {
-  const testRoot = path.join(__dirname, '../tmp_integration_test');
+  const testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-integration-'));
   
   beforeEach(() => {
     // Clean up and create test directory

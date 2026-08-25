@@ -11,9 +11,10 @@ const { exportToHTML, exportToSVG, exportToMermaid } = require('../../lib/utils/
 const { recordDecision, selectBranch, navigateTree } = require('../../lib/utils/decision-tree-interactive');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 // Temporary test directory for file operations
-const testDir = path.join(__dirname, '../tmp_test_decision_trees');
+const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-decision-trees-'));
 
 describe('Decision Tree Parser', () => {
   describe('Parse Simple Trees', () => {

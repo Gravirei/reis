@@ -5,10 +5,11 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { WaveExecutor, Wave } = require('../../lib/utils/wave-executor');
 
 describe('WaveExecutor', () => {
-  const testRoot = path.join(__dirname, '../tmp_test_waves');
+  const testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-waves-'));
   
   beforeEach(() => {
     // Clean up and create test directory

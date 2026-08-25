@@ -11,11 +11,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "dev": "tsc --watch -p tsconfig.json",
     "lint": "eslint .",
-    "test": "mocha test/**/*.test.js --timeout 5000",
+    "test": "jest --selectProjects suite --silent",
     "pretest": "npm run build",
     "prepare": "npm run build",
-    "test:watch": "mocha test/**/*.test.js --watch",
-    "postinstall": "node lib/install.js --silent"
+    "postinstall": "node lib/install.js --silent",
+    "test:perf": "jest --selectProjects perf --silent"
   },
   "keywords": [
     "reis",
@@ -71,11 +71,13 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/inquirer": "^9.0.10",
+    "@types/jest": "^30.0.0",
     "@types/node": "^26.3.0",
     "eslint": "^10.9.1",
     "globals": "^17.11.0",
-    "mocha": "^11.3.0",
+    "jest": "^30.4.2",
     "playwright": "^1.58.0",
+    "ts-jest": "^29.4.12",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.68.0"
   }

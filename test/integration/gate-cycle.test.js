@@ -6,7 +6,6 @@ const assert = require('assert');
 const path = require('path');
 
 describe('Gate-Cycle Integration', function() {
-  this.timeout(30000); // Gates can take time
 
   describe('Cycle Orchestrator Gate Phase', function() {
     const { runCycle } = require('../../lib/utils/cycle-orchestrator');

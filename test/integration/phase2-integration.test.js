@@ -14,7 +14,6 @@ const { getGitStatus, getGitInfo } = require('../../lib/utils/git-integration');
 
 describe('Phase 2 Integration Tests', function() {
   // Increase timeout for integration tests
-  this.timeout(10000);
   
   let testRoot;
   let originalCwd;
@@ -241,8 +240,8 @@ Test file exists
       const configPath = path.join(testRoot, 'reis.config.js');
       fs.writeFileSync(configPath, configContent, 'utf8');
       
-      // Clear require cache
-      delete require.cache[require.resolve(configPath)];
+      // Reset Jest module registry so the rewritten config is reloaded
+      jest.resetModules();
       
       let config = loadConfig(testRoot);
       assert.strictEqual(config.git.autoCommit, false, 'autoCommit should be false');
@@ -254,8 +253,8 @@ Test file exists
 };`;
       fs.writeFileSync(configPath, configContent, 'utf8');
       
-      // Clear require cache again
-      delete require.cache[require.resolve(configPath)];
+      // Reset Jest module registry again
+      jest.resetModules();
       
       config = loadConfig(testRoot);
       assert.strictEqual(config.git.autoCommit, true);
@@ -471,7 +470,6 @@ Test file exists
 
   describe('Performance', () => {
     it('should handle large plans efficiently', function() {
-      this.timeout(5000);
       
       const stateManager = new StateManager(testRoot);
       const startTime = Date.now();
@@ -492,7 +490,6 @@ Test file exists
     });
     
     it('should handle many checkpoints efficiently', function() {
-      this.timeout(5000);
       
       const stateManager = new StateManager(testRoot);
       const startTime = Date.now();
@@ -512,7 +509,6 @@ Test file exists
     });
     
     it('should handle large STATE.md efficiently', function() {
-      this.timeout(5000);
       
       const stateManager = new StateManager(testRoot);
       

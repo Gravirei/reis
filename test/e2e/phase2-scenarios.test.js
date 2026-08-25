@@ -11,7 +11,6 @@ const { execSync } = require('child_process');
 
 describe('Phase 2 E2E Scenarios', function() {
   // E2E tests may take longer
-  this.timeout(15000);
   
   let testRoot;
   let originalCwd;
@@ -289,9 +288,9 @@ Implement user authentication with email/password
 };`;
       fs.writeFileSync('reis.config.js', smallConfig, 'utf8');
       
-      // Clear cache and load
+      // Reset Jest module registry so the rewritten config is reloaded
       const configPath = path.join(testRoot, 'reis.config.js');
-      delete require.cache[require.resolve(configPath)];
+      jest.resetModules();
       let config = loadConfig(testRoot);
       
       assert.strictEqual(config.waves.defaultSize, 'small');
@@ -314,7 +313,7 @@ Implement user authentication with email/password
 };`;
       fs.writeFileSync('reis.config.js', largeConfig, 'utf8');
       
-      delete require.cache[require.resolve(configPath)];
+      jest.resetModules();
       config = loadConfig(testRoot);
       
       assert.strictEqual(config.waves.defaultSize, 'large');
@@ -338,7 +337,7 @@ Implement user authentication with email/password
 };`;
       fs.writeFileSync('reis.config.js', invalidConfig, 'utf8');
       
-      delete require.cache[require.resolve(configPath)];
+      jest.resetModules();
       
       // Should fall back to defaults on invalid config
       const configWithErrors = loadConfig(testRoot);

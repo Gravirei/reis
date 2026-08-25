@@ -6,7 +6,6 @@ const { runCycle } = require('../../lib/utils/cycle-orchestrator');
 const cycleCommand = require('../../lib/commands/cycle');
 
 describe('Cycle Command', function() {
-  this.timeout(5000);
   
   afterEach(() => {
     // Clean up state file

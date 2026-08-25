@@ -16,7 +16,6 @@ const { getGitStatus, createStructuredCommit, commitCheckpoint, getCurrentCommit
 const { validatePlan } = require('../../lib/utils/plan-validator');
 
 describe('Error Recovery & Edge Cases', function() {
-  this.timeout(15000);
   
   let testRoot;
   let originalCwd;

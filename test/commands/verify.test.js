@@ -16,7 +16,7 @@ describe('verify command', function() {
   let originalCwd;
   let fixtureDir;
 
-  before(function() {
+  beforeAll(function() {
     // Set up test fixtures directory
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-verify-test-'));
     originalCwd = process.cwd();
@@ -26,7 +26,7 @@ describe('verify command', function() {
     setupTestFixtures(testDir);
   });
 
-  after(function() {
+  afterAll(function() {
     // Clean up test fixtures
     process.chdir(originalCwd);
     cleanupTestFixtures(testDir);

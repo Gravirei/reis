@@ -6,6 +6,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 // Import all modules to test
 const { WaveDependencyGraph } = require('../../lib/utils/wave-dependency-graph');
@@ -17,7 +18,6 @@ const { ConflictResolver, ResolutionStrategy } = require('../../lib/utils/confli
 const { ParallelStateTracker } = require('../../lib/utils/parallel-state-tracker');
 
 describe('Parallel Wave Execution', function() {
-  this.timeout(10000);
 
   // ============================================
   // WaveDependencyGraph Tests
@@ -135,7 +135,7 @@ describe('Parallel Wave Execution', function() {
   // ============================================
   describe('DependencyParser', function() {
     let parser;
-    const testDir = path.join(__dirname, '../tmp_rovodev_parser_test');
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-parser-'));
 
     beforeEach(function() {
       parser = new DependencyParser();
@@ -772,7 +772,7 @@ describe('Parallel Wave Execution', function() {
   // ============================================
   describe('ParallelStateTracker', function() {
     let tracker;
-    const testDir = path.join(__dirname, '../tmp_rovodev_state_test');
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-state2-'));
     const stateFile = path.join(testDir, 'parallel-state.json');
 
     beforeEach(function() {
@@ -883,7 +883,7 @@ describe('Parallel Wave Execution', function() {
   // Integration Tests
   // ============================================
   describe('Integration', function() {
-    const testDir = path.join(__dirname, '../tmp_rovodev_integration_test');
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-pwint-'));
 
     beforeEach(function() {
       if (!fs.existsSync(testDir)) {

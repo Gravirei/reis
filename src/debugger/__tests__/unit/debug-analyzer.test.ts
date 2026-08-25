@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { DebugAnalyzer } from '../../debug-analyzer.js';
-import { testIssues } from '../fixtures/test-issues.js';
+import { DebugAnalyzer } from '../../../../lib/utils/debug-analyzer.js';
+import { testIssues } from '../integration/fixtures/test-issues.js';
 import type { IssueClassification } from '../../types.js';
 
 describe('DebugAnalyzer', () => {

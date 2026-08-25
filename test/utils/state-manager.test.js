@@ -5,10 +5,11 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const StateManager = require('../../lib/utils/state-manager');
 
 describe('StateManager', () => {
-  const testRoot = path.join(__dirname, '../tmp_test_state');
+  const testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-state-'));
   
   beforeEach(() => {
     // Clean up test directory
