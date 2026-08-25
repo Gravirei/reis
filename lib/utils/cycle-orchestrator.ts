@@ -1,17 +1,34 @@
-const fs = require('fs');
-const path = require('path');
-const chalk = require('chalk');
-const stateManager = require('./cycle-state-manager');
-const { parseDecisionTrees } = require('./decision-tree-parser');
-const { renderDecisionTree } = require('./visualizer');
-const { checkPlanningDir } = require('./command-helpers');
-const { invokeSubagent } = require('./subagent-invoker');
-const { PlanReviewer } = require('./plan-reviewer');
+import fs from 'fs';
+import path from 'path';
+import chalk from 'chalk';
+import * as stateManager from './cycle-state-manager.js';
+import { parseDecisionTrees } from './decision-tree-parser.js';
+import { renderDecisionTree } from './visualizer.js';
+import { checkPlanningDir } from './command-helpers.js';
+import { invokeSubagent } from './subagent-invoker.js';
+import { PlanReviewer } from './plan-reviewer.js';
 
 /**
  * Cycle Orchestrator
  * Orchestrates the complete PLAN → EXECUTE → VERIFY → DEBUG → FIX cycle
  */
+
+interface CycleOptions {
+  maxAttempts?: number;
+  autoFix?: boolean;
+  continueOnFail?: boolean;
+  verbose?: boolean;
+  resume?: boolean;
+  research?: boolean;
+  fullResearch?: boolean;
+  quick?: boolean;
+  skipReview?: boolean;
+  skipGates?: boolean;
+  strict?: boolean;
+  timeout?: number;
+  gateOnly?: string;
+  autoCommit?: boolean;
+}
 
 /**
  * Run complete cycle for a phase or plan
@@ -27,7 +44,7 @@ const { PlanReviewer } = require('./plan-reviewer');
  * @param {boolean} options.quick - Fast mode: skip research, review, and gates
  * @returns {Object} Cycle result
  */
-async function runCycle(phaseOrPlan, options = {}) {
+async function runCycle(phaseOrPlan: number | string, options: CycleOptions = {}) {
   const startTime = Date.now();
   
   // Set defaults
@@ -110,7 +127,7 @@ async function runCycle(phaseOrPlan, options = {}) {
 /**
  * Resume interrupted cycle
  */
-async function resumeCycle(options) {
+async function resumeCycle(options: CycleOptions) {
   const state = stateManager.loadState();
   
   if (!state || !stateManager.isResumable()) {
@@ -192,13 +209,13 @@ async function resumeCycle(options) {
 /**
  * Initialize cycle state
  */
-async function initializeCycle(phaseOrPlan, options) {
+async function initializeCycle(phaseOrPlan: number | string, options: CycleOptions) {
   // Determine plan path
   let planPath;
   
-  if (typeof phaseOrPlan === 'number' || /^\d+$/.test(phaseOrPlan)) {
+  if (typeof phaseOrPlan === 'number' || /^\d+$/.test(phaseOrPlan as string)) {
     // Phase number provided
-    const phase = parseInt(phaseOrPlan);
+    const phase = parseInt(phaseOrPlan as string);
     planPath = path.join(process.cwd(), '.planning', `phase-${phase}.PLAN.md`);
   } else if (phaseOrPlan) {
     // Plan path provided
@@ -210,7 +227,7 @@ async function initializeCycle(phaseOrPlan, options) {
   // Check if plan exists
   if (!fs.existsSync(planPath)) {
     // Offer to generate plan
-    const error = new Error(`Plan not found: ${planPath}`);
+    const error: any = new Error(`Plan not found: ${planPath}`);
     error.code = 'PLAN_NOT_FOUND';
     error.suggestion = `Run "reis plan ${phaseOrPlan}" to generate it`;
     throw error;
@@ -243,7 +260,7 @@ async function initializeCycle(phaseOrPlan, options) {
  * Step 0a: Research (optional)
  * Runs reis_scout for phase-specific research
  */
-async function executeResearchStep(phaseOrPlan, options) {
+async function executeResearchStep(phaseOrPlan: number | string, options: CycleOptions) {
   stateManager.updateState('RESEARCHING', 'pending', 'Running phase research');
   
   if (options.verbose) {
@@ -257,8 +274,8 @@ async function executeResearchStep(phaseOrPlan, options) {
       fs.mkdirSync(researchDir, { recursive: true });
     }
     
-    const phase = typeof phaseOrPlan === 'number' || /^\d+$/.test(phaseOrPlan) 
-      ? parseInt(phaseOrPlan) 
+    const phase = typeof phaseOrPlan === 'number' || /^\d+$/.test(phaseOrPlan as string) 
+      ? parseInt(phaseOrPlan as string) 
       : 'custom';
     
     const result = await invokeSubagent('reis_scout', {
@@ -292,7 +309,7 @@ async function executeResearchStep(phaseOrPlan, options) {
  * Step 0b: Full Research (optional)
  * Runs reis_analyst (project-level) + reis_scout (phase-level)
  */
-async function executeFullResearchStep(phaseOrPlan, options) {
+async function executeFullResearchStep(phaseOrPlan: number | string, options: CycleOptions) {
   stateManager.updateState('RESEARCHING', 'pending', 'Running full research');
   
   if (options.verbose) {
@@ -335,7 +352,7 @@ async function executeFullResearchStep(phaseOrPlan, options) {
 /**
  * Step 1: Planning
  */
-async function executePlanningStep(planPath, options) {
+async function executePlanningStep(planPath: string, options: CycleOptions) {
   stateManager.updateState('PLANNING', 'pending', 'Validating plan');
   
   if (options.verbose) {
@@ -346,21 +363,21 @@ async function executePlanningStep(planPath, options) {
   try {
     // Validate plan exists and has content
     if (!fs.existsSync(planPath)) {
-      const error = new Error(`Plan not found: ${planPath}`);
+      const error: any = new Error(`Plan not found: ${planPath}`);
       error.code = 'PLAN_NOT_FOUND';
       throw error;
     }
     
     const planContent = fs.readFileSync(planPath, 'utf8');
     if (planContent.length < 100) {
-      const error = new Error('Plan appears to be empty or invalid');
+      const error: any = new Error('Plan appears to be empty or invalid');
       error.code = 'INVALID_PLAN';
       throw error;
     }
     
     // Validate plan structure (basic check)
     if (!planContent.includes('## Task') && !planContent.includes('<task')) {
-      const error = new Error('Plan does not contain any tasks');
+      const error: any = new Error('Plan does not contain any tasks');
       error.code = 'INVALID_PLAN';
       error.suggestion = 'Ensure plan follows REIS PLAN.md format';
       throw error;
@@ -383,7 +400,7 @@ async function executePlanningStep(planPath, options) {
  * @param {Object} options - Review options
  * @returns {Object} Review result
  */
-async function executeReviewStep(planPath, options = {}) {
+async function executeReviewStep(planPath: string, options: CycleOptions = {}) {
   stateManager.updateState('REVIEWING', 'pending', 'Reviewing plans against codebase');
   
   if (options.verbose) {
@@ -432,7 +449,7 @@ async function executeReviewStep(planPath, options = {}) {
 /**
  * Step 2: Executing
  */
-async function executeExecutionStep(planPath, options) {
+async function executeExecutionStep(planPath: string, options: CycleOptions) {
   stateManager.updateState('EXECUTING', 'pending', 'Running plan');
   
   // Show decision trees before execution
@@ -477,7 +494,7 @@ async function executeExecutionStep(planPath, options) {
     
   } catch (error) {
     stateManager.updateState('EXECUTING', 'failure', error.message);
-    const executionError = new Error(`Execution failed: ${error.message}`);
+    const executionError: any = new Error(`Execution failed: ${error.message}`);
     executionError.code = 'EXECUTION_FAILED';
     executionError.originalError = error;
     throw executionError;
@@ -487,7 +504,7 @@ async function executeExecutionStep(planPath, options) {
 /**
  * Step 3: Verification Loop (with debug/fix)
  */
-async function executeVerificationLoop(planPath, options) {
+async function executeVerificationLoop(planPath: string, options: CycleOptions) {
   let attempt = stateManager.loadState()?.attempts || 0;
   
   while (attempt < options.maxAttempts) {
@@ -552,7 +569,7 @@ async function executeVerificationLoop(planPath, options) {
       console.log(chalk.gray('  3. Increase max attempts: reis cycle --max-attempts 5'));
       console.log(chalk.gray('  4. Skip verification: reis cycle --continue-on-fail\n'));
       
-      const error = new Error('Max verification attempts reached');
+      const error: any = new Error('Max verification attempts reached');
       error.code = 'MAX_ATTEMPTS_REACHED';
       error.attempts = attempt;
       error.maxAttempts = options.maxAttempts;
@@ -575,7 +592,7 @@ async function executeVerificationLoop(planPath, options) {
 /**
  * Step 3a: Verification
  */
-async function executeVerificationStep(planPath, options) {
+async function executeVerificationStep(planPath: string, options: CycleOptions) {
   stateManager.updateState('VERIFYING', 'pending', 'Running verification');
   
   // Show decision trees before verification
@@ -644,7 +661,7 @@ async function executeVerificationStep(planPath, options) {
     
   } catch (error) {
     stateManager.updateState('VERIFYING', 'failure', error.message);
-    const verifyError = new Error(`Verification failed: ${error.message}`);
+    const verifyError: any = new Error(`Verification failed: ${error.message}`);
     verifyError.code = 'VERIFICATION_FAILED';
     verifyError.originalError = error;
     throw verifyError;
@@ -654,7 +671,7 @@ async function executeVerificationStep(planPath, options) {
 /**
  * Step 3b: Debugging
  */
-async function executeDebuggingStep(planPath, verifyResult, options) {
+async function executeDebuggingStep(planPath: string, verifyResult: any, options: CycleOptions) {
   stateManager.updateState('DEBUGGING', 'pending', 'Analyzing failures');
   
   // Show decision trees before debugging
@@ -670,7 +687,7 @@ async function executeDebuggingStep(planPath, verifyResult, options) {
     const lastPlanPath = planPath;
     
     // Run debug analysis using reis_debugger subagent
-    const debugResult = await invokeSubagent('reis_debugger', {
+    const debugResult: any = await invokeSubagent('reis_debugger', {
       verbose: options.verbose,
       timeout: options.timeout || 300000,
       additionalContext: {
@@ -703,7 +720,7 @@ async function executeDebuggingStep(planPath, verifyResult, options) {
     
   } catch (error) {
     stateManager.updateState('DEBUGGING', 'failure', error.message);
-    const debugError = new Error(`Debugging failed: ${error.message}`);
+    const debugError: any = new Error(`Debugging failed: ${error.message}`);
     debugError.code = 'DEBUG_FAILED';
     debugError.originalError = error;
     throw debugError;
@@ -713,7 +730,7 @@ async function executeDebuggingStep(planPath, verifyResult, options) {
 /**
  * Step 3c: Fixing
  */
-async function executeFixingStep(planPath, debugResult, options) {
+async function executeFixingStep(planPath: string, debugResult: any, options: CycleOptions) {
   stateManager.updateState('FIXING', 'pending', 'Applying fix');
   
   if (options.verbose) {
@@ -723,7 +740,7 @@ async function executeFixingStep(planPath, debugResult, options) {
   try {
     // Check if fix plan exists
     if (!fs.existsSync(debugResult.fixPlanPath)) {
-      const error = new Error('Fix plan not found');
+      const error: any = new Error('Fix plan not found');
       error.code = 'FIX_PLAN_NOT_FOUND';
       error.expectedPath = debugResult.fixPlanPath;
       throw error;
@@ -737,7 +754,7 @@ async function executeFixingStep(planPath, debugResult, options) {
         output: process.stdout
       });
       
-      const answer = await new Promise(resolve => {
+      const answer: string = await new Promise(resolve => {
         rl.question(chalk.yellow('Apply fix? (Y/n): '), answer => {
           rl.close();
           resolve(answer);
@@ -745,7 +762,7 @@ async function executeFixingStep(planPath, debugResult, options) {
       });
       
       if (answer.toLowerCase() === 'n') {
-        const error = new Error('Fix declined by user');
+        const error: any = new Error('Fix declined by user');
         error.code = 'FIX_DECLINED';
         throw error;
       }
@@ -785,7 +802,7 @@ async function executeFixingStep(planPath, debugResult, options) {
     }
     
     // Otherwise wrap in fixing error
-    const fixError = new Error(`Fix failed: ${error.message}`);
+    const fixError: any = new Error(`Fix failed: ${error.message}`);
     fixError.code = 'FIX_FAILED';
     fixError.originalError = error;
     throw fixError;
@@ -798,7 +815,7 @@ async function executeFixingStep(planPath, debugResult, options) {
  * @param {Object} options - Execution options
  * @returns {Object} Gate execution result
  */
-async function executeGateStep(planPath, options = {}) {
+async function executeGateStep(planPath: string, options: CycleOptions = {}) {
   const { runAllGates, runCategoryGates } = require('../commands/gate');
   const { loadConfig } = require('./config');
   
@@ -863,7 +880,7 @@ async function executeGateStep(planPath, options = {}) {
  * @param {Object} gateResult - Gate execution result
  * @returns {string[]} Array of issue strings
  */
-function formatGateIssues(gateResult) {
+function formatGateIssues(gateResult: any): string[] {
   const issues = [];
   if (gateResult.results) {
     for (const result of gateResult.results) {
@@ -886,7 +903,7 @@ function formatGateIssues(gateResult) {
 /**
  * Step 4: Completion
  */
-async function executeCompletionStep(planPath, verifyResult, options) {
+async function executeCompletionStep(planPath: string, verifyResult: any, options: CycleOptions) {
   stateManager.updateState('COMPLETE', 'success', 'Cycle complete');
   
   // Update STATE.md
@@ -903,7 +920,7 @@ async function executeCompletionStep(planPath, verifyResult, options) {
 /**
  * Update STATE.md with cycle completion
  */
-async function updateStateFile(planPath, options) {
+async function updateStateFile(planPath: string, options: CycleOptions) {
   const statePath = path.join(process.cwd(), '.planning', 'STATE.md');
   
   if (!fs.existsSync(statePath)) {
@@ -920,7 +937,7 @@ async function updateStateFile(planPath, options) {
   if (cycleState?.startTime) {
     const startTime = new Date(cycleState.startTime);
     const endTime = new Date();
-    const durationMs = endTime - startTime;
+    const durationMs = (endTime as any) - (startTime as any);
     const minutes = Math.floor(durationMs / 60000);
     const seconds = Math.floor((durationMs % 60000) / 1000);
     duration = `${minutes}m ${seconds}s`;
@@ -950,7 +967,7 @@ async function updateStateFile(planPath, options) {
  * @param {string|number} phase - Phase identifier
  * @param {Object} cycleResult - Cycle result data
  */
-function appendCompletionRecord(phase, cycleResult) {
+function appendCompletionRecord(phase: string | number, cycleResult: any) {
   const statePath = path.join(process.cwd(), '.planning', 'STATE.md');
   
   const record = `
@@ -995,7 +1012,7 @@ setupInterruptHandler();
  * @param {string} transition - Transition name (e.g., 'PLAN → EXECUTE')
  * @param {Object} options - Cycle options
  */
-async function showDecisionTreesAtTransition(planPath, transition, options) {
+async function showDecisionTreesAtTransition(planPath: string, transition: string, options: CycleOptions) {
   try {
     // Read plan content
     if (!fs.existsSync(planPath)) {
@@ -1032,7 +1049,7 @@ async function showDecisionTreesAtTransition(planPath, transition, options) {
       output: process.stdout
     });
     
-    const answer = await new Promise(resolve => {
+    const answer: string = await new Promise(resolve => {
       rl.question('', answer => {
         rl.close();
         resolve(answer);
@@ -1054,8 +1071,4 @@ async function showDecisionTreesAtTransition(planPath, transition, options) {
   }
 }
 
-module.exports = {
-  runCycle,
-  resumeCycle,
-  executeReviewStep
-};
+export { runCycle, resumeCycle, executeReviewStep };

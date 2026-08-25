@@ -3,25 +3,38 @@
  * Parse PLAN.md into waves and execute them sequentially or in parallel
  */
 
-const fs = require('fs');
-const path = require('path');
-const StateManager = require('./state-manager');
-const { loadConfig, getWaveSize } = require('./config');
-const { commitWaveCompletion, isGitRepo, getGitStatus } = require('./git-integration');
+import fs from 'fs';
+import path from 'path';
+import StateManager from './state-manager.js';
+import { loadConfig, getWaveSize } from './config.js';
+import { commitWaveCompletion, isGitRepo, getGitStatus } from './git-integration.js';
 
 // Parallel execution modules (Phase 1-3)
-const { WaveDependencyGraph } = require('./wave-dependency-graph');
-const { DependencyParser } = require('./dependency-parser');
-const { ParallelWaveScheduler } = require('./parallel-wave-scheduler');
-const { ExecutionCoordinator } = require('./execution-coordinator');
-const { WaveConflictDetector } = require('./wave-conflict-detector');
-const { ConflictResolver } = require('./conflict-resolver');
+import { WaveDependencyGraph } from './wave-dependency-graph.js';
+import { DependencyParser } from './dependency-parser.js';
+import { ParallelWaveScheduler } from './parallel-wave-scheduler.js';
+import { ExecutionCoordinator } from './execution-coordinator.js';
+import { WaveConflictDetector } from './wave-conflict-detector.js';
+import { ConflictResolver } from './conflict-resolver.js';
+import type { ReisConfig, WaveSize } from '../../src/types/config.js';
 
 /**
  * Wave structure
  */
-class Wave {
-  constructor(id, name, size, tasks = []) {
+export class Wave {
+  id: number;
+  name: string;
+  size: WaveSize;
+  tasks: string[];
+  status: string;
+  startTime: Date | null;
+  endTime: Date | null;
+  commit: string | null;
+  error: any;
+  dependencies?: string[];
+  parallelGroup?: string | null;
+
+  constructor(id: number, name: string, size: WaveSize, tasks: string[] = []) {
     this.id = id;
     this.name = name;
     this.size = size; // 'small' | 'medium' | 'large'
@@ -51,7 +64,7 @@ class Wave {
 
   getDuration() {
     if (!this.startTime || !this.endTime) return null;
-    const diffMs = this.endTime - this.startTime;
+    const diffMs = (this.endTime as unknown as number) - (this.startTime as unknown as number);
     return Math.round(diffMs / 1000 / 60); // minutes
   }
 }
@@ -59,8 +72,24 @@ class Wave {
 /**
  * Wave Executor
  */
-class WaveExecutor {
-  constructor(projectRoot = process.cwd()) {
+export class WaveExecutor {
+  projectRoot: string;
+  planningDir: string;
+  planPath: string;
+  config: ReisConfig;
+  stateManager: StateManager;
+  waves: Wave[];
+  currentWaveIndex: number;
+  maxConcurrent: number;
+  parallelMode: boolean;
+  dependencyGraph: WaveDependencyGraph | null;
+  scheduler: ParallelWaveScheduler | null;
+  coordinator: ExecutionCoordinator | null;
+  conflictDetector: WaveConflictDetector | null;
+  conflictResolver: ConflictResolver | null;
+  parallelState: { running: Set<string>; completed: Set<string>; pending: Set<string>; failed: Set<string> };
+
+  constructor(projectRoot: string = process.cwd()) {
     this.projectRoot = projectRoot;
     this.planningDir = path.join(projectRoot, '.planning');
     this.planPath = path.join(this.planningDir, 'PLAN.md');
@@ -136,7 +165,7 @@ class WaveExecutor {
         // Create new wave
         const waveNumber = parseInt(waveMatch[1]);
         const waveName = waveMatch[2].trim();
-        const waveSize = waveMatch[4] || this.config.waves.defaultSize;
+        const waveSize = (waveMatch[4] || this.config.waves.defaultSize) as WaveSize;
 
         currentWave = new Wave(waveId++, `Wave ${waveNumber}: ${waveName}`, waveSize, []);
         inWaveSection = true;
@@ -255,7 +284,7 @@ class WaveExecutor {
   /**
    * Complete current wave
    */
-  completeCurrentWave(options = {}) {
+  completeCurrentWave(options: any = {}) {
     const currentWave = this.getCurrentWave();
     
     if (!currentWave) {
@@ -523,7 +552,7 @@ class WaveExecutor {
    * @param {number} [options.timeout=300000] - Timeout per wave in ms
    * @param {boolean} [options.stopOnFirstFailure=false] - Stop on first failure
    */
-  initializeParallel(options = {}) {
+  initializeParallel(options: any = {}) {
     // Build dependency graph if not already built
     if (!this.dependencyGraph) {
       this.buildDependencyGraph();
@@ -568,7 +597,7 @@ class WaveExecutor {
    * @param {boolean} [options.checkConflicts=true] - Check for file conflicts
    * @returns {Promise<Object>} Execution results
    */
-  async executeParallel(options = {}) {
+  async executeParallel(options: any = {}) {
     const { waveExecutor, dryRun = false, checkConflicts = true } = options;
 
     // Initialize if not already done
@@ -628,7 +657,7 @@ class WaveExecutor {
     }));
 
     // Detect conflicts
-    const conflicts = this.conflictDetector.detectBatchConflicts(waveData);
+    const conflicts = (this.conflictDetector as any).detectBatchConflicts(waveData);
 
     if (conflicts.length === 0) {
       return { canProceed: true, conflicts: [], resolution: null };
@@ -754,7 +783,7 @@ class WaveExecutor {
    * @param {Object} results - Results from coordinator
    */
   _updateWaveStatusesFromResults(results) {
-    for (const [waveId, result] of Object.entries(results)) {
+    for (const [waveId, result] of Object.entries(results) as [string, any][]) {
       const idx = parseInt(waveId.replace('Wave ', '')) - 1;
       const wave = this.waves[idx];
       
@@ -922,5 +951,3 @@ class WaveExecutor {
     }
   }
 }
-
-module.exports = { WaveExecutor, Wave };

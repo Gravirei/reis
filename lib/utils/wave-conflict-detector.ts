@@ -1,18 +1,18 @@
 /**
  * REIS Wave Conflict Detector
  * Detects file conflicts between waves that might run in parallel
- * 
+ *
  * @module lib/utils/wave-conflict-detector
  */
 
-const chalk = require('chalk');
-const path = require('path');
+import chalk from 'chalk';
+import path from 'path';
 
 /**
  * Conflict severity levels
  * @enum {string}
  */
-const ConflictSeverity = {
+export const ConflictSeverity = {
   HIGH: 'high',     // Same file modified by multiple waves
   MEDIUM: 'medium', // Same directory modified
   LOW: 'low'        // Same pattern area (e.g., both touch frontend)
@@ -22,7 +22,7 @@ const ConflictSeverity = {
  * Conflict types
  * @enum {string}
  */
-const ConflictType = {
+export const ConflictType = {
   DIRECT: 'direct',       // Same exact file
   DIRECTORY: 'directory', // Same directory
   PATTERN: 'pattern'      // Same pattern area
@@ -31,7 +31,7 @@ const ConflictType = {
 /**
  * Default file pattern configuration by area
  */
-const DEFAULT_FILE_PATTERNS = {
+export const DEFAULT_FILE_PATTERNS: Record<string, string[]> = {
   backend: ['src/api/**', 'src/models/**', 'prisma/**', 'src/services/**', 'lib/api/**'],
   frontend: ['src/components/**', 'src/pages/**', 'src/hooks/**', 'src/app/**'],
   shared: ['src/types/**', 'src/utils/**', 'src/config/**', 'lib/utils/**'],
@@ -42,7 +42,11 @@ const DEFAULT_FILE_PATTERNS = {
 /**
  * WaveConflictDetector - Identifies file conflicts between parallel waves
  */
-class WaveConflictDetector {
+export class WaveConflictDetector {
+  filePatterns: Record<string, string[]>;
+  strictMode: boolean;
+  ignorePatterns: string[];
+
   /**
    * Create a new WaveConflictDetector
    * @param {Object} options - Detector options
@@ -50,7 +54,7 @@ class WaveConflictDetector {
    * @param {boolean} [options.strictMode=false] - Fail on any overlap
    * @param {string[]} [options.ignorePatterns] - Patterns to ignore in conflict detection
    */
-  constructor(options = {}) {
+  constructor(options: any = {}) {
     this.filePatterns = options.filePatterns || DEFAULT_FILE_PATTERNS;
     this.strictMode = options.strictMode || false;
     this.ignorePatterns = options.ignorePatterns || ['*.md', '*.txt', 'README*', 'LICENSE*'];
@@ -61,19 +65,19 @@ class WaveConflictDetector {
    * @param {Object} wave - Wave object with id, tasks, and optional filePatterns
    * @returns {Object} Analysis result with files, patterns, and areas
    */
-  analyzeWave(wave) {
+  analyzeWave(wave: any): { waveId: any; files: string[]; patterns: string[]; areas: string[] } {
     const result = {
       waveId: wave.id,
-      files: new Set(),
-      patterns: new Set(),
-      areas: new Set()
+      files: new Set<string>(),
+      patterns: new Set<string>(),
+      areas: new Set<string>()
     };
 
     // If wave has explicit filePatterns, use them
     if (wave.filePatterns && Array.isArray(wave.filePatterns)) {
       for (const pattern of wave.filePatterns) {
         result.patterns.add(pattern);
-        
+
         // Determine which area this pattern belongs to
         for (const [area, areaPatterns] of Object.entries(this.filePatterns)) {
           for (const areaPattern of areaPatterns) {
@@ -96,7 +100,7 @@ class WaveConflictDetector {
             result.patterns.add(file);
           }
         }
-        
+
         // Handle string tasks - try to extract file paths
         if (typeof task === 'string') {
           const fileMatches = task.match(/[\w\-./]+\.(js|ts|jsx|tsx|json|css|scss|md)/g);
@@ -124,12 +128,12 @@ class WaveConflictDetector {
    * @param {Object} waveB - Second wave
    * @returns {Object|null} Conflict object if conflicts exist, null otherwise
    */
-  detectConflicts(waveA, waveB) {
+  detectConflicts(waveA: any, waveB: any): any {
     const analysisA = this.analyzeWave(waveA);
     const analysisB = this.analyzeWave(waveB);
 
     const overlaps = [];
-    const conflicts = {
+    const conflicts: Record<string, { patternA: string; patternB: string }[]> = {
       direct: [],    // Same file
       directory: [], // Same directory
       pattern: []    // Same pattern area
@@ -179,7 +183,7 @@ class WaveConflictDetector {
    * @param {Object} [dependencyGraph] - Optional dependency graph to check parallel eligibility
    * @returns {Array} Array of conflict objects
    */
-  detectAllConflicts(waves, dependencyGraph = null) {
+  detectAllConflicts(waves: any[], dependencyGraph: any = null): any[] {
     const allConflicts = [];
 
     for (let i = 0; i < waves.length; i++) {
@@ -210,9 +214,9 @@ class WaveConflictDetector {
    * @param {Array} waves - Array of wave objects
    * @returns {Array} Array of wave groups that can safely run together
    */
-  suggestGroups(waves) {
+  suggestGroups(waves: any[]): { group: number; waves: any[]; canRunInParallel: boolean; reason: string }[] {
     // Build conflict adjacency map
-    const conflictMap = new Map();
+    const conflictMap = new Map<any, Set<any>>();
     for (const wave of waves) {
       conflictMap.set(wave.id, new Set());
     }
@@ -221,25 +225,25 @@ class WaveConflictDetector {
     const conflicts = this.detectAllConflicts(waves);
     for (const conflict of conflicts) {
       const [waveA, waveB] = conflict.waves;
-      conflictMap.get(waveA).add(waveB);
-      conflictMap.get(waveB).add(waveA);
+      conflictMap.get(waveA)!.add(waveB);
+      conflictMap.get(waveB)!.add(waveA);
     }
 
     // Graph coloring - greedy approach
-    const colors = new Map(); // waveId -> color (group number)
+    const colors = new Map<any, number>(); // waveId -> color (group number)
     const groups = []; // Array of arrays of wave IDs
 
     // Sort waves by number of conflicts (most constrained first)
     const sortedWaves = [...waves].sort((a, b) => {
-      return conflictMap.get(b.id).size - conflictMap.get(a.id).size;
+      return conflictMap.get(b.id)!.size - conflictMap.get(a.id)!.size;
     });
 
     for (const wave of sortedWaves) {
       // Find colors used by conflicting waves
-      const usedColors = new Set();
-      for (const conflictingWaveId of conflictMap.get(wave.id)) {
+      const usedColors = new Set<number>();
+      for (const conflictingWaveId of conflictMap.get(wave.id)!) {
         if (colors.has(conflictingWaveId)) {
-          usedColors.add(colors.get(conflictingWaveId));
+          usedColors.add(colors.get(conflictingWaveId)!);
         }
       }
 
@@ -272,7 +276,7 @@ class WaveConflictDetector {
    * @param {string} pattern - Glob pattern to match against
    * @returns {boolean} True if the file matches the pattern
    */
-  matchesPattern(filePath, pattern) {
+  matchesPattern(filePath: string, pattern: string): boolean {
     // Normalize paths
     const normalizedPath = filePath.replace(/\\/g, '/');
     const normalizedPattern = pattern.replace(/\\/g, '/');
@@ -294,7 +298,7 @@ class WaveConflictDetector {
    * @param {Object} conflict - Conflict object with conflicts and sharedAreas
    * @returns {string} Severity: 'high', 'medium', or 'low'
    */
-  getConflictSeverity(conflict) {
+  getConflictSeverity(conflict: any): string {
     // High severity: direct file conflicts
     if (conflict.conflicts && conflict.conflicts.direct && conflict.conflicts.direct.length > 0) {
       return ConflictSeverity.HIGH;
@@ -319,8 +323,8 @@ class WaveConflictDetector {
    * @param {Array} conflicts - Array of conflict objects
    * @returns {Object} Report object with summary and details
    */
-  generateReport(conflicts) {
-    const report = {
+  generateReport(conflicts: any[]): { summary: { totalConflicts: number; highSeverity: number; mediumSeverity: number; lowSeverity: number; affectedWaves: any }; conflicts: any[]; recommendations: { priority: string; action: string; message: string }[] } {
+    const report: { summary: { totalConflicts: number; highSeverity: number; mediumSeverity: number; lowSeverity: number; affectedWaves: any }; conflicts: any[]; recommendations: { priority: string; action: string; message: string }[] } = {
       summary: {
         totalConflicts: conflicts.length,
         highSeverity: 0,
@@ -396,7 +400,7 @@ class WaveConflictDetector {
    * @param {Object} report - Report object from generateReport
    * @returns {string} Formatted string for console output
    */
-  formatReport(report) {
+  formatReport(report: any): string {
     const lines = [];
 
     lines.push(chalk.bold.underline('\n📋 Wave Conflict Report\n'));
@@ -416,9 +420,9 @@ class WaveConflictDetector {
       for (const conflict of report.conflicts) {
         const severityColor = conflict.severity === 'high' ? chalk.red :
                              conflict.severity === 'medium' ? chalk.yellow : chalk.blue;
-        
+
         lines.push(`  ${severityColor('●')} ${conflict.waves.join(' ↔ ')} [${conflict.severity}]`);
-        
+
         if (conflict.overlaps && conflict.overlaps.length > 0) {
           for (const overlap of conflict.overlaps.slice(0, 3)) {
             lines.push(`    - ${overlap.patternA} ↔ ${overlap.patternB} (${overlap.type})`);
@@ -455,7 +459,7 @@ class WaveConflictDetector {
    * @param {Array} waves - Array of wave objects
    * @returns {Object} Validation result with valid boolean and details
    */
-  validateParallelExecution(waves) {
+  validateParallelExecution(waves: any[]): { valid: boolean; conflicts: any[]; warnings: any[]; errors: any[] } {
     const conflicts = this.detectAllConflicts(waves);
 
     if (conflicts.length === 0) {
@@ -473,7 +477,7 @@ class WaveConflictDetector {
     return {
       valid: !this.strictMode && !hasHighSeverity,
       conflicts,
-      warnings: conflicts.filter(c => c.severity === ConflictSeverity.LOW || 
+      warnings: conflicts.filter(c => c.severity === ConflictSeverity.LOW ||
                                       c.severity === ConflictSeverity.MEDIUM),
       errors: conflicts.filter(c => c.severity === ConflictSeverity.HIGH)
     };
@@ -488,7 +492,7 @@ class WaveConflictDetector {
    * @param {string} patternB - Second pattern
    * @returns {boolean} True if patterns could match the same files
    */
-  _patternsOverlap(patternA, patternB) {
+  _patternsOverlap(patternA: string, patternB: string): boolean {
     // Normalize patterns
     const a = patternA.replace(/\\/g, '/');
     const b = patternB.replace(/\\/g, '/');
@@ -542,13 +546,13 @@ class WaveConflictDetector {
    * @param {string} patternB - Second pattern
    * @returns {string|null} Overlap type or null if no overlap
    */
-  _getOverlapType(patternA, patternB) {
+  _getOverlapType(patternA: string, patternB: string): string | null {
     const a = patternA.replace(/\\/g, '/');
     const b = patternB.replace(/\\/g, '/');
 
     // Direct: exact same file
     if (a === b) return ConflictType.DIRECT;
-    
+
     // Check if both resolve to the same concrete file
     if (!a.includes('*') && !b.includes('*') && !a.includes('?') && !b.includes('?')) {
       // Both are concrete paths
@@ -581,15 +585,15 @@ class WaveConflictDetector {
    * @param {string} pattern - Pattern to check
    * @returns {boolean} True if should be ignored
    */
-  _shouldIgnore(pattern) {
+  _shouldIgnore(pattern: string): boolean {
     const filename = path.basename(pattern);
-    
+
     for (const ignorePattern of this.ignorePatterns) {
       if (this.matchesPattern(filename, ignorePattern)) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -601,7 +605,7 @@ class WaveConflictDetector {
    * @param {Object} graph - Dependency graph
    * @returns {boolean} True if waves could run in parallel
    */
-  _couldRunInParallel(waveIdA, waveIdB, graph) {
+  _couldRunInParallel(waveIdA: string, waveIdB: string, graph: any): boolean {
     // If A depends on B or B depends on A, they cannot run in parallel
     const depsA = graph.getDependencies ? graph.getDependencies(waveIdA) : [];
     const depsB = graph.getDependencies ? graph.getDependencies(waveIdB) : [];
@@ -629,7 +633,7 @@ class WaveConflictDetector {
    * @param {Object} conflict - Conflict object
    * @returns {string} Recommendation message
    */
-  _getRecommendation(conflict) {
+  _getRecommendation(conflict: any): string {
     switch (conflict.severity) {
       case ConflictSeverity.HIGH:
         return `Add dependency: ${conflict.waves[1]} should depend on ${conflict.waves[0]}`;
@@ -642,10 +646,3 @@ class WaveConflictDetector {
     }
   }
 }
-
-module.exports = { 
-  WaveConflictDetector,
-  ConflictSeverity,
-  ConflictType,
-  DEFAULT_FILE_PATTERNS
-};

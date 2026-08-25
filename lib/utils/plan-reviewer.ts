@@ -4,14 +4,14 @@
  * detect already-complete work, and identify issues before execution.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { CodeAnalyzer } = require('./code-analyzer');
+import fs from 'fs';
+import path from 'path';
+import { CodeAnalyzer } from './code-analyzer.js';
 
 /**
  * Task status types
  */
-const TaskStatus = {
+export const TaskStatus = {
   OK: 'ok',
   ALREADY_COMPLETE: 'already_complete',
   PATH_ERROR: 'path_error',
@@ -22,7 +22,11 @@ const TaskStatus = {
 /**
  * PlanReviewer class for reviewing PLAN.md files against codebase
  */
-class PlanReviewer {
+export class PlanReviewer {
+  rootPath: string;
+  analyzer: CodeAnalyzer;
+  config: { autoFix: boolean; strict: boolean };
+
   /**
    * Create a new PlanReviewer instance
    * @param {string} [rootPath=process.cwd()] - Root path for the project
@@ -30,7 +34,7 @@ class PlanReviewer {
    * @param {boolean} [config.autoFix=false] - Whether to auto-fix simple issues
    * @param {boolean} [config.strict=false] - Whether to use strict validation
    */
-  constructor(rootPath = process.cwd(), config = {}) {
+  constructor(rootPath = process.cwd(), config: { autoFix?: boolean; strict?: boolean } = {}) {
     this.rootPath = rootPath;
     this.analyzer = new CodeAnalyzer(rootPath);
     this.config = {
@@ -68,7 +72,22 @@ class PlanReviewer {
     const parsed = this.parsePlanContent(content);
     const tasks = this.extractTasks(content);
     
-    const results = {
+    const results: {
+      success: boolean;
+      planPath: string;
+      planInfo?: object;
+      tasks: any[];
+      summary: {
+        total: number;
+        ok: number;
+        alreadyComplete: number;
+        pathErrors: number;
+        missingDependencies: number;
+        conflicts: number;
+      };
+      report?: string;
+      fixes?: any;
+    } = {
       success: true,
       planPath,
       planInfo: parsed,
@@ -769,7 +788,12 @@ class PlanReviewer {
    * @returns {Promise<object>} Fix results
    */
   async autoFixPlan(planPath, issues) {
-    const result = {
+    const result: {
+      fixed: any[];
+      skipped: any[];
+      newContent: string | null;
+      written?: boolean;
+    } = {
       fixed: [],
       skipped: [],
       newContent: null
@@ -851,7 +875,15 @@ class PlanReviewer {
    * @returns {object|null} Parsed task object
    */
   _parseTask(taskContent) {
-    const task = {
+    const task: {
+      name: string | null;
+      type: string | null;
+      files: string[];
+      action: string | null;
+      verify: string | null;
+      done: string | null;
+      rawContent?: string;
+    } = {
       name: null,
       type: null,
       files: [],
@@ -1071,7 +1103,3 @@ class PlanReviewer {
   }
 }
 
-module.exports = {
-  PlanReviewer,
-  TaskStatus
-};

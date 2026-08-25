@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "noEmit": false,
+    "allowJs": false,
+    "checkJs": false,
     "outDir": ".",
     "declaration": false,
     "sourceMap": false

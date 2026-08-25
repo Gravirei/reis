@@ -5,14 +5,14 @@
  * @module lib/utils/conflict-resolver
  */
 
-const chalk = require('chalk');
-const { WaveConflictDetector, ConflictSeverity } = require('./wave-conflict-detector');
+import chalk from 'chalk';
+import { WaveConflictDetector, ConflictSeverity } from './wave-conflict-detector.js';
 
 /**
  * Resolution strategies
  * @enum {string}
  */
-const ResolutionStrategy = {
+export const ResolutionStrategy = {
   FAIL: 'fail',     // Stop execution if conflicts detected
   QUEUE: 'queue',   // Serialize conflicting waves (add dependencies)
   BRANCH: 'branch', // Create isolated git branches per wave
@@ -22,15 +22,12 @@ const ResolutionStrategy = {
 /**
  * ConflictResolver - Resolves file conflicts between parallel waves
  */
-class ConflictResolver {
-  /**
-   * Create a new ConflictResolver
-   * @param {Object} options - Resolver options
-   * @param {string} [options.strategy='fail'] - Resolution strategy: 'fail' | 'queue' | 'merge' | 'branch'
-   * @param {Function} [options.onConflict] - Callback for custom handling
-   * @param {Object} [options.detectorOptions] - Options to pass to WaveConflictDetector
-   */
-  constructor(options = {}) {
+export class ConflictResolver {
+  strategy: string;
+  onConflict: ((conflicts: any[]) => any) | null;
+  detector: WaveConflictDetector;
+
+  constructor(options: any = {}) {
     this.strategy = options.strategy || ResolutionStrategy.FAIL;
     this.onConflict = options.onConflict || null;
     this.detector = new WaveConflictDetector(options.detectorOptions || {});
@@ -42,7 +39,7 @@ class ConflictResolver {
    * @param {Object} scheduler - ParallelWaveScheduler instance (for queue strategy)
    * @returns {Object} Resolution result
    */
-  resolve(conflicts, scheduler = null) {
+  resolve(conflicts: any[], scheduler: any = null) {
     // If no conflicts, nothing to resolve
     if (!conflicts || conflicts.length === 0) {
       return {
@@ -86,7 +83,7 @@ class ConflictResolver {
    * @param {Array} conflicts - Array of conflict objects
    * @returns {Object} Resolution result indicating failure
    */
-  _strategyFail(conflicts) {
+  _strategyFail(conflicts: any[]) {
     const highSeverity = conflicts.filter(c => c.severity === ConflictSeverity.HIGH);
     const mediumSeverity = conflicts.filter(c => c.severity === ConflictSeverity.MEDIUM);
 
@@ -116,7 +113,7 @@ class ConflictResolver {
    * @param {Object} scheduler - ParallelWaveScheduler instance
    * @returns {Object} Resolution result with modifications
    */
-  _strategyQueue(conflicts, scheduler) {
+  _strategyQueue(conflicts: any[], scheduler: any) {
     const modifications = [];
     const addedDependencies = new Set();
 
@@ -190,9 +187,9 @@ class ConflictResolver {
    * @param {Array} conflicts - Array of conflict objects
    * @returns {Object} Resolution result with branch information
    */
-  _strategyBranch(conflicts) {
-    const branches = [];
-    const affectedWaves = new Set();
+  _strategyBranch(conflicts: any[]) {
+    const branches: any[] = [];
+    const affectedWaves = new Set<string>();
 
     for (const conflict of conflicts) {
       for (const waveId of conflict.waves) {
@@ -231,7 +228,7 @@ class ConflictResolver {
    * @param {Array} conflicts - Array of conflict objects
    * @returns {Object} Resolution result with merge warnings
    */
-  _strategyMerge(conflicts) {
+  _strategyMerge(conflicts: any[]) {
     const highSeverity = conflicts.filter(c => c.severity === ConflictSeverity.HIGH);
 
     // Warn about high severity conflicts
@@ -274,7 +271,7 @@ class ConflictResolver {
    * @param {Object} graph - WaveDependencyGraph instance
    * @returns {boolean} True if dependency was added successfully
    */
-  addSerializationDependency(waveA, waveB, graph) {
+  addSerializationDependency(waveA: string, waveB: string, graph: any): boolean {
     if (!graph) {
       return false;
     }
@@ -302,7 +299,7 @@ class ConflictResolver {
    * @param {Array} conflicts - Array of conflict objects
    * @returns {Object} Recommendations object
    */
-  generateRecommendations(conflicts) {
+  generateRecommendations(conflicts: any[] | null) {
     const recommendations = {
       preferredStrategy: ResolutionStrategy.FAIL,
       reasoning: [],
@@ -379,7 +376,7 @@ class ConflictResolver {
    * @param {Object} result - Resolution result
    * @returns {string} Formatted string
    */
-  formatResult(result) {
+  formatResult(result: any): string {
     const lines = [];
 
     if (result.resolved) {
@@ -528,7 +525,3 @@ class ConflictResolver {
   }
 }
 
-module.exports = { 
-  ConflictResolver,
-  ResolutionStrategy
-};

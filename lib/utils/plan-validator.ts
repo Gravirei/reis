@@ -3,13 +3,24 @@
  * Validates PLAN.md files for structure, format, dependencies, and common issues
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+
+interface ValidationIssue {
+  type: string;
+  message: string;
+  line: number | null;
+}
 
 /**
  * Validation result class
  */
-class ValidationResult {
+export class ValidationResult {
+  valid: boolean;
+  errors: ValidationIssue[];
+  warnings: ValidationIssue[];
+  suggestions: string[];
+
   constructor() {
     this.valid = true;
     this.errors = [];
@@ -17,7 +28,7 @@ class ValidationResult {
     this.suggestions = [];
   }
 
-  addError(type, message, line = null) {
+  addError(type: string, message: string, line: number | null = null) {
     this.valid = false;
     this.errors.push({
       type,
@@ -26,7 +37,7 @@ class ValidationResult {
     });
   }
 
-  addWarning(type, message, line = null) {
+  addWarning(type: string, message: string, line: number | null = null) {
     this.warnings.push({
       type,
       message,
@@ -34,11 +45,11 @@ class ValidationResult {
     });
   }
 
-  addSuggestion(message) {
+  addSuggestion(message: string) {
     this.suggestions.push(message);
   }
 
-  hasErrors() {
+  hasErrors(): boolean {
     return this.errors.length > 0;
   }
 
@@ -55,11 +66,11 @@ class ValidationResult {
 /**
  * Individual validators
  */
-const validators = {
+export const validators = {
   /**
    * Validate file exists and is readable
    */
-  validateFileAccess(planPath, result) {
+  validateFileAccess(planPath: string, result: ValidationResult): boolean {
     if (!fs.existsSync(planPath)) {
       result.addError('file_not_found', `Plan file not found: ${planPath}`);
       return false;
@@ -68,7 +79,7 @@ const validators = {
     try {
       fs.accessSync(planPath, fs.constants.R_OK);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       result.addError('file_not_readable', `Plan file is not readable: ${error.message}`);
       return false;
     }
@@ -77,7 +88,7 @@ const validators = {
   /**
    * Validate required sections exist
    */
-  validateRequiredSections(content, result) {
+  validateRequiredSections(content: string, result: ValidationResult): boolean {
     const lines = content.split('\n');
     const sections = {
       objective: false,
@@ -108,7 +119,7 @@ const validators = {
   /**
    * Validate task format (XML)
    */
-  validateTaskFormat(content, result) {
+  validateTaskFormat(content: string, result: ValidationResult): { hasValidTasks: boolean; taskCount: number } {
     const taskRegex = /<task[^>]*>/g;
     const lines = content.split('\n');
     let hasValidTasks = false;
@@ -179,10 +190,10 @@ const validators = {
   /**
    * Validate wave format
    */
-  validateWaveFormat(content, result) {
+  validateWaveFormat(content: string, result: ValidationResult): { waves: any[]; waveCount: number } {
     const lines = content.split('\n');
     const waves = [];
-    let currentWave = null;
+    let currentWave: { number: number; name: string; size: string; tasks: string[]; lineNumber: number } | null = null;
     let lastWaveNumber = 0;
 
     for (let i = 0; i < lines.length; i++) {
@@ -228,9 +239,9 @@ const validators = {
         lastWaveNumber = waveNumber;
       } else if (currentWave) {
         // Count tasks in current wave
-        const taskMatch = line.match(/^[-*]\s+(?:\[[ x]\]\s+)?(.+)$/) || 
+        const taskMatch = line.match(/^[-*]\s+(?:\[[ x]\]\s+)?(.+)$/) ||
                           line.match(/^\d+\.\s+(.+)$/);
-        
+
         if (taskMatch && taskMatch[1]) {
           currentWave.tasks.push(taskMatch[1].trim());
         }
@@ -249,7 +260,7 @@ const validators = {
     }
 
     // Validate wave sizes
-    const sizeLimits = {
+    const sizeLimits: Record<string, { max: number; recommended: number }> = {
       small: { max: 8, recommended: 4 },
       medium: { max: 12, recommended: 8 },
       large: { max: 20, recommended: 12 }
@@ -262,8 +273,8 @@ const validators = {
 
       const limits = sizeLimits[wave.size];
       if (limits && wave.tasks.length > limits.max) {
-        result.addWarning('wave_size_exceeded', 
-          `Wave ${wave.number} has ${wave.tasks.length} tasks, exceeding ${wave.size} wave limit of ${limits.max}`, 
+        result.addWarning('wave_size_exceeded',
+          `Wave ${wave.number} has ${wave.tasks.length} tasks, exceeding ${wave.size} wave limit of ${limits.max}`,
           wave.lineNumber);
       } else if (limits && wave.tasks.length > limits.recommended) {
         result.addSuggestion(`Wave ${wave.number} has ${wave.tasks.length} tasks. Consider splitting for ${wave.size} wave (recommended max: ${limits.recommended})`);
@@ -276,7 +287,7 @@ const validators = {
   /**
    * Validate dependencies section
    */
-  validateDependencies(content, result) {
+  validateDependencies(content: string, result: ValidationResult): { text: string; lineNumber: number }[] {
     const lines = content.split('\n');
     let inDependenciesSection = false;
     const dependencies = [];
@@ -314,7 +325,7 @@ const validators = {
   /**
    * Detect common issues
    */
-  detectCommonIssues(content, result) {
+  detectCommonIssues(content: string, result: ValidationResult): void {
     const lines = content.split('\n');
 
     // Check for vague task names in markdown format
@@ -322,12 +333,12 @@ const validators = {
       const line = lines[i].trim();
       const lineNumber = i + 1;
 
-      const taskMatch = line.match(/^[-*]\s+(?:\[[ x]\]\s+)?(.+)$/) || 
+      const taskMatch = line.match(/^[-*]\s+(?:\[[ x]\]\s+)?(.+)$/) ||
                         line.match(/^\d+\.\s+(.+)$/);
 
       if (taskMatch) {
         const taskName = taskMatch[1];
-        
+
         // Check for vague patterns
         if (taskName.match(/^(implement|add|create|setup|fix)\s+\w+$/i)) {
           result.addWarning('vague_task', `Task "${taskName}" may be too vague - consider being more specific`, lineNumber);
@@ -359,7 +370,7 @@ const validators = {
         }
 
         // Look for measurable indicators
-        if (line.match(/\d+\+?\s+(tests?|checks?)/i) || 
+        if (line.match(/\d+\+?\s+(tests?|checks?)/i) ||
             line.match(/✅|✓/) ||
             line.match(/(pass(es|ing)?|complete|working)/i)) {
           hasMeasurableCriteria = true;
@@ -379,7 +390,7 @@ const validators = {
  * @param {Object} options - Validation options
  * @returns {ValidationResult} Validation results
  */
-function validatePlan(planPath, options = {}) {
+export function validatePlan(planPath: string, options: any = {}): ValidationResult {
   const result = new ValidationResult();
   const startTime = Date.now();
 
@@ -392,7 +403,7 @@ function validatePlan(planPath, options = {}) {
   let content;
   try {
     content = fs.readFileSync(planPath, 'utf8');
-  } catch (error) {
+  } catch (error: any) {
     result.addError('read_error', `Failed to read plan file: ${error.message}`);
     return result;
   }
@@ -431,9 +442,3 @@ function validatePlan(planPath, options = {}) {
 
   return result;
 }
-
-module.exports = {
-  validatePlan,
-  ValidationResult,
-  validators
-};

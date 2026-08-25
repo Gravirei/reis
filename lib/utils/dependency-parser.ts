@@ -3,37 +3,44 @@
  * Parse dependency metadata from PLAN.md files for parallel wave execution
  */
 
-const fs = require('fs');
-const path = require('path');
-const { WaveDependencyGraph } = require('./wave-dependency-graph');
+import fs from 'fs';
+import path from 'path';
+import { WaveDependencyGraph } from './wave-dependency-graph.js';
 
 /**
  * Parsed wave data structure
- * @typedef {object} ParsedWave
- * @property {string} id - Wave identifier (e.g., "Wave 1")
- * @property {number} number - Wave number
- * @property {string} name - Wave name/description
- * @property {string} size - Wave size (small/medium/large)
- * @property {string[]} dependencies - Array of dependency wave IDs
- * @property {string|null} parallelGroup - Parallel group name
- * @property {number} lineNumber - Line number in source file
- * @property {string[]} tasks - Task descriptions
  */
+export interface ParsedWave {
+  id: string;
+  number: number;
+  name: string | null;
+  size: string | null;
+  dependencies: string[];
+  parallelGroup: string | null;
+  lineNumber: number;
+  tasks: string[];
+}
 
 /**
  * Parsed plan data structure
- * @typedef {object} ParsedPlan
- * @property {ParsedWave[]} waves - Array of parsed waves
- * @property {Map<string, string[]>} dependencies - Map of waveId to dependency IDs
- * @property {Map<string, string>} groups - Map of waveId to parallel group
- * @property {string[]} errors - Validation errors
- * @property {string[]} warnings - Validation warnings
  */
+export interface ParsedPlan {
+  waves: ParsedWave[];
+  dependencies: Map<string, string[]>;
+  groups: Map<string, string>;
+  errors: string[];
+  warnings: string[];
+}
 
 /**
  * DependencyParser - Parse PLAN.md files for dependency information
  */
-class DependencyParser {
+export class DependencyParser {
+  dependencyPattern: RegExp;
+  groupPattern: RegExp;
+  wavePattern: RegExp;
+  waveRefPattern: RegExp;
+
   constructor() {
     // Pattern to match dependency comments: <!-- @dependencies: Wave 1, Wave 2 -->
     this.dependencyPattern = /<!--\s*@dependenc(?:y|ies):\s*(.+?)\s*-->/gi;
@@ -373,7 +380,7 @@ class DependencyParser {
    * @param {string[]} warnings - Warning array to populate
    */
   _validateParsedData(waves, errors, warnings) {
-    const waveNumbers = new Set();
+    const waveNumbers = new Set<number>();
     const waveIds = new Set();
 
     for (const wave of waves) {
@@ -457,4 +464,3 @@ class DependencyParser {
   }
 }
 
-module.exports = { DependencyParser };

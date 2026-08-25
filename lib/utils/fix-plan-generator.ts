@@ -6,7 +6,9 @@ import path from 'path';
  * FR2.1: Generates targeted fix plans for incomplete implementations
  */
 export class FixPlanGenerator {
-  constructor(analysis) {
+  analysis: any;
+
+  constructor(analysis: any) {
     this.analysis = analysis;
   }
 
@@ -474,7 +476,7 @@ export class FixPlanGenerator {
 /**
  * Generate and save FIX_PLAN.md
  */
-export function generateFixPlan(analysis, outputPath = '.planning/debug/FIX_PLAN.md') {
+export function generateFixPlan(analysis: any, outputPath: string = '.planning/debug/FIX_PLAN.md') {
   const generator = new FixPlanGenerator(analysis);
   const plan = generator.generate();
 

@@ -1,4 +1,4 @@
-const chalk = require('chalk');
+import chalk from 'chalk';
 
 /**
  * Cycle UI Components
@@ -6,14 +6,14 @@ const chalk = require('chalk');
  */
 
 // Cycle phases in order
-const CYCLE_PHASES = ['PLANNING', 'REVIEWING', 'EXECUTING', 'VERIFYING', 'GATING', 'DEBUGGING', 'FIXING', 'COMPLETED'];
+export const CYCLE_PHASES = ['PLANNING', 'REVIEWING', 'EXECUTING', 'VERIFYING', 'GATING', 'DEBUGGING', 'FIXING', 'COMPLETED'];
 
 /**
  * Get icon for a cycle phase
  * @param {string} phase - Phase name
  * @returns {string} Icon for the phase
  */
-function getPhaseIcon(phase) {
+export function getPhaseIcon(phase) {
   const icons = {
     PLANNING: '📝',
     REVIEWING: '📋',    // clipboard for review
@@ -32,7 +32,7 @@ function getPhaseIcon(phase) {
  * @param {Object} reviewResult - Review result object
  * @returns {string} Formatted review status string
  */
-function displayReviewStatus(reviewResult) {
+export function displayReviewStatus(reviewResult) {
   if (!reviewResult) return '';
   
   const icon = reviewResult.success ? '✅' : (reviewResult.hasWarnings ? '⚠️' : '❌');
@@ -47,7 +47,7 @@ function displayReviewStatus(reviewResult) {
  * @param {Object} gateResult - Gate result object
  * @returns {string} Formatted gate status string
  */
-function displayGateStatus(gateResult) {
+export function displayGateStatus(gateResult) {
   if (!gateResult) return '';
   
   const icon = gateResult.passed ? '✅' : (gateResult.hasWarnings ? '⚠️' : '❌');
@@ -61,7 +61,7 @@ function displayGateStatus(gateResult) {
  * Show gate results in detail
  * @param {Object} gateResult - Gate result from quality gates
  */
-function showGateResults(gateResult) {
+export function showGateResults(gateResult) {
   if (!gateResult) return;
   
   console.log();
@@ -97,7 +97,7 @@ function showGateResults(gateResult) {
 }
 
 // Spinner states
-let spinnerInterval = null;
+let spinnerInterval: ReturnType<typeof setInterval> | null = null;
 let spinnerFrame = 0;
 const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -107,7 +107,7 @@ const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '
  * @param {number} stepNumber - Current step number
  * @param {number} total - Total number of steps
  */
-function showStepStart(stepName, stepNumber, total) {
+export function showStepStart(stepName, stepNumber, total) {
   console.log();
   console.log(chalk.blue(`⏳ Step ${stepNumber}/${total}: ${stepName}`));
 }
@@ -117,7 +117,7 @@ function showStepStart(stepName, stepNumber, total) {
  * @param {string} stepName - Name of the step
  * @param {string} details - Additional details
  */
-function showStepSuccess(stepName, details = '') {
+export function showStepSuccess(stepName, details = '') {
   const message = details ? `${stepName} - ${details}` : stepName;
   console.log(chalk.green(`✓ ${message}`));
 }
@@ -127,7 +127,7 @@ function showStepSuccess(stepName, details = '') {
  * @param {string} stepName - Name of the step
  * @param {Error|string} error - Error object or message
  */
-function showStepFailure(stepName, error) {
+export function showStepFailure(stepName: string, error: any) {
   const message = error.message || String(error);
   console.log(chalk.red(`✗ ${stepName} - ${message}`));
 }
@@ -137,7 +137,7 @@ function showStepFailure(stepName, error) {
  * @param {string} stepName - Name of the step
  * @param {string} warning - Warning message
  */
-function showStepWarning(stepName, warning) {
+export function showStepWarning(stepName, warning) {
   console.log(chalk.yellow(`⚠️  ${stepName} - ${warning}`));
 }
 
@@ -145,7 +145,7 @@ function showStepWarning(stepName, warning) {
  * Start spinner with message
  * @param {string} message - Message to display
  */
-function showSpinner(message) {
+export function showSpinner(message) {
   // Clear any existing spinner
   stopSpinner();
   
@@ -162,18 +162,18 @@ function showSpinner(message) {
  * @param {string} finalMessage - Optional message to show after stopping
  * @param {boolean} success - Whether operation was successful
  */
-function stopSpinner(finalMessage = null, success = true) {
+export function stopSpinner(finalMessage: string | null = null, success = true) {
   if (spinnerInterval) {
     clearInterval(spinnerInterval);
     spinnerInterval = null;
     spinnerFrame = 0;
-    
+
     if (finalMessage) {
       const icon = success ? chalk.green('✓') : chalk.red('✗');
       process.stdout.write(`\r   ${icon} ${finalMessage}\n`);
     } else {
       process.stdout.write('\r');
-      process.stdout.clearLine();
+      (process.stdout.clearLine as any)();
     }
   }
 }
@@ -184,7 +184,7 @@ function stopSpinner(finalMessage = null, success = true) {
  * @param {number} total - Total items
  * @param {string} label - Label for progress bar
  */
-function showProgressBar(current, total, label = '') {
+export function showProgressBar(current, total, label = '') {
   const percentage = Math.floor((current / total) * 100);
   const barWidth = 30;
   const filled = Math.floor((current / total) * barWidth);
@@ -205,9 +205,9 @@ function showProgressBar(current, total, label = '') {
 /**
  * Clear progress bar
  */
-function clearProgressBar() {
+export function clearProgressBar() {
   process.stdout.write('\r');
-  process.stdout.clearLine();
+  (process.stdout.clearLine as any)();
 }
 
 /**
@@ -215,7 +215,7 @@ function clearProgressBar() {
  * @param {number} seconds - Elapsed seconds
  * @returns {string} Formatted time
  */
-function formatElapsedTime(seconds) {
+export function formatElapsedTime(seconds) {
   if (seconds < 60) {
     return `${seconds}s`;
   } else if (seconds < 3600) {
@@ -233,7 +233,7 @@ function formatElapsedTime(seconds) {
  * Show time elapsed
  * @param {number} startTime - Start timestamp (milliseconds)
  */
-function showElapsedTime(startTime) {
+export function showElapsedTime(startTime) {
   const elapsed = Math.floor((Date.now() - startTime) / 1000);
   console.log(chalk.gray(`   Elapsed: ${formatElapsedTime(elapsed)}`));
 }
@@ -242,7 +242,7 @@ function showElapsedTime(startTime) {
  * Show cycle summary
  * @param {Object} results - Cycle results
  */
-function showSummary(results) {
+export function showSummary(results) {
   console.log();
   console.log(chalk.cyan('═══════════════════════════════════════════════════════════'));
   console.log(chalk.cyan('                    Cycle Summary'));
@@ -280,7 +280,7 @@ function showSummary(results) {
  * Show verification results
  * @param {Object} results - Verification results
  */
-function showVerificationResults(results) {
+export function showVerificationResults(results) {
   console.log();
   console.log(chalk.cyan('Verification Results:'));
   
@@ -313,7 +313,7 @@ function showVerificationResults(results) {
  * Show debug summary
  * @param {Object} debugResult - Debug result
  */
-function showDebugSummary(debugResult) {
+export function showDebugSummary(debugResult) {
   console.log();
   console.log(chalk.cyan('Debug Analysis:'));
   
@@ -336,7 +336,7 @@ function showDebugSummary(debugResult) {
  * Show section header
  * @param {string} title - Section title
  */
-function showSectionHeader(title) {
+export function showSectionHeader(title) {
   console.log();
   console.log(chalk.blue.bold(`◆ ${title}`));
   console.log(chalk.blue('─'.repeat(60)));
@@ -345,7 +345,7 @@ function showSectionHeader(title) {
 /**
  * Show section footer
  */
-function showSectionFooter() {
+export function showSectionFooter() {
   console.log(chalk.blue('─'.repeat(60)));
 }
 
@@ -353,7 +353,7 @@ function showSectionFooter() {
  * Show info message
  * @param {string} message - Message to display
  */
-function showInfo(message) {
+export function showInfo(message) {
   console.log(chalk.blue(`ℹ ${message}`));
 }
 
@@ -361,7 +361,7 @@ function showInfo(message) {
  * Show success message
  * @param {string} message - Message to display
  */
-function showSuccess(message) {
+export function showSuccess(message) {
   console.log(chalk.green(`✓ ${message}`));
 }
 
@@ -369,7 +369,7 @@ function showSuccess(message) {
  * Show error message
  * @param {string} message - Message to display
  */
-function showError(message) {
+export function showError(message) {
   console.log(chalk.red(`✗ ${message}`));
 }
 
@@ -377,7 +377,7 @@ function showError(message) {
  * Show warning message
  * @param {string} message - Message to display
  */
-function showWarning(message) {
+export function showWarning(message) {
   console.log(chalk.yellow(`⚠️  ${message}`));
 }
 
@@ -386,7 +386,7 @@ function showWarning(message) {
  * @param {string} message - Message to display
  * @param {string} type - Box type: 'success', 'error', 'warning', 'info'
  */
-function showBox(message, type = 'info') {
+export function showBox(message, type = 'info') {
   const colors = {
     success: chalk.green,
     error: chalk.red,
@@ -412,7 +412,7 @@ function showBox(message, type = 'info') {
  * @param {Array<string>} items - Items to display
  * @param {string} bullet - Bullet character
  */
-function showList(items, bullet = '•') {
+export function showList(items, bullet = '•') {
   items.forEach(item => {
     console.log(`   ${bullet} ${item}`);
   });
@@ -423,7 +423,7 @@ function showList(items, bullet = '•') {
  * @param {Array<Array<string>>} rows - Table rows (including header)
  * @param {Array<number>} columnWidths - Width for each column
  */
-function showTable(rows, columnWidths) {
+export function showTable(rows, columnWidths) {
   rows.forEach((row, index) => {
     const cells = row.map((cell, i) => {
       const width = columnWidths[i] || 20;
@@ -443,16 +443,16 @@ function showTable(rows, columnWidths) {
 /**
  * Clear current line
  */
-function clearLine() {
+export function clearLine() {
   process.stdout.write('\r');
-  process.stdout.clearLine();
+  (process.stdout.clearLine as any)();
 }
 
 /**
  * Move cursor up
  * @param {number} lines - Number of lines to move up
  */
-function moveCursorUp(lines = 1) {
+export function moveCursorUp(lines = 1) {
   process.stdout.write(`\x1b[${lines}A`);
 }
 
@@ -460,42 +460,6 @@ function moveCursorUp(lines = 1) {
  * Move cursor down
  * @param {number} lines - Number of lines to move down
  */
-function moveCursorDown(lines = 1) {
+export function moveCursorDown(lines = 1) {
   process.stdout.write(`\x1b[${lines}B`);
 }
-
-module.exports = {
-  // Constants
-  CYCLE_PHASES,
-  // Phase utilities
-  getPhaseIcon,
-  displayReviewStatus,
-  displayGateStatus,
-  showGateResults,
-  // Step display
-  showStepStart,
-  showStepSuccess,
-  showStepFailure,
-  showStepWarning,
-  showSpinner,
-  stopSpinner,
-  showProgressBar,
-  clearProgressBar,
-  formatElapsedTime,
-  showElapsedTime,
-  showSummary,
-  showVerificationResults,
-  showDebugSummary,
-  showSectionHeader,
-  showSectionFooter,
-  showInfo,
-  showSuccess,
-  showError,
-  showWarning,
-  showBox,
-  showList,
-  showTable,
-  clearLine,
-  moveCursorUp,
-  moveCursorDown
-};

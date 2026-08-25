@@ -17,7 +17,10 @@ const NodeColor = {
  * WaveDependencyGraph - DAG structure for wave dependencies
  * Supports cycle detection, topological sorting, and execution ordering
  */
-class WaveDependencyGraph {
+export class WaveDependencyGraph {
+  nodes: Map<string, { wave: any; dependencies: Set<string>; dependents: Set<string>; estimatedMinutes?: number; parallelGroup?: string | null }>;
+  completed: Set<string>;
+
   /**
    * Create a new WaveDependencyGraph
    */
@@ -34,7 +37,7 @@ class WaveDependencyGraph {
    * @param {any} wave - Wave data object (optional)
    * @returns {WaveDependencyGraph} - Returns this for chaining
    */
-  addWave(waveId, wave = null) {
+  addWave(waveId: string, wave: any = null): WaveDependencyGraph {
     if (!this.nodes.has(waveId)) {
       this.nodes.set(waveId, {
         wave,
@@ -54,7 +57,7 @@ class WaveDependencyGraph {
    * @param {string} dependsOnWaveId - Wave that must complete first
    * @returns {WaveDependencyGraph} - Returns this for chaining
    */
-  addDependency(waveId, dependsOnWaveId) {
+  addDependency(waveId: string, dependsOnWaveId: string): WaveDependencyGraph {
     // Ensure both nodes exist
     this.addWave(waveId);
     this.addWave(dependsOnWaveId);
@@ -72,7 +75,7 @@ class WaveDependencyGraph {
    * @param {string} dependsOnWaveId - Wave to remove from dependencies
    * @returns {boolean} - True if dependency was removed
    */
-  removeDependency(waveId, dependsOnWaveId) {
+  removeDependency(waveId: string, dependsOnWaveId: string): boolean {
     const node = this.nodes.get(waveId);
     const dependsOnNode = this.nodes.get(dependsOnWaveId);
 
@@ -91,7 +94,7 @@ class WaveDependencyGraph {
    * @param {string} waveId - Wave to get dependencies for
    * @returns {string[]} - Array of dependency wave IDs
    */
-  getDependencies(waveId) {
+  getDependencies(waveId: string): string[] {
     const node = this.nodes.get(waveId);
     if (!node) {
       return [];
@@ -104,7 +107,7 @@ class WaveDependencyGraph {
    * @param {string} waveId - Wave to get dependents for
    * @returns {string[]} - Array of dependent wave IDs
    */
-  getDependents(waveId) {
+  getDependents(waveId: string): string[] {
     const node = this.nodes.get(waveId);
     if (!node) {
       return [];
@@ -119,7 +122,7 @@ class WaveDependencyGraph {
    * @param {Set<string>} [visited] - Set of already visited nodes (for cycle prevention)
    * @returns {string[]} - Array of all dependency wave IDs (direct and indirect)
    */
-  getAllDependencies(waveId, visited = new Set()) {
+  getAllDependencies(waveId: string, visited: Set<string> = new Set()): string[] {
     const node = this.nodes.get(waveId);
     if (!node) {
       return [];
@@ -152,7 +155,7 @@ class WaveDependencyGraph {
    * @param {Set<string>} [visited] - Set of already visited nodes (for cycle prevention)
    * @returns {string[]} - Array of all dependent wave IDs (direct and indirect)
    */
-  getAllDependents(waveId, visited = new Set()) {
+  getAllDependents(waveId: string, visited: Set<string> = new Set()): string[] {
     const node = this.nodes.get(waveId);
     if (!node) {
       return [];
@@ -182,7 +185,7 @@ class WaveDependencyGraph {
    * Check if the graph has any cycles
    * @returns {boolean} - True if cycles exist
    */
-  hasCycle() {
+  hasCycle(): boolean {
     const cycles = this.detectCycles();
     return cycles.length > 0;
   }
@@ -191,9 +194,9 @@ class WaveDependencyGraph {
    * Detect all cycles in the graph using DFS with color marking
    * @returns {string[][]} - Array of cycle paths (empty if no cycles)
    */
-  detectCycles() {
-    const colors = new Map();
-    const parent = new Map();
+  detectCycles(): string[][] {
+    const colors = new Map<string, number>();
+    const parent = new Map<string, string | null>();
     const cycles = [];
 
     // Initialize all nodes as WHITE (unvisited)
@@ -208,7 +211,7 @@ class WaveDependencyGraph {
      * @param {string[]} path - Current path from start
      * @returns {boolean} - True if cycle found
      */
-    const dfsVisit = (nodeId, path) => {
+    const dfsVisit = (nodeId: string, path: string[]): boolean => {
       colors.set(nodeId, NodeColor.GRAY);
       const currentPath = [...path, nodeId];
 
@@ -251,12 +254,12 @@ class WaveDependencyGraph {
    * Get execution order using topological sort (Kahn's algorithm)
    * @returns {string[]} - Ordered array of wave IDs (empty if cycle exists)
    */
-  getExecutionOrder() {
+  getExecutionOrder(): string[] {
     if (this.hasCycle()) {
       return [];
     }
 
-    const inDegree = new Map();
+    const inDegree = new Map<string, number>();
     const queue = [];
     const result = [];
 
@@ -293,7 +296,7 @@ class WaveDependencyGraph {
    * Get waves that can be executed (all dependencies satisfied, not completed)
    * @returns {string[]} - Array of executable wave IDs
    */
-  getExecutableWaves() {
+  getExecutableWaves(): string[] {
     const executable = [];
 
     for (const [waveId, node] of this.nodes) {
@@ -325,7 +328,7 @@ class WaveDependencyGraph {
    * @param {string} waveId - Wave to mark as completed
    * @returns {string[]} - Waves that became executable after this completion
    */
-  markCompleted(waveId) {
+  markCompleted(waveId: string): string[] {
     if (!this.nodes.has(waveId)) {
       return [];
     }
@@ -343,7 +346,7 @@ class WaveDependencyGraph {
    * @param {string} waveId - Wave to check
    * @returns {boolean} - True if completed
    */
-  isCompleted(waveId) {
+  isCompleted(waveId: string): boolean {
     return this.completed.has(waveId);
   }
 
@@ -351,7 +354,7 @@ class WaveDependencyGraph {
    * Reset completion status of all waves
    * @returns {WaveDependencyGraph} - Returns this for chaining
    */
-  reset() {
+  reset(): WaveDependencyGraph {
     this.completed.clear();
     return this;
   }
@@ -361,7 +364,7 @@ class WaveDependencyGraph {
    * @param {string} waveId - Wave to get
    * @returns {any} - Wave data or null
    */
-  getWave(waveId) {
+  getWave(waveId: string): any {
     const node = this.nodes.get(waveId);
     return node ? node.wave : null;
   }
@@ -370,7 +373,7 @@ class WaveDependencyGraph {
    * Get all wave IDs in the graph
    * @returns {string[]} - Array of all wave IDs
    */
-  getAllWaveIds() {
+  getAllWaveIds(): string[] {
     return Array.from(this.nodes.keys());
   }
 
@@ -378,7 +381,7 @@ class WaveDependencyGraph {
    * Get the number of waves in the graph
    * @returns {number} - Number of waves
    */
-  size() {
+  size(): number {
     return this.nodes.size;
   }
 
@@ -386,8 +389,8 @@ class WaveDependencyGraph {
    * Serialize graph to JSON for persistence
    * @returns {object} - JSON-serializable object
    */
-  toJSON() {
-    const nodes = {};
+  toJSON(): { nodes: Record<string, { wave: any; dependencies: string[]; dependents: string[] }>; completed: string[] } {
+    const nodes: Record<string, { wave: any; dependencies: string[]; dependents: string[] }> = {};
     for (const [waveId, node] of this.nodes) {
       nodes[waveId] = {
         wave: node.wave,
@@ -407,7 +410,7 @@ class WaveDependencyGraph {
    * @param {object} json - JSON object from toJSON()
    * @returns {WaveDependencyGraph} - New graph instance
    */
-  static fromJSON(json) {
+  static fromJSON(json: any): WaveDependencyGraph {
     const graph = new WaveDependencyGraph();
 
     if (!json || !json.nodes) {
@@ -415,7 +418,7 @@ class WaveDependencyGraph {
     }
 
     // Restore nodes
-    for (const [waveId, nodeData] of Object.entries(json.nodes)) {
+    for (const [waveId, nodeData] of Object.entries(json.nodes) as [string, any][]) {
       graph.nodes.set(waveId, {
         wave: nodeData.wave,
         dependencies: new Set(nodeData.dependencies || []),
@@ -437,7 +440,7 @@ class WaveDependencyGraph {
    * Generate Mermaid diagram syntax for visualization
    * @returns {string} - Mermaid diagram syntax
    */
-  toMermaid() {
+  toMermaid(): string {
     const lines = ['graph TD'];
 
     // Add nodes with styling
@@ -478,7 +481,7 @@ class WaveDependencyGraph {
    * Create a deep clone of the graph
    * @returns {WaveDependencyGraph} - Cloned graph
    */
-  clone() {
+  clone(): WaveDependencyGraph {
     return WaveDependencyGraph.fromJSON(this.toJSON());
   }
 
@@ -486,7 +489,7 @@ class WaveDependencyGraph {
    * Get graph statistics
    * @returns {object} - Statistics about the graph
    */
-  getStats() {
+  getStats(): { totalWaves: number; completedCount: number; executableCount: number; pendingCount: number; totalDependencies: number; maxDependencies: number; maxDependents: number; progress: number } {
     const totalWaves = this.nodes.size;
     const completedCount = this.completed.size;
     const executableCount = this.getExecutableWaves().length;
@@ -514,5 +517,3 @@ class WaveDependencyGraph {
     };
   }
 }
-
-module.exports = { WaveDependencyGraph };

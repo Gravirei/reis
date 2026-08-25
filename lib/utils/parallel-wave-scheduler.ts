@@ -5,20 +5,28 @@
  * @module lib/utils/parallel-wave-scheduler
  */
 
-const { WaveDependencyGraph } = require('./wave-dependency-graph');
+import { WaveDependencyGraph } from './wave-dependency-graph.js';
 
 /**
  * Parallel Wave Scheduler
  * Determines which waves can execute concurrently based on dependencies and constraints
  */
-class ParallelWaveScheduler {
+export class ParallelWaveScheduler {
+  maxConcurrent: number;
+  strategy: string;
+  graph: WaveDependencyGraph | null;
+  completed: Set<string>;
+  running: Set<string>;
+  failed: Set<string>;
+  failureReasons: Map<string, string>;
+
   /**
    * Create a new ParallelWaveScheduler
    * @param {Object} options - Scheduler options
    * @param {number} [options.maxConcurrent=4] - Maximum concurrent waves
    * @param {string} [options.strategy='dependency'] - Scheduling strategy: 'dependency' | 'group' | 'auto'
    */
-  constructor(options = {}) {
+  constructor(options: { maxConcurrent?: number; strategy?: string } = {}) {
     this.maxConcurrent = options.maxConcurrent || 4;
     this.strategy = options.strategy || 'dependency'; // 'dependency' | 'group' | 'auto'
     this.graph = null;
@@ -33,7 +41,7 @@ class ParallelWaveScheduler {
    * @param {WaveDependencyGraph} graph - The dependency graph to schedule
    * @throws {Error} If graph is not a valid WaveDependencyGraph instance
    */
-  initialize(graph) {
+  initialize(graph: WaveDependencyGraph) {
     if (!graph || typeof graph.nodes === 'undefined') {
       throw new Error('Must provide a valid WaveDependencyGraph instance');
     }
@@ -55,7 +63,7 @@ class ParallelWaveScheduler {
    * Get next batch of waves that can execute in parallel
    * @returns {string[]} Array of wave IDs that can start now
    */
-  getNextBatch() {
+  getNextBatch(): string[] {
     if (!this.graph) {
       throw new Error('Scheduler not initialized. Call initialize() first.');
     }
@@ -104,7 +112,7 @@ class ParallelWaveScheduler {
    * @param {string} waveId - Wave ID to check
    * @returns {boolean} True if the wave can start
    */
-  canStart(waveId) {
+  canStart(waveId: string): boolean {
     if (!this.graph) return false;
     if (!this.graph.nodes.has(waveId)) return false;
     if (this.completed.has(waveId) || this.running.has(waveId) || this.failed.has(waveId)) {
@@ -126,7 +134,7 @@ class ParallelWaveScheduler {
    * Mark a wave as started/running
    * @param {string} waveId - Wave ID to mark as started
    */
-  markStarted(waveId) {
+  markStarted(waveId: string) {
     this.running.add(waveId);
   }
 
@@ -134,7 +142,7 @@ class ParallelWaveScheduler {
    * Alias for markStarted for backward compatibility
    * @param {string} waveId - Wave ID to start
    */
-  startWave(waveId) {
+  startWave(waveId: string) {
     this.markStarted(waveId);
   }
 
@@ -142,7 +150,7 @@ class ParallelWaveScheduler {
    * Mark a wave as completed
    * @param {string} waveId - Wave ID to mark as completed
    */
-  markCompleted(waveId) {
+  markCompleted(waveId: string) {
     this.running.delete(waveId);
     this.completed.add(waveId);
   }
@@ -151,7 +159,7 @@ class ParallelWaveScheduler {
    * Alias for markCompleted for backward compatibility
    * @param {string} waveId - Wave ID to complete
    */
-  completeWave(waveId) {
+  completeWave(waveId: string) {
     this.markCompleted(waveId);
   }
 
@@ -160,7 +168,7 @@ class ParallelWaveScheduler {
    * @param {string} waveId - Wave ID to mark as failed
    * @param {string} [error] - Error message describing the failure
    */
-  markFailed(waveId, error = 'Unknown error') {
+  markFailed(waveId: string, error: string = 'Unknown error') {
     this.running.delete(waveId);
     this.failed.add(waveId);
     this.failureReasons.set(waveId, error);
@@ -170,7 +178,7 @@ class ParallelWaveScheduler {
    * Alias for markFailed for backward compatibility
    * @param {string} waveId - Wave ID to fail
    */
-  failWave(waveId) {
+  failWave(waveId: string) {
     this.markFailed(waveId);
   }
 
@@ -178,7 +186,7 @@ class ParallelWaveScheduler {
    * Check if all waves are done (completed or failed)
    * @returns {boolean} True if all waves are done
    */
-  isComplete() {
+  isComplete(): boolean {
     if (!this.graph) return true;
     const total = this.graph.nodes.size;
     return this.completed.size + this.failed.size >= total;
@@ -458,5 +466,3 @@ class ParallelWaveScheduler {
     });
   }
 }
-
-module.exports = { ParallelWaveScheduler };

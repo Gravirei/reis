@@ -5,7 +5,9 @@ import fs from 'fs';
  * FR2.1: Optimizes incomplete implementation solutions (targeted re-execution)
  */
 export class SolutionDesigner {
-  constructor(analysis) {
+  analysis: any;
+
+  constructor(analysis: any) {
     this.analysis = analysis;
   }
 
@@ -472,7 +474,7 @@ export class SolutionDesigner {
   }
 }
 
-export function enhanceSolutions(analysis) {
+export function enhanceSolutions(analysis: any) {
   const designer = new SolutionDesigner(analysis);
   const enhanced = designer.enhanceSolutions(analysis.solutions);
   const matrix = designer.generateComparisonMatrix(enhanced);

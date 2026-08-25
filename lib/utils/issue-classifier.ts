@@ -3,10 +3,12 @@
  * Implements FR2.1: Distinguishes incomplete implementations from bugs
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-class IssueClassifier {
+export class IssueClassifier {
+  patterns: Record<string, { keywords: string[]; indicators: string[]; severity: { critical: string[]; major: string[]; minor: string[] } }>;
+
   constructor() {
     this.patterns = this.loadPatterns();
   }
@@ -220,7 +222,7 @@ class IssueClassifier {
     }
 
     // Check other issue types
-    const scores = {};
+    const scores: Record<string, number> = {};
     
     for (const [type, pattern] of Object.entries(this.patterns)) {
       if (type === 'incomplete-implementation') continue;  // Already checked
@@ -524,8 +526,4 @@ class IssueClassifier {
   }
 }
 
-// Export class and singleton instance
-module.exports = {
-  IssueClassifier,
-  issueClassifier: new IssueClassifier()
-};
+export const issueClassifier = new IssueClassifier();

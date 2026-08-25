@@ -1,14 +1,18 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
-const { issueClassifier } = require('./issue-classifier.js');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { issueClassifier } from './issue-classifier.js';
 
 /**
  * Debug Analyzer - Implements 6-step analysis protocol
  * FR2.1: Special handling for incomplete implementations
  */
 class DebugAnalyzer {
-  constructor(debugInput, projectContext) {
+  input: string;
+  context: any;
+  analysis: any;
+
+  constructor(debugInput: string, projectContext: any) {
     this.input = debugInput;
     this.context = projectContext;
     this.analysis = {};
@@ -717,7 +721,4 @@ class DebugAnalyzer {
   }
 }
 
-// Export class and singleton instance
-module.exports = {
-  DebugAnalyzer
-};
+export { DebugAnalyzer };

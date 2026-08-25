@@ -9,9 +9,9 @@
  * - Structured result objects with artifacts and metadata
  */
 
-const fs = require('fs');
-const path = require('path');
-const EventEmitter = require('events');
+import fs from 'fs';
+import path from 'path';
+import EventEmitter from 'events';
 
 // Get project root (where subagents/ directory lives)
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
@@ -24,8 +24,10 @@ const SUBAGENTS_DIR = path.join(PROJECT_ROOT, 'subagents');
 /**
  * Error thrown when a subagent definition is not found
  */
-class SubagentNotFoundError extends Error {
-  constructor(name) {
+export class SubagentNotFoundError extends Error {
+  subagentName: string;
+
+  constructor(name: string) {
     const available = listSubagentsInternal();
     super(`Subagent '${name}' not found. Available: ${available.join(', ')}`);
     this.name = 'SubagentNotFoundError';
@@ -36,8 +38,11 @@ class SubagentNotFoundError extends Error {
 /**
  * Error thrown when a subagent definition is invalid
  */
-class InvalidDefinitionError extends Error {
-  constructor(name, reason) {
+export class InvalidDefinitionError extends Error {
+  subagentName: string;
+  reason: string;
+
+  constructor(name: string, reason: string) {
     super(`Invalid subagent definition '${name}': ${reason}`);
     this.name = 'InvalidDefinitionError';
     this.subagentName = name;
@@ -48,8 +53,11 @@ class InvalidDefinitionError extends Error {
 /**
  * Error thrown when invocation times out
  */
-class TimeoutError extends Error {
-  constructor(subagentName, timeout) {
+export class TimeoutError extends Error {
+  subagentName: string;
+  timeout: number;
+
+  constructor(subagentName: string, timeout: number) {
     super(`Subagent '${subagentName}' invocation timed out after ${timeout}ms`);
     this.name = 'TimeoutError';
     this.subagentName = subagentName;
@@ -60,8 +68,11 @@ class TimeoutError extends Error {
 /**
  * Error thrown when invocation fails
  */
-class InvocationError extends Error {
-  constructor(subagentName, reason, cause = null) {
+export class InvocationError extends Error {
+  subagentName: string;
+  reason: string;
+
+  constructor(subagentName: string, reason: string, cause: any = null) {
     super(`Failed to invoke subagent '${subagentName}': ${reason}`);
     this.name = 'InvocationError';
     this.subagentName = subagentName;
@@ -77,14 +88,13 @@ class InvocationError extends Error {
 /**
  * SubagentDefinition - Parsed subagent definition from markdown file
  */
-class SubagentDefinition {
-  /**
-   * @param {string} name - Subagent identifier
-   * @param {string} description - What the subagent does
-   * @param {string[]} tools - List of tools the subagent can use
-   * @param {string} systemPrompt - The system prompt/instructions
-   */
-  constructor(name, description, tools, systemPrompt) {
+export class SubagentDefinition {
+  name: string;
+  description: string;
+  tools: string[];
+  systemPrompt: string;
+
+  constructor(name: string, description: string, tools: string[], systemPrompt: string) {
     this.name = name;
     this.description = description;
     this.tools = tools || [];
@@ -108,12 +118,17 @@ class SubagentDefinition {
 /**
  * ExecutionContext - Context for subagent invocation
  */
-class ExecutionContext {
-  /**
-   * @param {SubagentDefinition} subagent - The subagent definition
-   * @param {Object} options - Context options
-   */
-  constructor(subagent, options = {}) {
+export class ExecutionContext {
+  subagent: SubagentDefinition;
+  planPath: string | null;
+  planContent: string | null;
+  projectState: any;
+  projectConfig: any;
+  additionalContext: Record<string, any>;
+  timeout: number;
+  verbose: boolean;
+
+  constructor(subagent: SubagentDefinition, options: any = {}) {
     this.subagent = subagent;
     this.planPath = options.planPath || null;
     this.planContent = options.planContent || null;
@@ -223,7 +238,14 @@ class ExecutionContext {
 /**
  * InvocationResult - Result from subagent invocation
  */
-class InvocationResult {
+export class InvocationResult {
+  success: boolean;
+  output: string;
+  artifacts: any[];
+  duration: number;
+  error: Error | null;
+  metadata: Record<string, any>;
+
   constructor() {
     this.success = false;
     this.output = '';
@@ -233,12 +255,7 @@ class InvocationResult {
     this.metadata = {};
   }
 
-  /**
-   * Create a successful result
-   * @param {Object} options
-   * @returns {InvocationResult}
-   */
-  static success(options = {}) {
+  static success(options: any = {}) {
     const result = new InvocationResult();
     result.success = true;
     result.output = options.output || '';
@@ -248,13 +265,7 @@ class InvocationResult {
     return result;
   }
 
-  /**
-   * Create a failed result
-   * @param {Error|string} error
-   * @param {Object} options
-   * @returns {InvocationResult}
-   */
-  static failure(error, options = {}) {
+  static failure(error: any, options: any = {}) {
     const result = new InvocationResult();
     result.success = false;
     result.error = error instanceof Error ? error : new Error(error);
@@ -289,7 +300,7 @@ class InvocationResult {
  * @param {string} content - Markdown content with YAML frontmatter
  * @returns {{ frontmatter: Object, body: string }}
  */
-function parseYamlFrontmatter(content) {
+export function parseYamlFrontmatter(content: string): { frontmatter: Record<string, any> | null; body: string } {
   // Match YAML frontmatter: ---\n...\n---
   const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/;
   const match = content.match(frontmatterRegex);
@@ -302,9 +313,9 @@ function parseYamlFrontmatter(content) {
   const body = match[2];
 
   // Simple YAML parser for our specific format
-  const frontmatter = {};
+  const frontmatter: Record<string, any> = {};
   const lines = yamlContent.split('\n');
-  let currentKey = null;
+  let currentKey: string | null = null;
   let isArrayMode = false;
 
   for (const line of lines) {
@@ -357,7 +368,7 @@ function listSubagentsInternal() {
  * List all available subagents
  * @returns {string[]} Array of subagent names
  */
-function listSubagents() {
+export function listSubagents() {
   return listSubagentsInternal();
 }
 
@@ -368,7 +379,7 @@ function listSubagents() {
  * @throws {SubagentNotFoundError} If subagent file doesn't exist
  * @throws {InvalidDefinitionError} If definition is malformed
  */
-function loadSubagentDefinition(name) {
+export function loadSubagentDefinition(name: string): SubagentDefinition {
   const filePath = path.join(SUBAGENTS_DIR, `${name}.md`);
 
   // Check if file exists
@@ -414,7 +425,7 @@ function loadSubagentDefinition(name) {
  * @param {SubagentDefinition} definition
  * @returns {{ valid: boolean, errors: string[] }}
  */
-function validateDefinition(definition) {
+export function validateDefinition(definition: any): { valid: boolean; errors: string[] } {
   const errors = [];
 
   if (!definition) {
@@ -449,7 +460,7 @@ function validateDefinition(definition) {
  * @param {string} projectRoot
  * @returns {string|null} State content or null
  */
-function loadProjectState(projectRoot = process.cwd()) {
+export function loadProjectState(projectRoot: string = process.cwd()): string | null {
   const statePath = path.join(projectRoot, '.planning', 'STATE.md');
   
   if (fs.existsSync(statePath)) {
@@ -468,7 +479,7 @@ function loadProjectState(projectRoot = process.cwd()) {
  * @param {string} projectRoot
  * @returns {Object|null} Config object or null
  */
-function loadProjectConfig(projectRoot = process.cwd()) {
+export function loadProjectConfig(projectRoot: string = process.cwd()): any {
   // Try .planning/config.json first
   const planningConfigPath = path.join(projectRoot, '.planning', 'config.json');
   if (fs.existsSync(planningConfigPath)) {
@@ -501,7 +512,7 @@ function loadProjectConfig(projectRoot = process.cwd()) {
  * @param {Object} options - Context options
  * @returns {ExecutionContext}
  */
-function buildExecutionContext(subagentName, options = {}) {
+export function buildExecutionContext(subagentName: string, options: any = {}): ExecutionContext {
   // Load subagent definition
   const subagent = loadSubagentDefinition(subagentName);
 
@@ -561,13 +572,11 @@ function buildExecutionContext(subagentName, options = {}) {
  * - 'error' - Error occurred { error }
  * - 'timeout' - Invocation timed out { subagent, timeout }
  */
-class SubagentInvoker extends EventEmitter {
-  /**
-   * @param {Object} options
-   * @param {boolean} options.verbose - Enable verbose logging
-   * @param {string} options.mode - Execution mode ('prompt' | 'api')
-   */
-  constructor(options = {}) {
+export class SubagentInvoker extends EventEmitter {
+  verbose: boolean;
+  mode: string;
+
+  constructor(options: any = {}) {
     super();
     this.verbose = options.verbose || false;
     this.mode = options.mode || 'prompt'; // Currently only 'prompt' mode is implemented
@@ -606,7 +615,7 @@ class SubagentInvoker extends EventEmitter {
       const executionPromise = this._executeSubagent(context);
 
       // Race between execution and timeout
-      const result = await Promise.race([executionPromise, timeoutPromise]);
+      const result = await Promise.race([executionPromise, timeoutPromise]) as InvocationResult;
       
       // Clear timeout
       clearTimeout(timeoutId);
@@ -710,7 +719,7 @@ class SubagentInvoker extends EventEmitter {
  * @param {Object} options - Invocation options
  * @returns {Promise<InvocationResult>}
  */
-async function invokeSubagent(subagentName, options = {}) {
+export async function invokeSubagent(subagentName: string, options: any = {}) {
   const context = buildExecutionContext(subagentName, options);
   const invoker = new SubagentInvoker({ 
     verbose: options.verbose,
@@ -727,7 +736,7 @@ async function invokeSubagent(subagentName, options = {}) {
  * @param {number} options.retryDelay - Delay between retries in ms (default: 1000)
  * @returns {Promise<InvocationResult>}
  */
-async function invokeWithRetry(subagentName, options = {}) {
+export async function invokeWithRetry(subagentName: string, options: any = {}) {
   const maxRetries = options.maxRetries || 3;
   const retryDelay = options.retryDelay || 1000;
   let lastError = null;
@@ -774,40 +783,7 @@ async function invokeWithRetry(subagentName, options = {}) {
  * @param {Object} options
  * @returns {SubagentInvoker}
  */
-function createInvoker(options = {}) {
+export function createInvoker(options: any = {}): SubagentInvoker {
   return new SubagentInvoker(options);
 }
 
-// ============================================================================
-// Module Exports
-// ============================================================================
-
-module.exports = {
-  // Classes
-  SubagentDefinition,
-  ExecutionContext,
-  InvocationResult,
-  SubagentInvoker,
-  
-  // Error Classes
-  SubagentNotFoundError,
-  InvalidDefinitionError,
-  TimeoutError,
-  InvocationError,
-  
-  // Core Functions
-  loadSubagentDefinition,
-  listSubagents,
-  validateDefinition,
-  buildExecutionContext,
-  
-  // Convenience Functions
-  invokeSubagent,
-  invokeWithRetry,
-  createInvoker,
-  
-  // Internal (exported for testing)
-  parseYamlFrontmatter,
-  loadProjectState,
-  loadProjectConfig
-};

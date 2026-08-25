@@ -1,5 +1,5 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Cycle State Manager
@@ -13,7 +13,7 @@ const STATE_FILE = path.join(STATE_DIR, 'cycle-state.json');
 /**
  * Ensure .reis directory exists
  */
-function ensureStateDir() {
+export function ensureStateDir() {
   if (!fs.existsSync(STATE_DIR)) {
     fs.mkdirSync(STATE_DIR, { recursive: true });
   }
@@ -33,7 +33,7 @@ function ensureStateDir() {
  * @param {Object|null} cycleData.lastError - Last error encountered
  * @param {number} cycleData.completeness - Verification completeness percentage
  */
-function saveState(cycleData) {
+export function saveState(cycleData) {
   try {
     ensureStateDir();
     
@@ -82,7 +82,7 @@ function saveState(cycleData) {
  * Load cycle state from disk
  * @returns {Object|null} Cycle state or null if not found/invalid
  */
-function loadState() {
+export function loadState() {
   try {
     if (!fs.existsSync(STATE_FILE)) {
       return null;
@@ -111,7 +111,7 @@ function loadState() {
  * @param {string} details - Additional details about the transition
  * @param {Object} updates - Additional fields to update
  */
-function updateState(newState, result = 'pending', details = '', updates = {}) {
+export function updateState(newState: string, result = 'pending', details = '', updates: Record<string, unknown> = {}) {
   const state = loadState();
   
   if (!state) {
@@ -125,7 +125,7 @@ function updateState(newState, result = 'pending', details = '', updates = {}) {
     const lastTransition = state.history[state.history.length - 1];
     const lastTime = new Date(lastTransition.timestamp);
     const now = new Date();
-    duration = now - lastTime;
+    duration = (now as any) - (lastTime as any);
   }
   
   // Add history entry
@@ -150,7 +150,7 @@ function updateState(newState, result = 'pending', details = '', updates = {}) {
  * Clear cycle state (on completion or user request)
  * @returns {boolean} Success status
  */
-function clearState() {
+export function clearState() {
   try {
     if (fs.existsSync(STATE_FILE)) {
       fs.unlinkSync(STATE_FILE);
@@ -166,7 +166,7 @@ function clearState() {
  * Check if cycle is resumable
  * @returns {boolean} True if there's a resumable cycle
  */
-function isResumable() {
+export function isResumable() {
   const state = loadState();
   
   if (!state) {
@@ -183,7 +183,7 @@ function isResumable() {
  * Get state file path (for testing or manual inspection)
  * @returns {string} Path to state file
  */
-function getStateFilePath() {
+export function getStateFilePath() {
   return STATE_FILE;
 }
 
@@ -191,7 +191,7 @@ function getStateFilePath() {
  * Get current state summary (for display)
  * @returns {Object|null} Summary of current state
  */
-function getStateSummary() {
+export function getStateSummary() {
   const state = loadState();
   
   if (!state) {
@@ -200,7 +200,7 @@ function getStateSummary() {
   
   const now = new Date();
   const start = new Date(state.startTime);
-  const elapsed = Math.floor((now - start) / 1000); // seconds
+  const elapsed = Math.floor(((now as any) - (start as any)) / 1000); // seconds
   
   return {
     phase: state.phase,
@@ -217,7 +217,7 @@ function getStateSummary() {
  * Increment attempt counter
  * @returns {boolean} Success status
  */
-function incrementAttempts() {
+export function incrementAttempts() {
   const state = loadState();
   
   if (!state) {
@@ -232,7 +232,7 @@ function incrementAttempts() {
  * Check if max attempts reached
  * @returns {boolean} True if max attempts reached
  */
-function isMaxAttemptsReached() {
+export function isMaxAttemptsReached() {
   const state = loadState();
   
   if (!state) {
@@ -246,7 +246,7 @@ function isMaxAttemptsReached() {
  * Set last error
  * @param {Error|Object} error - Error object or error details
  */
-function setLastError(error) {
+export function setLastError(error: any) {
   const state = loadState();
   
   if (!state) {
@@ -267,7 +267,7 @@ function setLastError(error) {
  * Update completeness percentage
  * @param {number} completeness - Percentage (0-100)
  */
-function updateCompleteness(completeness) {
+export function updateCompleteness(completeness: number) {
   const state = loadState();
   
   if (!state) {
@@ -282,7 +282,7 @@ function updateCompleteness(completeness) {
  * Set execution result
  * @param {Object} result - Execution result from subagent
  */
-function setExecutionResult(result) {
+export function setExecutionResult(result) {
   const state = loadState();
   
   if (!state) {
@@ -305,7 +305,7 @@ function setExecutionResult(result) {
  * Get execution result
  * @returns {Object|null} Execution result or null
  */
-function getExecutionResult() {
+export function getExecutionResult() {
   const state = loadState();
   return state?.executionResult || null;
 }
@@ -314,7 +314,7 @@ function getExecutionResult() {
  * Set verification result
  * @param {Object} result - Verification result
  */
-function setVerificationResult(result) {
+export function setVerificationResult(result) {
   const state = loadState();
   
   if (!state) {
@@ -336,7 +336,7 @@ function setVerificationResult(result) {
  * Get verification result
  * @returns {Object|null} Verification result or null
  */
-function getVerificationResult() {
+export function getVerificationResult() {
   const state = loadState();
   return state?.verificationResult || null;
 }
@@ -349,7 +349,7 @@ function getVerificationResult() {
  * Store review execution results
  * @param {Object} result - Review execution result
  */
-function setReviewResult(result) {
+export function setReviewResult(result) {
   const state = loadState();
   
   if (!state) {
@@ -367,7 +367,7 @@ function setReviewResult(result) {
  * Get stored review results
  * @returns {Object|null} Review result or null
  */
-function getReviewResult() {
+export function getReviewResult() {
   const state = loadState();
   return state?.reviewResult || null;
 }
@@ -375,14 +375,14 @@ function getReviewResult() {
 /**
  * Clear review results
  */
-function clearReviewResult() {
+export function clearReviewResult() {
   const state = loadState();
   if (!state) return;
   delete state.reviewResult;
   saveState(state);
 }
 
-function setGateResult(result) {
+export function setGateResult(result) {
   const state = loadState();
   
   if (!state) {
@@ -400,7 +400,7 @@ function setGateResult(result) {
  * Get stored gate results
  * @returns {Object|null} Gate result or null
  */
-function getGateResult() {
+export function getGateResult() {
   const state = loadState();
   return state?.gateResult || null;
 }
@@ -408,7 +408,7 @@ function getGateResult() {
 /**
  * Clear gate results
  */
-function clearGateResult() {
+export function clearGateResult() {
   const state = loadState();
   
   if (!state) {
@@ -418,27 +418,3 @@ function clearGateResult() {
   delete state.gateResult;
   return saveState(state);
 }
-
-module.exports = {
-  saveState,
-  loadState,
-  updateState,
-  clearState,
-  isResumable,
-  getStateFilePath,
-  getStateSummary,
-  incrementAttempts,
-  isMaxAttemptsReached,
-  setLastError,
-  updateCompleteness,
-  setExecutionResult,
-  getExecutionResult,
-  setVerificationResult,
-  getVerificationResult,
-  setReviewResult,
-  getReviewResult,
-  clearReviewResult,
-  setGateResult,
-  getGateResult,
-  clearGateResult
-};

@@ -3,14 +3,14 @@
  * Auto-commit, branch management, and rollback support
  */
 
-const { execSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+import { execSync } from 'child_process';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Check if directory is a git repository
  */
-function isGitRepo(projectRoot = process.cwd()) {
+export function isGitRepo(projectRoot: string = process.cwd()): boolean {
   try {
     execSync('git rev-parse --git-dir', { 
       cwd: projectRoot,
@@ -25,7 +25,7 @@ function isGitRepo(projectRoot = process.cwd()) {
 /**
  * Get current git status
  */
-function getGitStatus(projectRoot = process.cwd()) {
+export function getGitStatus(projectRoot: string = process.cwd()) {
   if (!isGitRepo(projectRoot)) {
     return null;
   }
@@ -50,7 +50,7 @@ function getGitStatus(projectRoot = process.cwd()) {
 /**
  * Get current branch name
  */
-function getCurrentBranch(projectRoot = process.cwd()) {
+export function getCurrentBranch(projectRoot: string = process.cwd()): string | null {
   if (!isGitRepo(projectRoot)) {
     return null;
   }
@@ -70,7 +70,7 @@ function getCurrentBranch(projectRoot = process.cwd()) {
 /**
  * Get current commit hash
  */
-function getCurrentCommit(projectRoot = process.cwd()) {
+export function getCurrentCommit(projectRoot: string = process.cwd()): string | null {
   if (!isGitRepo(projectRoot)) {
     return null;
   }
@@ -90,7 +90,7 @@ function getCurrentCommit(projectRoot = process.cwd()) {
 /**
  * Get short commit hash (7 characters)
  */
-function getShortCommit(projectRoot = process.cwd()) {
+export function getShortCommit(projectRoot: string = process.cwd()): string | null {
   const commit = getCurrentCommit(projectRoot);
   return commit ? commit.substring(0, 7) : null;
 }
@@ -98,7 +98,7 @@ function getShortCommit(projectRoot = process.cwd()) {
 /**
  * Check if working tree is clean
  */
-function isWorkingTreeClean(projectRoot = process.cwd()) {
+export function isWorkingTreeClean(projectRoot: string = process.cwd()): boolean {
   const status = getGitStatus(projectRoot);
   return status ? status.clean : false;
 }
@@ -110,7 +110,7 @@ function isWorkingTreeClean(projectRoot = process.cwd()) {
  * @param {string} summary - Commit summary
  * @param {Object} options - Additional options
  */
-function createStructuredCommit(phase, waveName, summary, options = {}) {
+export function createStructuredCommit(phase: string, waveName: string, summary: string, options: any = {}) {
   const {
     projectRoot = process.cwd(),
     prefix = '[REIS v2.0]',
@@ -182,7 +182,7 @@ function createStructuredCommit(phase, waveName, summary, options = {}) {
 /**
  * Create a wave completion commit
  */
-function commitWaveCompletion(waveName, phase, options = {}) {
+export function commitWaveCompletion(waveName: string, phase: string, options: any = {}) {
   const summary = `Complete ${waveName}`;
   return createStructuredCommit(phase, waveName, summary, options);
 }
@@ -190,7 +190,7 @@ function commitWaveCompletion(waveName, phase, options = {}) {
 /**
  * Create a checkpoint commit
  */
-function commitCheckpoint(checkpointName, phase, options = {}) {
+export function commitCheckpoint(checkpointName: string, phase: string, options: any = {}) {
   const summary = `Checkpoint: ${checkpointName}`;
   return createStructuredCommit(phase, null, summary, {
     ...options,
@@ -201,7 +201,7 @@ function commitCheckpoint(checkpointName, phase, options = {}) {
 /**
  * Create a git tag for milestone
  */
-function createMilestoneTag(milestone, message, projectRoot = process.cwd()) {
+export function createMilestoneTag(milestone: string, message: string, projectRoot: string = process.cwd()): string {
   if (!isGitRepo(projectRoot)) {
     throw new Error('Not a git repository');
   }
@@ -223,7 +223,7 @@ function createMilestoneTag(milestone, message, projectRoot = process.cwd()) {
 /**
  * Create or switch to a branch
  */
-function ensureBranch(branchName, projectRoot = process.cwd()) {
+export function ensureBranch(branchName: string, projectRoot: string = process.cwd()): string {
   if (!isGitRepo(projectRoot)) {
     throw new Error('Not a git repository');
   }
@@ -267,7 +267,7 @@ function ensureBranch(branchName, projectRoot = process.cwd()) {
 /**
  * Get list of commits for a specific branch
  */
-function getCommitHistory(limit = 10, projectRoot = process.cwd()) {
+export function getCommitHistory(limit: number = 10, projectRoot: string = process.cwd()) {
   if (!isGitRepo(projectRoot)) {
     return [];
   }
@@ -291,7 +291,7 @@ function getCommitHistory(limit = 10, projectRoot = process.cwd()) {
 /**
  * Get diff between two commits
  */
-function getCommitDiff(fromCommit, toCommit = 'HEAD', projectRoot = process.cwd()) {
+export function getCommitDiff(fromCommit: string, toCommit: string = 'HEAD', projectRoot: string = process.cwd()): string | null {
   if (!isGitRepo(projectRoot)) {
     return null;
   }
@@ -312,7 +312,7 @@ function getCommitDiff(fromCommit, toCommit = 'HEAD', projectRoot = process.cwd(
 /**
  * Reset to a specific commit (rollback)
  */
-function rollbackToCommit(commitHash, mode = 'mixed', projectRoot = process.cwd()) {
+export function rollbackToCommit(commitHash: string, mode: string = 'mixed', projectRoot: string = process.cwd()): boolean {
   if (!isGitRepo(projectRoot)) {
     throw new Error('Not a git repository');
   }
@@ -338,7 +338,7 @@ function rollbackToCommit(commitHash, mode = 'mixed', projectRoot = process.cwd(
 /**
  * Stash current changes
  */
-function stashChanges(message = 'REIS auto-stash', projectRoot = process.cwd()) {
+export function stashChanges(message: string = 'REIS auto-stash', projectRoot: string = process.cwd()): string | null {
   if (!isGitRepo(projectRoot)) {
     throw new Error('Not a git repository');
   }
@@ -365,7 +365,7 @@ function stashChanges(message = 'REIS auto-stash', projectRoot = process.cwd()) 
 /**
  * Pop stashed changes
  */
-function popStash(projectRoot = process.cwd()) {
+export function popStash(projectRoot: string = process.cwd()): boolean {
   if (!isGitRepo(projectRoot)) {
     throw new Error('Not a git repository');
   }
@@ -386,7 +386,7 @@ function popStash(projectRoot = process.cwd()) {
 /**
  * Get git configuration info
  */
-function getGitInfo(projectRoot = process.cwd()) {
+export function getGitInfo(projectRoot: string = process.cwd()) {
   if (!isGitRepo(projectRoot)) {
     return null;
   }
@@ -401,22 +401,3 @@ function getGitInfo(projectRoot = process.cwd()) {
   };
 }
 
-module.exports = {
-  isGitRepo,
-  getGitStatus,
-  getCurrentBranch,
-  getCurrentCommit,
-  getShortCommit,
-  isWorkingTreeClean,
-  createStructuredCommit,
-  commitWaveCompletion,
-  commitCheckpoint,
-  createMilestoneTag,
-  ensureBranch,
-  getCommitHistory,
-  getCommitDiff,
-  rollbackToCommit,
-  stashChanges,
-  popStash,
-  getGitInfo
-};

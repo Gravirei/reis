@@ -1,29 +1,61 @@
 /**
  * REIS Parallel State Tracker
  * Tracks state for parallel wave execution with persistence and metrics
- * 
+ *
  * @module lib/utils/parallel-state-tracker
  */
 
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
+import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Wave status enum
  * @enum {string}
  */
-const WaveStatus = {
+export const WaveStatus = {
   PENDING: 'pending',
   RUNNING: 'running',
   COMPLETED: 'completed',
   FAILED: 'failed'
 };
 
+interface TrackedWave {
+  status: string;
+  startTime: number | null;
+  endTime: number | null;
+  error: string | null;
+  metadata: Record<string, unknown>;
+}
+
+interface TrackedBatch {
+  waveIds: string[];
+  startTime: number;
+  endTime: number | null;
+  status: string;
+}
+
+interface HistoryEntry {
+  type: string;
+  data: any;
+  timestamp: number;
+}
+
 /**
  * ParallelStateTracker - Tracks state for concurrent wave execution
  */
-class ParallelStateTracker {
+export class ParallelStateTracker {
+  projectRoot: string;
+  stateFile: string;
+  autoPersist: boolean;
+  waves: Map<string, TrackedWave>;
+  batches: Map<number, TrackedBatch>;
+  currentBatchId: number;
+  history: HistoryEntry[];
+  executionStartTime: number | null;
+  executionEndTime: number | null;
+  isExecuting: boolean;
+
   /**
    * Create a new ParallelStateTracker
    * @param {Object} options - Tracker options
@@ -31,21 +63,21 @@ class ParallelStateTracker {
    * @param {boolean} [options.autoPersist=true] - Auto-save state on changes
    * @param {string} [options.projectRoot=process.cwd()] - Project root directory
    */
-  constructor(options = {}) {
+  constructor(options: any = {}) {
     this.projectRoot = options.projectRoot || process.cwd();
     this.stateFile = options.stateFile || path.join(this.projectRoot, '.reis', 'parallel-state.json');
     this.autoPersist = options.autoPersist !== false;
-    
+
     // Wave tracking: waveId -> { status, startTime, endTime, error, metadata }
     this.waves = new Map();
-    
+
     // Batch tracking: batchId -> { waveIds, startTime, endTime, status }
     this.batches = new Map();
     this.currentBatchId = 0;
-    
+
     // Execution history for reporting
     this.history = [];
-    
+
     // Overall execution tracking
     this.executionStartTime = null;
     this.executionEndTime = null;
@@ -61,9 +93,9 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @param {Object} [metadata={}] - Additional wave metadata
    */
-  startWave(waveId, metadata = {}) {
+  startWave(waveId: string, metadata: Record<string, unknown> = {}) {
     const now = Date.now();
-    
+
     this.waves.set(waveId, {
       status: WaveStatus.RUNNING,
       startTime: now,
@@ -91,7 +123,7 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @param {Object} [result={}] - Completion result/metadata
    */
-  completeWave(waveId, result = {}) {
+  completeWave(waveId: string, result: Record<string, unknown> = {}) {
     const wave = this.waves.get(waveId);
     if (!wave) {
       throw new Error(`Wave not found: ${waveId}`);
@@ -109,7 +141,7 @@ class ParallelStateTracker {
     this._addHistoryEntry('wave_complete', {
       waveId,
       timestamp: now,
-      duration: now - wave.startTime,
+      duration: now - wave.startTime!,
       result
     });
 
@@ -123,7 +155,7 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @param {string|Error} error - Error that caused failure
    */
-  failWave(waveId, error) {
+  failWave(waveId: string, error: string | Error) {
     const wave = this.waves.get(waveId);
     if (!wave) {
       throw new Error(`Wave not found: ${waveId}`);
@@ -131,7 +163,7 @@ class ParallelStateTracker {
 
     const now = Date.now();
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     wave.status = WaveStatus.FAILED;
     wave.endTime = now;
     wave.error = errorMessage;
@@ -144,7 +176,7 @@ class ParallelStateTracker {
     this._addHistoryEntry('wave_failed', {
       waveId,
       timestamp: now,
-      duration: now - wave.startTime,
+      duration: now - wave.startTime!,
       error: errorMessage
     });
 
@@ -158,7 +190,7 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @param {Object} [metadata={}] - Wave metadata
    */
-  registerWave(waveId, metadata = {}) {
+  registerWave(waveId: string, metadata: Record<string, unknown> = {}) {
     if (!this.waves.has(waveId)) {
       this.waves.set(waveId, {
         status: WaveStatus.PENDING,
@@ -179,7 +211,7 @@ class ParallelStateTracker {
    * @param {string[]} waveIds - Array of wave IDs in this batch
    * @returns {number} Batch ID
    */
-  startBatch(waveIds) {
+  startBatch(waveIds: string[]): number {
     const batchId = ++this.currentBatchId;
     const now = Date.now();
 
@@ -198,7 +230,7 @@ class ParallelStateTracker {
 
     // Start all waves in the batch
     for (const waveId of waveIds) {
-      if (!this.waves.has(waveId) || this.waves.get(waveId).status === WaveStatus.PENDING) {
+      if (!this.waves.has(waveId) || this.waves.get(waveId)!.status === WaveStatus.PENDING) {
         this.startWave(waveId, { batchId });
       }
     }
@@ -214,7 +246,7 @@ class ParallelStateTracker {
    * Complete a batch
    * @param {number} batchId - Batch ID to complete
    */
-  completeBatch(batchId) {
+  completeBatch(batchId: number) {
     const batch = this.batches.get(batchId);
     if (!batch) {
       throw new Error(`Batch not found: ${batchId}`);
@@ -222,7 +254,7 @@ class ParallelStateTracker {
 
     const now = Date.now();
     batch.endTime = now;
-    
+
     // Check if any waves failed
     const hasFailures = batch.waveIds.some(id => {
       const wave = this.waves.get(id);
@@ -253,7 +285,7 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @returns {string} Wave status: 'pending' | 'running' | 'completed' | 'failed'
    */
-  getWaveStatus(waveId) {
+  getWaveStatus(waveId: string): string {
     const wave = this.waves.get(waveId);
     return wave ? wave.status : WaveStatus.PENDING;
   }
@@ -262,7 +294,7 @@ class ParallelStateTracker {
    * Get all currently running waves
    * @returns {string[]} Array of running wave IDs
    */
-  getRunningWaves() {
+  getRunningWaves(): string[] {
     return this._getWavesByStatus(WaveStatus.RUNNING);
   }
 
@@ -270,7 +302,7 @@ class ParallelStateTracker {
    * Get all completed waves
    * @returns {string[]} Array of completed wave IDs
    */
-  getCompletedWaves() {
+  getCompletedWaves(): string[] {
     return this._getWavesByStatus(WaveStatus.COMPLETED);
   }
 
@@ -278,7 +310,7 @@ class ParallelStateTracker {
    * Get all failed waves
    * @returns {string[]} Array of failed wave IDs
    */
-  getFailedWaves() {
+  getFailedWaves(): string[] {
     return this._getWavesByStatus(WaveStatus.FAILED);
   }
 
@@ -286,7 +318,7 @@ class ParallelStateTracker {
    * Get all pending waves
    * @returns {string[]} Array of pending wave IDs
    */
-  getPendingWaves() {
+  getPendingWaves(): string[] {
     return this._getWavesByStatus(WaveStatus.PENDING);
   }
 
@@ -296,7 +328,7 @@ class ParallelStateTracker {
    * @param {string} status - Status to filter by
    * @returns {string[]} Array of wave IDs
    */
-  _getWavesByStatus(status) {
+  _getWavesByStatus(status: string): string[] {
     const result = [];
     for (const [waveId, wave] of this.waves) {
       if (wave.status === status) {
@@ -311,7 +343,7 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @returns {Object|null} Wave details or null if not found
    */
-  getWaveDetails(waveId) {
+  getWaveDetails(waveId: string): any {
     const wave = this.waves.get(waveId);
     if (!wave) return null;
 
@@ -339,7 +371,7 @@ class ParallelStateTracker {
 
       const state = this.toJSON();
       fs.writeFileSync(this.stateFile, JSON.stringify(state, null, 2), 'utf8');
-    } catch (error) {
+    } catch (error: any) {
       // Non-fatal: log warning but don't throw
       console.warn(chalk.yellow(`Warning: Could not save parallel state: ${error.message}`));
     }
@@ -349,7 +381,7 @@ class ParallelStateTracker {
    * Load state from file
    * @returns {boolean} True if state was loaded successfully
    */
-  load() {
+  load(): boolean {
     try {
       if (!fs.existsSync(this.stateFile)) {
         return false;
@@ -360,7 +392,7 @@ class ParallelStateTracker {
 
       // Restore waves
       this.waves = new Map(state.waves || []);
-      
+
       // Restore batches
       this.batches = new Map(state.batches || []);
       this.currentBatchId = state.currentBatchId || 0;
@@ -374,7 +406,7 @@ class ParallelStateTracker {
       this.isExecuting = state.isExecuting || false;
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.warn(chalk.yellow(`Warning: Could not load parallel state: ${error.message}`));
       return false;
     }
@@ -409,7 +441,7 @@ class ParallelStateTracker {
    * Get total execution duration
    * @returns {number|null} Duration in milliseconds, or null if not complete
    */
-  getTotalDuration() {
+  getTotalDuration(): number | null {
     if (!this.executionStartTime) {
       return null;
     }
@@ -423,7 +455,7 @@ class ParallelStateTracker {
    * @param {string} waveId - Wave identifier
    * @returns {number|null} Duration in milliseconds, or null if not complete
    */
-  getWaveDuration(waveId) {
+  getWaveDuration(waveId: string): number | null {
     const wave = this.waves.get(waveId);
     if (!wave || !wave.startTime) {
       return null;
@@ -438,9 +470,9 @@ class ParallelStateTracker {
    * Compares actual parallel time to theoretical sequential time
    * @returns {Object} Efficiency metrics
    */
-  getParallelEfficiency() {
+  getParallelEfficiency(): { sequentialTime: number; parallelTime: number; efficiency: number; speedupFactor: number; timeSaved?: number; wavesAnalyzed: number } {
     const completedWaves = this.getCompletedWaves();
-    
+
     if (completedWaves.length === 0) {
       return {
         sequentialTime: 0,
@@ -481,7 +513,7 @@ class ParallelStateTracker {
    * Get average wave duration
    * @returns {number} Average duration in milliseconds
    */
-  getAverageWaveDuration() {
+  getAverageWaveDuration(): number {
     const completedWaves = this.getCompletedWaves();
     if (completedWaves.length === 0) return 0;
 
@@ -539,7 +571,7 @@ class ParallelStateTracker {
    * Get full execution summary
    * @returns {Object} Execution summary
    */
-  getSummary() {
+  getSummary(): any {
     const running = this.getRunningWaves();
     const completed = this.getCompletedWaves();
     const failed = this.getFailedWaves();
@@ -597,9 +629,9 @@ class ParallelStateTracker {
    * @param {Object} [options={}] - Tracker options
    * @returns {ParallelStateTracker} New tracker instance
    */
-  static fromJSON(json, options = {}) {
+  static fromJSON(json: any, options: any = {}): ParallelStateTracker {
     const tracker = new ParallelStateTracker(options);
-    
+
     tracker.waves = new Map(json.waves || []);
     tracker.batches = new Map(json.batches || []);
     tracker.currentBatchId = json.currentBatchId || 0;
@@ -621,7 +653,7 @@ class ParallelStateTracker {
    * @param {string} type - Entry type
    * @param {Object} data - Entry data
    */
-  _addHistoryEntry(type, data) {
+  _addHistoryEntry(type: string, data: any) {
     this.history.push({
       type,
       data,
@@ -643,9 +675,9 @@ class ParallelStateTracker {
    * @param {number} ms - Duration in milliseconds
    * @returns {string} Formatted duration
    */
-  formatDuration(ms) {
+  formatDuration(ms: number | null): string {
     if (ms === null || ms === undefined) return '-';
-    
+
     if (ms < 1000) {
       return `${ms}ms`;
     } else if (ms < 60000) {
@@ -662,7 +694,7 @@ class ParallelStateTracker {
    * @param {string} status - Wave status
    * @returns {string} Colored status string
    */
-  getColoredStatus(status) {
+  getColoredStatus(status: string): string {
     switch (status) {
       case WaveStatus.RUNNING:
         return chalk.blue('●') + ' ' + chalk.blue('running');
@@ -681,10 +713,10 @@ class ParallelStateTracker {
    */
   printSummary() {
     const summary = this.getSummary();
-    
+
     console.log(chalk.bold('\n📊 Parallel Execution Summary'));
     console.log(chalk.gray('─'.repeat(40)));
-    
+
     console.log(`Status: ${this._getStatusColor(summary.status)}`);
     console.log(`Waves: ${chalk.green(summary.waves.completed)} completed, ` +
                 `${chalk.blue(summary.waves.running)} running, ` +
@@ -692,7 +724,7 @@ class ParallelStateTracker {
                 `${chalk.gray(summary.waves.pending)} pending`);
     console.log(`Batches: ${summary.batches.total} total`);
     console.log(`Duration: ${this.formatDuration(summary.timing.totalDuration)}`);
-    
+
     if (summary.efficiency.wavesAnalyzed > 0) {
       console.log(chalk.gray('─'.repeat(40)));
       console.log(chalk.bold('Efficiency Metrics:'));
@@ -718,7 +750,7 @@ class ParallelStateTracker {
    * @param {string} status - Execution status
    * @returns {string} Colored status
    */
-  _getStatusColor(status) {
+  _getStatusColor(status: string): string {
     switch (status) {
       case 'running':
         return chalk.blue('● Running');
@@ -731,5 +763,3 @@ class ParallelStateTracker {
     }
   }
 }
-
-module.exports = { ParallelStateTracker, WaveStatus };

@@ -6,6 +6,9 @@ import path from 'path';
  * FR2.1: Tracks incomplete implementation patterns for learning
  */
 export class PatternMatcher {
+  patternsDir: string;
+  patterns: any[];
+
   constructor() {
     this.patternsDir = 'patterns/debug';
     this.patterns = this.loadPatterns();
