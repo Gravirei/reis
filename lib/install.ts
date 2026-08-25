@@ -625,6 +625,15 @@ async function performInstallation(overwrite = false, silent = false, target = '
     const hooksSourceDir = path.join(packageDir, 'hooks');
     if (fs.existsSync(hooksSourceDir)) {
       copyDirectory(hooksSourceDir, path.join(reisDir, 'hooks'), true);
+      if (process.platform === 'win32') {
+        // Windows shims so node-based hooks resolve without a shell wrapper
+        const hooksDest = path.join(reisDir, 'hooks');
+        for (const js of fs.readdirSync(hooksDest).filter(f => f.endsWith('.js'))) {
+          const shim = `@echo off\r\nnode "%~dp0${js}" %*\r\n`;
+          fs.writeFileSync(path.join(hooksDest, `${js}.cmd`), shim);
+          fileCount++;
+        }
+      }
     }
 
     // Inject lifecycle hooks into Claude Code settings (only supported runtime)

@@ -69,7 +69,7 @@ describe('Installer (v3 agent-native package)', function () {
     try {
       await performInstallation(false, true, 'codex', 'local');
       const files = fs.readdirSync(path.join(proj, '.codex/prompts')).filter(f => f.startsWith('reis-'));
-      assert.strictEqual(files.length, 30);
+      assert.strictEqual(files.length, 31);
       for (const f of files) {
         const content = fs.readFileSync(path.join(proj, '.codex/prompts', f), 'utf8');
         assert.ok(!content.startsWith('---'), `${f}: frontmatter stripped`);

@@ -105,6 +105,7 @@ All commands run inside your AI tool via its invocation syntax above.
 | `extract-learnings` | Mine decisions/patterns/surprises into LEARNINGS.md |
 | `ingest-docs` | Bootstrap `.planning/` from existing ADRs/PRDs/specs |
 | `forensics` | Post-mortem audit when a REIS workflow itself fails |
+| `doctor` | Diagnose install integrity + project state; print repair plan |
 
 ## Subagents
 

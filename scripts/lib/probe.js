@@ -50,7 +50,7 @@ pass(`${wfCount} workflows installed`);
 if (runtime === 'claude') {
   const dir = path.join(base, 'commands/reis');
   const n = fs.readdirSync(dir).filter(f => f.endsWith('.md')).length;
-  if (n !== 30) fail(`expected 30 claude commands, found ${n}`);
+  if (n !== 31) fail(`expected 31 claude commands, found ${n}`);
   const sample = fs.readFileSync(path.join(dir, 'plan.md'), 'utf8');
   if (sample.includes('~/.claude/reis/') && !process.env.REIS_LOCAL) {
     // global installs keep ~/.claude paths for claude itself
@@ -59,14 +59,14 @@ if (runtime === 'claude') {
 } else if (runtime === 'gemini') {
   const dir = path.join(base, 'commands/reis');
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.toml'));
-  if (files.length !== 30) fail(`expected 30 gemini TOML commands, found ${files.length}`);
+  if (files.length !== 31) fail(`expected 31 gemini TOML commands, found ${files.length}`);
   const sample = fs.readFileSync(path.join(dir, 'plan.toml'), 'utf8');
   if (!sample.includes('{{args}}') && !sample.includes('description')) pass('toml shape ok (no-arg command)');
   else pass(`${files.length} TOML commands incl. {{args}} templating`);
 } else if (runtime === 'codex') {
   const dir = path.join(base, 'prompts');
   const files = fs.readdirSync(dir).filter(f => /^reis-.*\.md$/.test(f));
-  if (files.length !== 30) fail(`expected 30 codex prompts, found ${files.length}`);
+  if (files.length !== 31) fail(`expected 31 codex prompts, found ${files.length}`);
   const sample = fs.readFileSync(path.join(dir, 'reis-plan.md'), 'utf8');
   if (sample.startsWith('---')) fail('codex prompt still has frontmatter');
   pass(`${files.length} prompts, frontmatter stripped`);
@@ -75,7 +75,7 @@ if (runtime === 'claude') {
   const skills = fs.readdirSync(dir).filter(f =>
     fs.existsSync(path.join(dir, f, 'SKILL.md'))
   );
-  if (skills.length !== 30) fail(`expected 30 copilot skills, found ${skills.length}`);
+  if (skills.length !== 31) fail(`expected 31 copilot skills, found ${skills.length}`);
   pass(`${skills.length} skills`);
 }
 
