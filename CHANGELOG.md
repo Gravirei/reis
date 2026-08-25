@@ -1,5 +1,34 @@
 # Changelog
 
+## [3.0.0] - 2026-08-26
+
+### 🤖 Agent-Native REIS
+
+REIS pivots from a human-facing CLI to an **agent-native methodology package**:
+the primary interface is now `/reis:*` slash commands inside AI coding tools
+(Claude Code, OpenAI Codex, Gemini CLI, GitHub Copilot CLI, Atlassian Rovo Dev).
+
+### ✨ Added
+
+- **24 slash-command dispatchers** (`commands/reis/*.md`) in GSD-compatible format
+- **Methodology layer**: 24 workflows, 5 reference specs, 3 context primers —
+  plain Markdown the agent reads and follows
+- **Installer v3**: installs agents + commands + methodology per runtime
+  (Claude commands, Gemini TOML commands, Codex prompts, Copilot skills),
+  global (`~`) or project-local (`./`) scopes with automatic path rewriting
+- `reis update` for refreshing installed files
+
+### 🔧 Changed
+
+- The 40-command Node CLI is retired; the binary now only manages
+  install / uninstall / update / version
+- commander dependency dropped; runtime deps reduced to chalk + inquirer
+
+### 🗑️ Removed
+
+- All legacy JS command implementations and presentation utilities
+  (~7k lines) superseded by the Markdown methodology layer
+
 ## [2.8.0] - 2026-08-25
 
 ### 🔁 Full TypeScript Migration

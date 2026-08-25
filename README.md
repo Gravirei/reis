@@ -617,10 +617,22 @@ reis plan && reis execute
 
 - TypeScript (strict mode, compiled to CommonJS)
 - Node.js
-- Chalk (terminal styling)
-- Inquirer (interactive prompts)
+- Agent-native: slash commands + methodology as plain Markdown
 - Jest (testing)
-- Rovo Dev / Gemini CLI (AI development)
+
+## How It Works (v3+)
+
+REIS is **agent-native**: you don't run REIS commands yourself — your AI tool does.
+After `npm install -g @gravirei/reis`, open Claude Code, Codex, Gemini CLI,
+Copilot CLI or Rovo Dev and use `/reis:*` slash commands:
+
+    /reis:new-project     initialize .planning/ structure
+    /reis:plan 2          plan phase 2 into wave-based task plans
+    /reis:cycle 2         full automated PLAN→REVIEW→EXECUTE→VERIFY→GATE loop
+    /reis:progress        status report + next-action routing
+
+The installer places agent definitions, command dispatchers, and methodology
+(workflows/references/contexts) into each tool's configuration directory.
 
 ## Development
 

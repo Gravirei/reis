@@ -31,3 +31,5 @@ tmp_rovodev_*
 tsconfig.json
 tsconfig.build.json
 eslint.config.js
+lib/*.ts
+bin/*.ts

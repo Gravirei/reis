@@ -1,10 +1,9 @@
-import { showSuccess, showError } from '../utils/command-helpers.js';
 import chalk from 'chalk';
 import inquirer from 'inquirer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { PLATFORMS } from '../install.js';
+import { PLATFORMS } from './install.js';
 
 interface PlatformInstallStatus {
   key: string;
@@ -63,6 +62,14 @@ function detectInstalls(): PlatformInstallStatus[] {
   }
 
   return found;
+}
+
+function showSuccess(message: string): void {
+  console.log(message);
+}
+
+function showError(error: string): void {
+  console.log(error);
 }
 
 /**
