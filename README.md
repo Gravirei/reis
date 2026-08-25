@@ -49,7 +49,7 @@ REIS v2.5 introduces **parallel wave execution** for significantly faster phase 
 - 💾 **No Context Rot** - Fresh 200k context per task
 - ⚡ **Atomic Commits** - One commit per task with automatic tracking
 - 🛠️ **Auto-Fix** - Automatic bug detection and gap filling
-- 📚 **Always-Loaded Context** - Structured documentation in `~/.rovodev/`
+- 📚 **Always-Loaded Context** - Structured documentation in `~/.rovodev/` and `~/.gemini/`
 
 Inspired by [Get Shit Done](https://github.com/glittercowboy/get-shit-done) and enhanced for Rovo Dev.
 
@@ -65,7 +65,7 @@ Or install globally:
 npm install -g @gravirei/reis
 ```
 
-On first run, REIS installs to `~/.rovodev/reis/` and sets up subagents for Rovo Dev.
+On first run, REIS installs to `~/.rovodev/reis/` and/or `~/.gemini/reis/` and sets up subagents.
 
 ## Quick Start
 
@@ -584,7 +584,7 @@ Maps codebases with architecture analysis, dependency mapping, tech stack identi
 
 ### After Installation
 
-Full documentation is also available at `~/.rovodev/reis/`
+Full documentation is also available at `~/.rovodev/reis/` and `~/.gemini/reis/`
 
 Access from CLI:
 ```bash
