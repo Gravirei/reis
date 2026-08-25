@@ -25,3 +25,9 @@ Thumbs.db
 # Temporary files
 tmp_rovodev_*
 *.tmp
+
+# TypeScript sources (runtime ships compiled .js emitted by tsc)
+**/*.ts
+tsconfig.json
+tsconfig.build.json
+eslint.config.js

@@ -14,7 +14,6 @@ const { PerformanceGate } = require('../../lib/utils/gates/performance-gate');
 const { AccessibilityGate } = require('../../lib/utils/gates/accessibility-gate');
 
 describe('Quality Gates', function() {
-  this.timeout(30000); // Gates can take time
 
   describe('GateResult', function() {
     it('should create a pending result', function() {

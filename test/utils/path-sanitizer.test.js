@@ -17,7 +17,7 @@ describe('Path Sanitizer', () => {
   const testFile = path.join(testDir, 'test.txt');
   const testSubDir = path.join(testDir, 'subdir');
   
-  before(() => {
+  beforeAll(() => {
     // Create test directory structure
     if (!fs.existsSync(testDir)) {
       fs.mkdirSync(testDir, { recursive: true });
@@ -28,7 +28,7 @@ describe('Path Sanitizer', () => {
     fs.writeFileSync(testFile, 'test content');
   });
   
-  after(() => {
+  afterAll(() => {
     // Cleanup
     if (fs.existsSync(testFile)) {
       fs.unlinkSync(testFile);

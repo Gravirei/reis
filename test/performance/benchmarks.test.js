@@ -19,17 +19,16 @@ const { createBarChart, createProgressBar, createTimeline } = require('../../lib
 
 describe('Performance Benchmarks', function() {
   // Extended timeout for performance tests
-  this.timeout(60000);
   
   let testRoot;
   let originalCwd;
   const benchmarkResults = {};
 
-  before(() => {
+  beforeAll(() => {
     console.log('\n=== Starting Performance Benchmark Suite ===\n');
   });
 
-  after(() => {
+  afterAll(() => {
     console.log(generateReport(benchmarkResults));
   });
 

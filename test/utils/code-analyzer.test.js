@@ -118,7 +118,7 @@ describe('CodeAnalyzer', function() {
     });
     
     it('should detect dev dependencies', function() {
-      const result = analyzer.checkNpmDependency('mocha');
+      const result = analyzer.checkNpmDependency('jest');
       assert.ok(result.exists);
       assert.strictEqual(result.isDev, true);
     });

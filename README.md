@@ -615,10 +615,26 @@ reis plan && reis execute
 
 ## Tech Stack
 
+- TypeScript (strict mode, compiled to CommonJS)
 - Node.js
 - Chalk (terminal styling)
 - Inquirer (interactive prompts)
-- Rovo Dev (AI development)
+- Jest (testing)
+- Rovo Dev / Gemini CLI (AI development)
+
+## Development
+
+```bash
+npm install          # install dependencies
+npm run build        # compile TypeScript to lib/ + bin/
+npm run dev          # watch mode
+npm run typecheck    # tsc --noEmit
+npm run lint         # eslint
+npm test             # unit/integration/e2e suites (Jest)
+npm run test:perf    # performance benchmarks
+```
+
+The published package ships compiled JavaScript only; `prepare` builds automatically before `npm pack` / `npm publish`.
 
 ## Credits
 

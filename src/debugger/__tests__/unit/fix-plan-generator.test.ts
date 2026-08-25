@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { FixPlanGenerator } from '../../fix-plan-generator.js';
+import { FixPlanGenerator } from '../../../../lib/utils/fix-plan-generator.js';
 import type { DebugSolution } from '../../types.js';
 
 describe('FixPlanGenerator', () => {

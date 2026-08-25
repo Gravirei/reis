@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { IssueClassifier } from '../../issue-classifier.js';
-import { DebugAnalyzer } from '../../debug-analyzer.js';
-import { SolutionDesigner } from '../../solution-designer.js';
-import { PatternMatcher } from '../../pattern-matcher.js';
-import { FixPlanGenerator } from '../../fix-plan-generator.js';
+import { IssueClassifier } from '../../../../lib/utils/issue-classifier.js';
+import { DebugAnalyzer } from '../../../../lib/utils/debug-analyzer.js';
+import { SolutionDesigner } from '../../../../lib/utils/solution-designer.js';
+import { PatternMatcher } from '../../../../lib/utils/pattern-matcher.js';
+import { FixPlanGenerator } from '../../../../lib/utils/fix-plan-generator.js';
 import { testIssues } from '../fixtures/test-issues.js';
 import { mkdirSync, rmSync, existsSync } from 'fs';
 

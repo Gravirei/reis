@@ -5,13 +5,13 @@ let consoleOutput = [];
 const originalLog = console.log;
 
 describe('Version Command', () => {
-  before(() => {
+  beforeAll(() => {
     console.log = (...args) => {
       consoleOutput.push(args.join(' '));
     };
   });
 
-  after(() => {
+  afterAll(() => {
     console.log = originalLog;
   });
 

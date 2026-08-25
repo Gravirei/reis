@@ -6,6 +6,7 @@ const assert = require('assert');
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const {
   isGitRepo,
   getGitStatus,
@@ -15,7 +16,7 @@ const {
 } = require('../../lib/utils/git-integration');
 
 describe('Git Integration', () => {
-  const testRoot = path.join(__dirname, '../tmp_test_git');
+  const testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-git-'));
   
   beforeEach(() => {
     // Clean up and create test directory

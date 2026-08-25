@@ -5,38 +5,23 @@ const os = require('os');
 
 // Mock the command-helpers module
 let mockPlanningDir = true;
-let capturedError = null;
+let mockCapturedError = null;
 
-const mockHelpers = {
+jest.mock('../../lib/utils/command-helpers', () => ({
   showPrompt: (prompt) => {},
-  showError: (msg) => { capturedError = msg; },
+  showError: (msg) => { mockCapturedError = msg; },
   showSuccess: (msg) => {},
   showWarning: (msg) => {},
   showInfo: (msg) => {},
   checkPlanningDir: () => mockPlanningDir,
   getVersion: () => '2.7.0'
-};
+}));
 
 // Mock kanban renderer
-const mockKanban = {
+jest.mock('../../lib/utils/kanban-renderer', () => ({
   showKanbanBoard: () => {},
   renderKanban: () => {}
-};
-
-// Override require cache
-require.cache[require.resolve('../../lib/utils/command-helpers')] = {
-  id: require.resolve('../../lib/utils/command-helpers'),
-  filename: require.resolve('../../lib/utils/command-helpers'),
-  loaded: true,
-  exports: mockHelpers
-};
-
-require.cache[require.resolve('../../lib/utils/kanban-renderer')] = {
-  id: require.resolve('../../lib/utils/kanban-renderer'),
-  filename: require.resolve('../../lib/utils/kanban-renderer'),
-  loaded: true,
-  exports: mockKanban
-};
+}));
 
 const progress = require('../../lib/commands/progress');
 
@@ -45,7 +30,7 @@ describe('Progress Command', () => {
   const planningDir = path.join(testDir, '.planning');
   const originalCwd = process.cwd();
 
-  before(() => {
+  beforeAll(() => {
     fs.mkdirSync(planningDir, { recursive: true });
     // Create mock STATE.md
     fs.writeFileSync(path.join(planningDir, 'STATE.md'), `# Project State
@@ -75,23 +60,23 @@ Phase 2
 `);
   });
 
-  after(() => {
+  afterAll(() => {
     process.chdir(originalCwd);
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   beforeEach(() => {
     mockPlanningDir = true;
-    capturedError = null;
+    mockCapturedError = null;
     process.chdir(testDir);
   });
 
   describe('Validation', () => {
-    it('should return error when not a REIS project', () => {
+    it('should exit(1) when not a REIS project', () => {
       mockPlanningDir = false;
-      const result = progress({});
-      assert.strictEqual(result, 1);
-      assert.ok(capturedError && capturedError.includes('Not a REIS project'));
+      // jest.setup.js intercepts process.exit and throws Error('process.exit(1)')
+      assert.throws(() => progress({}), /process\.exit\(1\)/);
+      assert.ok(mockCapturedError && mockCapturedError.includes('Not a REIS project'));
     });
   });
 
@@ -118,10 +103,9 @@ Phase 2
       assert.strictEqual(result, 0);
     });
 
-    it('should return 1 when not a REIS project', () => {
+    it('should exit(1) when not a REIS project (never returns normally)', () => {
       mockPlanningDir = false;
-      const result = progress({});
-      assert.strictEqual(result, 1);
+      assert.throws(() => progress({}), /process\.exit\(1\)/);
     });
   });
 });

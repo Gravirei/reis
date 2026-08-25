@@ -4,47 +4,39 @@ const fs = require('fs');
 const os = require('os');
 
 // Mock the command-helpers module
-let capturedPrompt = null;
-let capturedError = null;
+let mockCapturedPrompt = null;
+let mockCapturedError = null;
 
-const mockHelpers = {
-  showPrompt: (prompt) => { capturedPrompt = prompt; },
-  showError: (msg) => { capturedError = msg; },
+jest.mock('../../lib/utils/command-helpers', () => ({
+  showPrompt: (prompt) => { mockCapturedPrompt = prompt; },
+  showError: (msg) => { mockCapturedError = msg; },
   showSuccess: (msg) => {},
   showWarning: (msg) => {},
   showInfo: (msg) => {},
   checkPlanningDir: () => false, // For 'new' command, planning dir shouldn't exist
   getVersion: () => '2.7.0'
-};
+}));
 
-// Override require cache BEFORE requiring new.js
-require.cache[require.resolve('../../lib/utils/command-helpers')] = {
-  id: require.resolve('../../lib/utils/command-helpers'),
-  filename: require.resolve('../../lib/utils/command-helpers'),
-  loaded: true,
-  exports: mockHelpers
-};
-
-// Clear the new command from cache to force reload with mocks
-delete require.cache[require.resolve('../../lib/commands/new')];
+// bin/reis.ts registers `.command('new [idea]')` and calls `newCmd({ idea })`,
+// so the command reads args.idea only.
 const newCommand = require('../../lib/commands/new');
 
 describe('New Command', () => {
   const testDir = path.join(os.tmpdir(), 'reis-new-test-' + Date.now());
   const originalCwd = process.cwd();
 
-  before(() => {
+  beforeAll(() => {
     fs.mkdirSync(testDir, { recursive: true });
   });
 
-  after(() => {
+  afterAll(() => {
     process.chdir(originalCwd);
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   beforeEach(() => {
-    capturedPrompt = null;
-    capturedError = null;
+    mockCapturedPrompt = null;
+    mockCapturedError = null;
     process.chdir(testDir);
     // Clean up any .planning directory
     const planningDir = path.join(testDir, '.planning');
@@ -54,65 +46,75 @@ describe('New Command', () => {
   });
 
   describe('Validation', () => {
-    it('should require a project name', () => {
+    it('should succeed without an idea and prompt to ask for one', () => {
       const result = newCommand({ _: [] });
-      assert.strictEqual(result, 1);
-      assert.ok(capturedError && capturedError.includes('name'));
+      assert.strictEqual(result, 0);
+      assert.ok(mockCapturedPrompt && mockCapturedPrompt.includes('Ask me about the project idea'));
     });
 
-    it('should accept project name from arguments', () => {
+    it('should accept project idea from --idea (positional [idea] argument)', () => {
+      const result = newCommand({ _: [], idea: 'my-project' });
+      assert.strictEqual(result, 0);
+      assert.ok(mockCapturedPrompt && mockCapturedPrompt.includes('my-project'));
+    });
+
+    it('should ignore positional _ array entries (not part of the contract)', () => {
       const result = newCommand({ _: ['my-project'] });
       assert.strictEqual(result, 0);
-      assert.ok(capturedPrompt && capturedPrompt.includes('my-project'));
-    });
-
-    it('should accept project name from --name option', () => {
-      const result = newCommand({ _: [], name: 'test-project' });
-      assert.strictEqual(result, 0);
-      assert.ok(capturedPrompt && capturedPrompt.includes('test-project'));
+      // No idea property means generic prompt, even though _[0] is set
+      assert.ok(mockCapturedPrompt && !mockCapturedPrompt.includes('my-project'));
     });
   });
 
   describe('Project Initialization', () => {
-    it('should create .planning directory structure', () => {
-      newCommand({ _: ['test-project'] });
-      // The command generates a prompt - actual creation is done by AI
-      assert.ok(capturedPrompt);
+    it('should generate a prompt (actual creation is done by AI)', () => {
+      newCommand({ idea: 'test-project' });
+      assert.ok(mockCapturedPrompt);
     });
 
-    it('should generate project setup prompt', () => {
-      newCommand({ _: ['my-app'] });
-      assert.ok(capturedPrompt.includes('PROJECT.md') || capturedPrompt.includes('project'));
+    it('should generate project setup prompt mentioning the idea', () => {
+      newCommand({ idea: 'my-app' });
+      assert.ok(
+        mockCapturedPrompt.includes('my-app') &&
+        (mockCapturedPrompt.includes('PROJECT.md') || mockCapturedPrompt.includes('.planning'))
+      );
     });
 
     it('should include ROADMAP in setup', () => {
-      newCommand({ _: ['my-app'] });
-      assert.ok(capturedPrompt.includes('ROADMAP') || capturedPrompt.includes('roadmap'));
+      newCommand({ idea: 'my-app' });
+      assert.ok(mockCapturedPrompt.includes('ROADMAP.md'));
+    });
+
+    it('should use the generic prompt when no idea is given', () => {
+      newCommand({});
+      assert.ok(mockCapturedPrompt && !mockCapturedPrompt.includes('for:'));
+      assert.ok(mockCapturedPrompt.includes('PROJECT.md'));
     });
   });
 
   describe('Options', () => {
-    it('should handle --description option', () => {
-      const result = newCommand({ _: ['my-app'], description: 'A test application' });
+    it('should handle --description option gracefully (ignored by implementation)', () => {
+      const result = newCommand({ idea: 'my-app', description: 'A test application' });
       assert.strictEqual(result, 0);
-      assert.ok(capturedPrompt.includes('A test application') || capturedPrompt);
+      assert.ok(mockCapturedPrompt && mockCapturedPrompt.includes('my-app'));
     });
 
-    it('should handle --template option', () => {
-      const result = newCommand({ _: ['my-app'], template: 'react' });
+    it('should handle --template option gracefully (ignored by implementation)', () => {
+      const result = newCommand({ idea: 'my-app', template: 'react' });
       assert.strictEqual(result, 0);
     });
   });
 
   describe('Return Values', () => {
-    it('should return 0 on success', () => {
-      const result = newCommand({ _: ['success-project'] });
+    it('should return 0 on success with an idea', () => {
+      const result = newCommand({ idea: 'success-project' });
       assert.strictEqual(result, 0);
     });
 
-    it('should return 1 on missing name', () => {
-      const result = newCommand({ _: [] });
-      assert.strictEqual(result, 1);
+    it('should return 0 even without an idea (no error path exists)', () => {
+      const result = newCommand({});
+      assert.strictEqual(result, 0);
+      assert.ok(!mockCapturedError);
     });
   });
 });

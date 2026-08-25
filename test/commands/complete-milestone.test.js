@@ -5,61 +5,41 @@ const os = require('os');
 
 // Mock the command-helpers module
 let mockPlanningDir = true;
-let capturedPrompt = null;
-let capturedError = null;
-let capturedSuccess = null;
-let capturedWarning = null;
+let mockCapturedPrompt = null;
+let mockCapturedError = null;
+let mockCapturedSuccess = null;
+let mockCapturedWarning = null;
 
-const mockHelpers = {
+jest.mock('../../lib/utils/command-helpers', () => ({
   checkPlanningDir: () => mockPlanningDir,
-  showPrompt: (prompt) => { capturedPrompt = prompt; },
-  showError: (msg) => { capturedError = msg; },
-  showSuccess: (msg) => { capturedSuccess = msg; },
-  showWarning: (msg) => { capturedWarning = msg; },
+  showPrompt: (prompt) => { mockCapturedPrompt = prompt; },
+  showError: (msg) => { mockCapturedError = msg; },
+  showSuccess: (msg) => { mockCapturedSuccess = msg; },
+  showWarning: (msg) => { mockCapturedWarning = msg; },
   showInfo: (msg) => {}
-};
+}));
 
 // Mock audit command
-const mockAudit = async (args) => {
+jest.mock('../../lib/commands/audit', () => async (args) => {
   return 0; // Success
-};
+});
 
 // Mock subagent-invoker
-const mockInvokeSubagent = async (name, args) => {
-  return { success: true, issues: [] };
-};
-
-// Override require cache
-require.cache[require.resolve('../../lib/utils/command-helpers')] = {
-  id: require.resolve('../../lib/utils/command-helpers'),
-  filename: require.resolve('../../lib/utils/command-helpers'),
-  loaded: true,
-  exports: mockHelpers
-};
-
-require.cache[require.resolve('../../lib/utils/subagent-invoker')] = {
-  id: require.resolve('../../lib/utils/subagent-invoker'),
-  filename: require.resolve('../../lib/utils/subagent-invoker'),
-  loaded: true,
-  exports: { invokeSubagent: mockInvokeSubagent }
-};
-
-require.cache[require.resolve('../../lib/commands/audit')] = {
-  id: require.resolve('../../lib/commands/audit'),
-  filename: require.resolve('../../lib/commands/audit'),
-  loaded: true,
-  exports: mockAudit
-};
+jest.mock('../../lib/utils/subagent-invoker', () => ({
+  invokeSubagent: async (name, args) => {
+    return { success: true, issues: [] };
+  }
+}));
 
 const completeMilestone = require('../../lib/commands/complete-milestone');
 
 describe('Complete-Milestone Command', () => {
   beforeEach(() => {
     mockPlanningDir = true;
-    capturedPrompt = null;
-    capturedError = null;
-    capturedSuccess = null;
-    capturedWarning = null;
+    mockCapturedPrompt = null;
+    mockCapturedError = null;
+    mockCapturedSuccess = null;
+    mockCapturedWarning = null;
   });
 
   describe('Validation', () => {
@@ -67,13 +47,13 @@ describe('Complete-Milestone Command', () => {
       mockPlanningDir = false;
       const result = await completeMilestone({ milestone: 'v1.0' });
       assert.strictEqual(result, 1);
-      assert.ok(capturedError.includes('Not a REIS project'));
+      assert.ok(mockCapturedError.includes('Not a REIS project'));
     });
 
     it('should return error when no milestone provided', async () => {
       const result = await completeMilestone({});
       assert.strictEqual(result, 1);
-      assert.ok(capturedError.includes('Milestone') || capturedError.includes('required'));
+      assert.ok(mockCapturedError.includes('Milestone') || mockCapturedError.includes('required'));
     });
 
     it('should return error when milestone is empty', async () => {
@@ -86,19 +66,19 @@ describe('Complete-Milestone Command', () => {
     it('should accept milestone from arguments', async () => {
       const result = await completeMilestone({ milestone: 'v1.0' });
       assert.strictEqual(result, 0);
-      assert.ok(capturedPrompt.includes('v1.0'));
+      assert.ok(mockCapturedPrompt.includes('v1.0'));
     });
 
     it('should generate completion prompt', async () => {
       await completeMilestone({ milestone: 'v2.0' });
-      assert.ok(capturedPrompt.includes('v2.0'));
-      assert.ok(capturedPrompt.includes('complet') || capturedPrompt.includes('Complete'));
+      assert.ok(mockCapturedPrompt.includes('v2.0'));
+      assert.ok(mockCapturedPrompt.includes('complet') || mockCapturedPrompt.includes('Complete'));
     });
 
     it('should include audit reference', async () => {
       await completeMilestone({ milestone: 'v1.0' });
       // Complete-milestone runs audit first
-      assert.ok(capturedPrompt.includes('audit') || capturedPrompt.includes('Audit') || capturedPrompt);
+      assert.ok(mockCapturedPrompt.includes('audit') || mockCapturedPrompt.includes('Audit') || mockCapturedPrompt);
     });
   });
 
@@ -106,27 +86,27 @@ describe('Complete-Milestone Command', () => {
     it('should handle --tag flag (default true)', async () => {
       await completeMilestone({ milestone: 'v1.0' });
       // Should include git tag creation by default
-      assert.ok(capturedPrompt.includes('tag') || capturedPrompt);
+      assert.ok(mockCapturedPrompt.includes('tag') || mockCapturedPrompt);
     });
 
     it('should handle --no-tag flag', async () => {
       await completeMilestone({ milestone: 'v1.0', tag: false });
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
 
     it('should handle --no-archive flag', async () => {
       await completeMilestone({ milestone: 'v1.0', archive: false });
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
 
     it('should handle --skip-audit flag', async () => {
       await completeMilestone({ milestone: 'v1.0', 'skip-audit': true });
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
 
     it('should handle --force flag', async () => {
       await completeMilestone({ milestone: 'v1.0', force: true });
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
 
     it('should handle multiple flags together', async () => {
@@ -136,25 +116,25 @@ describe('Complete-Milestone Command', () => {
         archive: false, 
         force: true 
       });
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
   });
 
   describe('Prompt Generation', () => {
     it('should include completion steps', async () => {
       await completeMilestone({ milestone: 'v1.0' });
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
 
     it('should include archiving instructions when not skipped', async () => {
       await completeMilestone({ milestone: 'v1.0' });
       // Default includes archiving
-      assert.ok(capturedPrompt.includes('archive') || capturedPrompt.includes('Archive') || capturedPrompt);
+      assert.ok(mockCapturedPrompt.includes('archive') || mockCapturedPrompt.includes('Archive') || mockCapturedPrompt);
     });
 
     it('should include ROADMAP update reference', async () => {
       await completeMilestone({ milestone: 'v1.0' });
-      assert.ok(capturedPrompt.includes('ROADMAP') || capturedPrompt);
+      assert.ok(mockCapturedPrompt.includes('ROADMAP') || mockCapturedPrompt);
     });
   });
 
@@ -162,7 +142,7 @@ describe('Complete-Milestone Command', () => {
     it('should warn when skipping audit', async () => {
       await completeMilestone({ milestone: 'v1.0', 'skip-audit': true });
       // Should have some indication that audit is skipped
-      assert.ok(capturedPrompt || capturedWarning);
+      assert.ok(mockCapturedPrompt || mockCapturedWarning);
     });
   });
 });

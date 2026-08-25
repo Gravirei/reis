@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { SolutionDesigner } from '../../solution-designer.js';
-import { testIssues } from '../fixtures/test-issues.js';
+import { SolutionDesigner } from '../../../../lib/utils/solution-designer.js';
+import { testIssues } from '../integration/fixtures/test-issues.js';
 import type { DebugAnalysis } from '../../types.js';
 
 describe('SolutionDesigner', () => {

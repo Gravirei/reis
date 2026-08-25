@@ -4,6 +4,8 @@
 
 const assert = require('assert');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 const {
   loadSubagentDefinition,
   listSubagents,
@@ -194,9 +196,17 @@ Body`;
     });
 
     it('should load project state automatically', () => {
-      const ctx = buildExecutionContext('reis_executor', {});
-      // Project state should be loaded from .planning/STATE.md
-      assert.ok(ctx.projectState !== null);
+      // Create an isolated REIS project fixture (repo root has no .planning/)
+      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reis-subinv-'));
+      fs.mkdirSync(path.join(tmpDir, '.planning'), { recursive: true });
+      fs.writeFileSync(path.join(tmpDir, '.planning', 'STATE.md'), '# STATE\n');
+      try {
+        const ctx = buildExecutionContext('reis_executor', { projectRoot: tmpDir });
+        // Project state should be loaded from .planning/STATE.md
+        assert.ok(ctx.projectState !== null);
+      } finally {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      }
     });
 
     it('should respect custom timeout', () => {

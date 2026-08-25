@@ -4,36 +4,26 @@ const fs = require('fs');
 const os = require('os');
 
 // Mock the command-helpers module
-let capturedPrompt = null;
-let capturedError = null;
+let mockCapturedPrompt = null;
+let mockCapturedError = null;
 
-const mockHelpers = {
-  showPrompt: (prompt) => { capturedPrompt = prompt; },
-  showError: (msg) => { capturedError = msg; },
+jest.mock('../../lib/utils/command-helpers', () => ({
+  showPrompt: (prompt) => { mockCapturedPrompt = prompt; },
+  showError: (msg) => { mockCapturedError = msg; },
   showSuccess: (msg) => {},
   showWarning: (msg) => {},
   showInfo: (msg) => {},
   checkPlanningDir: () => false,
   getVersion: () => '2.7.0'
-};
+}));
 
-// Override require cache
-require.cache[require.resolve('../../lib/utils/command-helpers')] = {
-  id: require.resolve('../../lib/utils/command-helpers'),
-  filename: require.resolve('../../lib/utils/command-helpers'),
-  loaded: true,
-  exports: mockHelpers
-};
-
-// Clear the command from cache to force reload with mocks
-delete require.cache[require.resolve('../../lib/commands/map')];
 const map = require('../../lib/commands/map');
 
 describe('Map Command', () => {
   const testDir = path.join(os.tmpdir(), 'reis-map-test-' + Date.now());
   const originalCwd = process.cwd();
 
-  before(() => {
+  beforeAll(() => {
     fs.mkdirSync(testDir, { recursive: true });
     // Create some files to map
     fs.writeFileSync(path.join(testDir, 'package.json'), '{"name": "test"}');
@@ -41,14 +31,14 @@ describe('Map Command', () => {
     fs.writeFileSync(path.join(testDir, 'src', 'index.js'), 'console.log("hello");');
   });
 
-  after(() => {
+  afterAll(() => {
     process.chdir(originalCwd);
     fs.rmSync(testDir, { recursive: true, force: true });
   });
 
   beforeEach(() => {
-    capturedPrompt = null;
-    capturedError = null;
+    mockCapturedPrompt = null;
+    mockCapturedError = null;
     process.chdir(testDir);
   });
 
@@ -56,17 +46,17 @@ describe('Map Command', () => {
     it('should generate mapping prompt', () => {
       const result = map({});
       assert.strictEqual(result, 0);
-      assert.ok(capturedPrompt);
+      assert.ok(mockCapturedPrompt);
     });
 
     it('should include PROJECT.md creation', () => {
       map({});
-      assert.ok(capturedPrompt.includes('PROJECT') || capturedPrompt.includes('project'));
+      assert.ok(mockCapturedPrompt.includes('PROJECT') || mockCapturedPrompt.includes('project'));
     });
 
     it('should reference reis_project_mapper', () => {
       map({});
-      assert.ok(capturedPrompt.includes('mapper') || capturedPrompt.includes('map') || capturedPrompt);
+      assert.ok(mockCapturedPrompt.includes('mapper') || mockCapturedPrompt.includes('map') || mockCapturedPrompt);
     });
   });
 
