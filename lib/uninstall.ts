@@ -3,7 +3,7 @@ import inquirer from 'inquirer';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { PLATFORMS } from './install.js';
+import { PLATFORMS, removeClaudeHooks } from './install.js';
 
 interface PlatformInstallStatus {
   key: string;
@@ -175,6 +175,18 @@ export async function uninstall(args: any): Promise<void> {
       }
       if (removedAgents > 0) {
         console.log(chalk.green(`  ✓ [${inst.key}] Removed ${removedAgents} REIS agent file(s)`));
+      }
+
+      // Remove injected Claude lifecycle hooks
+      if (inst.key === 'claude') {
+        const settingsPath = path.join(os.homedir(), '.claude', 'settings.json');
+        if (removeClaudeHooks(settingsPath)) {
+          console.log(chalk.green(`  ✓ [${inst.key}] Removed REIS hooks from settings.json`));
+        }
+        const localSettings = path.join('.claude', 'settings.json');
+        if (fs.existsSync(localSettings) && removeClaudeHooks(localSettings)) {
+          console.log(chalk.green(`  ✓ [${inst.key}] Removed REIS hooks from project settings.json`));
+        }
       }
 
       for (const cp of inst.commandPaths) {

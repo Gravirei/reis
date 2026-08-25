@@ -29,6 +29,7 @@ function showHelp(): void {
   Flags:
     --local             Install into the current project instead of your home directory
     --global            Install into your home directory (default)
+    --hooks / --no-hooks   Toggle lifecycle hooks injection (default: hooks)
 
   Learn more: https://github.com/Gravirei/reis
 `);
@@ -37,11 +38,12 @@ function showHelp(): void {
 async function runInstall(overwrite: boolean): Promise<void> {
   const scope: 'global' | 'local' =
     process.argv.includes('--local') ? 'local' : 'global';
+  const hooks = !process.argv.includes('--no-hooks');
   const { performInstallation } = await import('../lib/install.js');
   // Targets: default to all platforms unless flags narrow it down
   const targets = ['rovodev', 'gemini', 'claude', 'codex', 'copilot']
     .filter(p => process.argv.includes(`--${p}`));
-  await performInstallation(overwrite, false, targets.length ? targets.join(',') : 'all', scope);
+  await performInstallation(overwrite, false, targets.length ? targets.join(',') : 'all', scope, hooks);
 }
 
 async function main(): Promise<void> {

@@ -60,6 +60,7 @@
     "lib/uninstall.d.ts",
     "commands",
     "reis",
+    "hooks",
     "agents",
     "templates",
     "examples",

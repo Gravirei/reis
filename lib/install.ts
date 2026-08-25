@@ -221,6 +221,69 @@ function toCodexPrompt(cmd: ParsedCommand): string {
   return `${cmd.body}\n`;
 }
 
+// Claude Code hooks injection (marker-scoped, user entries preserved)
+const REIS_HOOK_MARKER = 'reis/hooks/';
+
+function injectClaudeHooks(settingsPath: string, hookCommands: { event: string; command: string; matcher?: string }[]): void {
+  let settings: any = {};
+  if (fs.existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    } catch {
+      console.log(chalk.yellow(`  ⚠ Could not parse ${settingsPath} - skipping hooks injection`));
+      return;
+    }
+  }
+  fs.copyFileSync(settingsPath, settingsPath + '.reis-backup');
+  settings.hooks = settings.hooks || {};
+  for (const { event, command, matcher } of hookCommands) {
+    const arr = (settings.hooks[event] = settings.hooks[event] || []);
+    // remove previous reis entries for idempotent update
+    for (const entry of arr) {
+      if (entry.hooks) {
+        entry.hooks = entry.hooks.filter((h: any) => !String(h.command || '').includes(REIS_HOOK_MARKER));
+      }
+    }
+    for (let i = arr.length - 1; i >= 0; i--) {
+      if (!arr[i].hooks || arr[i].hooks.length === 0) arr.splice(i, 1);
+    }
+    const entry: Record<string, unknown> = { hooks: [{ type: 'command', command }] };
+    if (matcher) {
+      entry.matcher = matcher;
+    }
+    arr.push(entry);
+  }
+  fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+}
+
+function removeClaudeHooks(settingsPath: string): boolean {
+  if (!fs.existsSync(settingsPath)) return false;
+  try {
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    if (!settings.hooks) return false;
+    let removed = false;
+    for (const event of Object.keys(settings.hooks)) {
+      const arr = settings.hooks[event];
+      if (!Array.isArray(arr)) continue;
+      for (const entry of arr) {
+        if (entry.hooks) {
+          const before = entry.hooks.length;
+          entry.hooks = entry.hooks.filter((h: any) => !String(h.command || '').includes(REIS_HOOK_MARKER));
+          if (entry.hooks.length !== before) removed = true;
+        }
+      }
+      settings.hooks[event] = arr.filter((entry: any) => entry.hooks && entry.hooks.length > 0);
+      if (settings.hooks[event].length === 0) delete settings.hooks[event];
+    }
+    if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    return removed;
+  } catch {
+    return false;
+  }
+}
+
 // Main installation function
 async function install() {
   try {
@@ -316,7 +379,7 @@ async function install() {
 }
 
 // Perform the actual installation
-async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global') {
+async function performInstallation(overwrite = false, silent = false, target = 'all', scope: 'global' | 'local' = 'global', hooks = true) {
   const rootDir = scope === 'local' ? process.cwd() : os.homedir();
   const platforms = resolvePlatforms(target);
   let totalFiles = 0;
@@ -452,6 +515,27 @@ async function performInstallation(overwrite = false, silent = false, target = '
       }
     }
 
+    // Install hook scripts (all platforms can use them manually)
+    const hooksSourceDir = path.join(packageDir, 'hooks');
+    if (fs.existsSync(hooksSourceDir)) {
+      copyDirectory(hooksSourceDir, path.join(reisDir, 'hooks'), true);
+    }
+
+    // Inject lifecycle hooks into Claude Code settings (only supported runtime)
+    if (platform.key === 'claude' && hooks) {
+      const hooksBase = scope === 'local'
+        ? `.${platform.baseDir}/reis/hooks`
+        : `~/${platform.baseDir}/reis/hooks`;
+      const settingsPath = path.join(baseDir, 'settings.json');
+      injectClaudeHooks(settingsPath, [
+        { event: 'SessionStart', command: `${hooksBase}/session-start.sh` },
+        { event: 'PreToolUse', command: `node ${hooksBase}/workflow-guard.js`, matcher: 'Edit|Write' }
+      ]);
+      if (!silent) {
+        console.log(chalk.green(`  ✓ [${platform.key}] Lifecycle hooks injected into ${settingsPath}`));
+      }
+    }
+
     totalFiles += fileCount;
 
     // Success message and next steps (only when called standalone)
@@ -561,4 +645,4 @@ if (require.main === module) {
   });
 }
 
-export { install, performInstallation, PLATFORMS, ALL_PLATFORM_KEYS };
+export { install, performInstallation, PLATFORMS, ALL_PLATFORM_KEYS, removeClaudeHooks };
